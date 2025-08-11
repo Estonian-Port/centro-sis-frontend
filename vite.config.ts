@@ -1,9 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwind from "@tailwindcss/vite"
 
-// cambia 'repo-name' por el nombre EXACTO del repo
+// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
-  base: '/repo-name/',
-  build: { outDir: 'docs' }
-})
+  plugins: [react(), tailwind()],
+  base: '/',
+  build: {
+    outDir: 'docs',
+    chunkSizeWarningLimit: 1500
+  }});
