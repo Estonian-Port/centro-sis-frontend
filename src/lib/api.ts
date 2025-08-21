@@ -7,6 +7,17 @@ export const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL?.replace(/\/+$/, ""),
     withCredentials: true,
 });
+
+api.interceptors.response.use(
+    r => r,
+    (error) => {
+        const s = error?.response?.status;
+        if (s === 401 || s === 403) {
+            window.location.assign(`${import.meta.env.BASE_URL}login`);
+        }
+        return Promise.reject(error);
+    }
+);
 api.defaults.headers.post["Content-Type"] = "application/json";
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {

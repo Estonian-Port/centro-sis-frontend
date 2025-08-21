@@ -1,35 +1,33 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { apiGet, initCsrf } from "./auth";
+import { apiGet } from "./auth";
 
-type User = { username: string } | null;
+type User = { id?: number; username: string } | null;
 
-const AuthCtx = createContext<{ user: User; refresh: () => Promise<void> }>({
-    user: null,
-    refresh: async () => {},
-});
+type Ctx = { user: User; loaded: boolean; refresh: () => Promise<void> };
+const AuthCtx = createContext<Ctx>({ user: null, loaded: false, refresh: async () => {} });
+
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User>(null);
+    const [loaded, setLoaded] = useState(false);
 
     const refresh = async () => {
         try {
-            const data = await apiGet<{ authenticated: boolean; username: string }>("/api/me/");
-            setUser(data.authenticated ? { username: data.username } : null);
+            // Accept either {authenticated, username} or {id, username, ...}
+            const data = await apiGet<any>("/api/me/");
+            const isAuth = data?.authenticated === true || typeof data?.id === "number";
+            setUser(isAuth ? { id: data.id, username: data.username } : null);
         } catch {
             setUser(null);
+        } finally {
+            setLoaded(true);
         }
     };
 
-    useEffect(() => {
-        (async () => {
-            await initCsrf();
-            await refresh();
-        })();
-    }, []);
+    useEffect(() => { void refresh(); }, []);
 
-    return <AuthCtx.Provider value={{ user, refresh }}>{children}</AuthCtx.Provider>;
+    return <AuthCtx.Provider value={{ user, loaded, refresh }}>{children}</AuthCtx.Provider>;
 }
 
-export function useAuth() {
-    return useContext(AuthCtx);
-}
+
+export const useAuth = () => useContext(AuthCtx);
