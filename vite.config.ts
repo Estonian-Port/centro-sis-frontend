@@ -4,9 +4,13 @@ import tailwind from "@tailwindcss/vite"
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwind()],
-  base: '/',
-  build: {
-    outDir: 'docs',
-    chunkSizeWarningLimit: 1500
-  }});
+    plugins: [react(), tailwind()],
+    server: {
+        proxy: {
+            "/api": {
+                target: "api.centrosis.tenri.com.ar",
+                changeOrigin: true,
+            },
+        },
+    },
+});

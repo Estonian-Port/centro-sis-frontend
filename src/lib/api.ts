@@ -1,14 +1,25 @@
-import axios from 'axios';
+import axios, { AxiosHeaders, type InternalAxiosRequestConfig } from "axios";
 
-const API = import.meta.env.VITE_API_BASE;          // from .env files
+let CSRF: string | null = null;
+export const setCsrf = (t: string | null) => { CSRF = t; };
 
 export const api = axios.create({
-  baseURL: API,
-  withCredentials: false,       // keep if you don't need cookies
+    baseURL: import.meta.env.VITE_API_URL?.replace(/\/+$/, ""),
+    withCredentials: true,
 });
+api.defaults.headers.post["Content-Type"] = "application/json";
 
-/* optional shorthand wrappers */
-export const get  = api.get;
-export const post = api.post;
-export const patch= api.patch;
-export const del  = api.delete;
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+    // normalize headers to an AxiosHeaders instance (fixes TS2322)
+    if (!(config.headers instanceof AxiosHeaders)) {
+        config.headers = new AxiosHeaders(config.headers);
+    }
+    const h = config.headers as AxiosHeaders;
+
+    // attach CSRF if we have it (fallback to cookie)
+    const cookieMatch = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+    const token = CSRF ?? (cookieMatch ? decodeURIComponent(cookieMatch[1]) : null);
+    if (token) h.set("X-CSRFToken", token);
+
+    return config;
+});

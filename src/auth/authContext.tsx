@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { apiGet } from "./auth";
+import { apiGet, initCsrf } from "./auth";
 
 type User = { username: string } | null;
 
@@ -21,7 +21,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     useEffect(() => {
-        refresh();
+        (async () => {
+            await initCsrf();
+            await refresh();
+        })();
     }, []);
 
     return <AuthCtx.Provider value={{ user, refresh }}>{children}</AuthCtx.Provider>;

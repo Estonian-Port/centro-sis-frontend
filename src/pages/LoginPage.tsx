@@ -10,7 +10,7 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(null);
 
     const navigate = useNavigate();
-    const location = useLocation() as never;
+    const location = useLocation() as any;
     const { refresh } = useAuth();
 
     const onSubmit = async (e: React.FormEvent) => {
@@ -21,7 +21,7 @@ export default function LoginPage() {
             await refresh();
             const to = location.state?.from?.pathname || "/";
             navigate(to, { replace: true });
-        } catch (err: never) {
+        } catch (err: any) {
             setError("Login failed");
         }
     };
