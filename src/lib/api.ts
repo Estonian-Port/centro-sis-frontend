@@ -14,6 +14,8 @@ if (!/^https:\/\//i.test(baseURL) && window.isSecureContext) {
 export const api = axios.create({
     baseURL,
     withCredentials: true, // send cookies for session auth
+    xsrfCookieName: 'csrftoken',
+    xsrfHeaderName: 'X-CSRFToken',
 });
 
 // default headers

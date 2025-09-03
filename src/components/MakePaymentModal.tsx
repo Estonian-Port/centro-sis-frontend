@@ -132,12 +132,14 @@ export default function MakePaymentModal({ student, onClose }: Props) {
           {/* actions */}
           <div className="flex justify-end gap-2">
             <button
+              type="button"
               onClick={onClose}
               className="rounded px-3 py-1 hover:bg-gray-100"
             >
               Cancelar
             </button>
             <button
+                type="button"
               disabled={saveMutation.isPending}
               onClick={() => saveMutation.mutate()}
               className="rounded bg-emerald-600 px-4 py-1 text-white disabled:bg-emerald-300"
