@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import logo from '../assets/tenrikyoemblem.png';
 import { Link } from 'react-router-dom';
+import { useLogout } from '../auth/useLogout';
 
 const nav = [
     { to: "/home", label: "Inicio"},
@@ -8,6 +9,8 @@ const nav = [
 ];
 
 export default function BaseLayout() {
+    const logout = useLogout();
+
     return (
         <div className="min-h-screen min-w-full flex">
             {/* Sidebar */}
@@ -34,6 +37,17 @@ export default function BaseLayout() {
                             </NavLink>
                     ))}
                 </nav>
+
+                {/* Bottom logout */}
+                <div className="mt-auto p-4 border-t border-gray-700">
+                    <button
+                        type="button"
+                        onClick={logout}
+                        className="w-full rounded bg-gray-700 hover:bg-gray-600 px-4 py-2 text-sm font-medium"
+                    >
+                        Cerrar sesión
+                    </button>
+                </div>
             </aside>
 
             {/* Main Content */}
