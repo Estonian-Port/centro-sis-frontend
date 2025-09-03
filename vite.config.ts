@@ -13,6 +13,6 @@ export default defineConfig({
         },
     },
     build: {
-        outDir: 'dist',   // ← your target folder
+        outDir: 'docs',   // ← your target folder
     },
 });
