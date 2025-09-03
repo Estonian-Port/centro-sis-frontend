@@ -28,13 +28,13 @@ export default function LoginPage() {
 
     return (
         <form onSubmit={onSubmit} style={{ maxWidth: 360, margin: "64px auto" }}>
-            <h1>Sign in</h1>
+            <h1>Ingresar</h1>
             <label>
-                Username
+                Nombre de Usuario
                 <input value={username} onChange={(e) => setUsername(e.target.value)} />
             </label>
             <label>
-                Password
+                Contraseña
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
             </label>
             <label style={{ display: "flex", alignItems: "center", gap: 8 }}>

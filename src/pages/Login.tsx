@@ -48,7 +48,7 @@ export default function Login() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow">
-                <h1 className="mb-6 text-center text-2xl font-semibold">Sign in</h1>
+                <h1 className="mb-6 text-center text-2xl font-semibold">Ingreso</h1>
 
                 {error && (
                     <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -58,7 +58,7 @@ export default function Login() {
 
                 <form onSubmit={onSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium">Username</label>
+                        <label className="block text-sm font-medium">Nombre</label>
                         <input
                             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none"
                             value={username}
@@ -68,7 +68,7 @@ export default function Login() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium">Password</label>
+                        <label className="block text-sm font-medium">Contraseña</label>
                         <input
                             type="password"
                             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none"
@@ -82,7 +82,7 @@ export default function Login() {
                         disabled={submitting}
                         className="mt-2 w-full rounded-lg bg-indigo-600 px-4 py-2.5 font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
                     >
-                        {submitting ? "Signing in…" : "Sign in"}
+                        {submitting ? "Ingresando…" : "Ingresar"}
                     </button>
                 </form>
             </div>
