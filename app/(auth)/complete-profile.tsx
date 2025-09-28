@@ -8,7 +8,8 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 
-const schema = yup.object().shape({
+// 🔹 Schema de validación
+const schema = yup.object({
   nombre: yup.string().required('El nombre es requerido'),
   apellido: yup.string().required('El apellido es requerido'),
   dni: yup.string().required('El DNI es requerido'),
@@ -23,6 +24,7 @@ const schema = yup.object().shape({
     .required('Confirma la nueva contraseña'),
 });
 
+// 🔹 Interface del formulario
 interface CompleteProfileData {
   nombre: string;
   apellido: string;
@@ -33,20 +35,28 @@ interface CompleteProfileData {
 }
 
 export default function CompleteProfileScreen() {
+  // 🔹 useForm correctamente tipado
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<CompleteProfileData>({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(schema) as any,
+    defaultValues: {
+      nombre: '',
+      apellido: '',
+      dni: '',
+      telefono: '',
+      password: '',
+      confirmPassword: '',
+    },
   });
 
   const onSubmit = async (data: CompleteProfileData) => {
     try {
-      // Here you would typically make an API call to update the user profile
       console.log('Updating profile:', data);
 
-      // Simulate API call
+      // Simula API
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       Alert.alert(

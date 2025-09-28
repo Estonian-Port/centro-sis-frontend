@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Role } from '../../types';
 
 interface RoleSelectionModalProps {
@@ -8,44 +8,41 @@ interface RoleSelectionModalProps {
   onSelectRole: (role: Role) => void;
 }
 
-export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
-  visible,
-  roles,
-  onSelectRole,
-}) => {
-  const roleLabels = {
-    ALUMNO: 'Alumno',
-    PROFESOR: 'Profesor',
-    ADMINISTRADOR: 'Administrador',
-  };
+export const RoleSelectionModal: React.FC<RoleSelectionModalProps> =
+  ({ visible, roles, onSelectRole }) => {
+    const roleLabels: Record<Role['nombre'], string> = {
+      ALUMNO: 'Alumno',
+      PROFESOR: 'Profesor',
+      ADMINISTRADOR: 'Administrador',
+    };
 
-  return (
-    <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.overlay}>
-        <View style={styles.modal}>
-          <Text style={styles.title}>Seleccionar Vista</Text>
-          <Text style={styles.subtitle}>
-            ¿Desde qué perspectiva deseas acceder?
-          </Text>
+    return (
+      <Modal visible={visible} transparent animationType="slide">
+        <View style={styles.overlay}>
+          <View style={styles.modal}>
+            <Text style={styles.title}>Seleccionar Vista</Text>
+            <Text style={styles.subtitle}>
+              ¿Desde qué perspectiva deseas acceder?
+            </Text>
 
-          <View style={styles.options}>
-            {roles.map((role) => (
-              <TouchableOpacity
-                key={role.id}
-                style={styles.option}
-                onPress={() => onSelectRole(role)}
-              >
-                <Text style={styles.optionText}>
-                  Ver vista como {roleLabels[role.nombre]}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <View style={styles.options}>
+              {roles.map((role) => (
+                <TouchableOpacity
+                  key={role.id}
+                  style={styles.option}
+                  onPress={() => onSelectRole(role)}
+                >
+                  <Text style={styles.optionText}>
+                    Ver vista como {roleLabels[role.nombre]}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         </View>
-      </View>
-    </Modal>
-  );
-};
+      </Modal>
+    );
+  };
 
 const styles = StyleSheet.create({
   overlay: {

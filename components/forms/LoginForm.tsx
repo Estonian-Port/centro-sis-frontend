@@ -30,7 +30,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(schema) as any,
     defaultValues: {
       email: '',
       password: '',

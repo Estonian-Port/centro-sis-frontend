@@ -1,48 +1,21 @@
+import { useAuth } from '@/services/auth.service';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-  TouchableOpacity,
   Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
-import { Button } from '../../components/ui/Button';
-
-// Mock rápido
-// Mock rápido
-const useAuth = () => {
-  return {
-    user: {
-      id: 1,
-      nombre: 'Juan',
-      apellido: 'Pérez',
-      email: 'juan@test.com',
-      dni: '12345678',
-      telefono: '1234567890',
-      estado: 'ALTA',
-      roles: [
-        { id: 1, nombre: 'ALUMNO' },
-        { id: 2, nombre: 'PROFESOR' },
-      ],
-      firstLogin: false,
-      beneficios: ['Pago total', 'Familiar'],
-    },
-    selectedRole: 'ALUMNO', // Cambiá entre 'ALUMNO', 'PROFESOR', 'ADMINISTRADOR'
-    hasMultipleRoles: () => true,
-    setSelectedRole: (role: string) => console.log('Role set to', role),
-    logout: () => console.log('Logout ejecutado'), // <- Esto hace que tu botón funcione
-  };
-};
-
-
 
 export default function ProfileScreen() {
-  const { user, logout, hasMultipleRoles } = useAuth();
+  const { user2, logout } = useAuth();
 
   const handleLogout = () => {
     Alert.alert(
@@ -73,20 +46,20 @@ export default function ProfileScreen() {
       items: [
         {
           label: 'Nombre completo',
-          value: `${user?.nombre} ${user?.apellido}`,
+          value: `${user2?.nombre} ${user2?.apellido}`,
         },
-        { label: 'Email', value: user?.email },
-        { label: 'DNI', value: user?.dni },
-        { label: 'Teléfono', value: user?.telefono },
+        { label: 'Email', value: user2?.email },
+        { label: 'DNI', value: user2?.dni },
+        { label: 'Teléfono', value: user2?.telefono },
       ],
     },
     {
       title: 'Información de Cuenta',
       items: [
-        { label: 'Estado', value: user?.estado, isTag: true },
+        { label: 'Estado', value: user2?.estado, isTag: true },
         {
           label: 'Roles',
-          value: user?.roles.map((r: { nombre: any }) => r.nombre).join(', '),
+          value: user2?.roles.map((r: { nombre: any }) => r.nombre).join(', '),
           isTag: true,
           multiple: true,
         },
@@ -119,10 +92,10 @@ export default function ProfileScreen() {
       subtitle: 'Exportar datos personales',
       onPress: () => {
         const userData = {
-          nombre: user?.nombre,
-          apellido: user?.apellido,
-          dni: user?.dni,
-          email: user?.email,
+          nombre: user2?.nombre,
+          apellido: user2?.apellido,
+          dni: user2?.dni,
+          email: user2?.email,
         };
 
         Alert.alert(
@@ -141,13 +114,13 @@ export default function ProfileScreen() {
           <Ionicons name="person" size={32} color="#ffffff" />
         </View>
         <Text style={styles.userName}>
-          {user?.nombre} {user?.apellido}
+          {user2?.nombre} {user2?.apellido}
         </Text>
-        <Text style={styles.userEmail}>{user?.email}</Text>
+        <Text style={styles.userEmail}>{user2?.email}</Text>
 
-        {user?.beneficios && user.beneficios.length > 0 && (
+        {user2?.beneficios && user2.beneficios.length > 0 && (
           <View style={styles.beneficiosContainer}>
-            {user.beneficios.map(
+            {user2.beneficios.map(
               (beneficio: string, index: React.Key | null | undefined) => (
                 <Tag key={index} label={beneficio} variant="info" />
               )
@@ -167,7 +140,7 @@ export default function ProfileScreen() {
                 {item.isTag ? (
                   item.multiple ? (
                     <View style={styles.tagsContainer}>
-                      {user?.roles.map(
+                      {user2?.roles.map(
                         (role: {
                           id: React.Key | null | undefined;
                           nombre: string;

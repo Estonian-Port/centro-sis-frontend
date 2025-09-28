@@ -1,39 +1,20 @@
+import { useAuth } from '@/services/auth.service';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
   SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
-import { Button } from '../../components/ui/Button';
-
-// Mock rápido
-const useAuth = () => {
-  return {
-    user: {
-      id: 1,
-      nombre: 'Juan',
-      apellido: 'Pérez',
-      roles: [
-        { id: 1, nombre: 'ALUMNO' },
-        { id: 2, nombre: 'PROFESOR' },
-      ],
-      firstLogin: false,
-    },
-    selectedRole: 'ALUMNO', // Cambiá entre 'ALUMNO', 'PROFESOR', 'ADMINISTRADOR'
-    hasMultipleRoles: () => true,
-    setSelectedRole: (role: string) => console.log('Role set to', role),
-  };
-};
-
 
 export default function HomeScreen() {
-  const { user, selectedRole } = useAuth();
+  const { selectedRole } = useAuth();
 
   const renderAlumnoView = () => (
     <ScrollView style={styles.container}>

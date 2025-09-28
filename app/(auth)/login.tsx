@@ -1,21 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, Platform, SafeAreaView } from 'react-native';
+import { useAuth } from '@/services/auth.service';
 import { router } from 'expo-router';
+import React from 'react';
+import { Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { LoginForm } from '../../components/forms/LoginForm';
 import { Card } from '../../components/ui/Card';
 
-// ---------------- MOCK useAuth ----------------
-const useAuth = () => {
-  const user = {
-    firstLogin: false,
-    roles: ['ALUMNO'],
-  };
-
-  const hasMultipleRoles = () => user.roles.length > 1;
-
-  return { user, hasMultipleRoles };
-};
-// ------------------------------------------------
 
 export default function LoginScreen() {
   const { user, hasMultipleRoles } = useAuth();

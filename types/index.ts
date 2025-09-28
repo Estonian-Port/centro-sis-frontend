@@ -18,6 +18,7 @@ export interface Role {
   nombre: 'ALUMNO' | 'PROFESOR' | 'ADMINISTRADOR';
 }
 
+
 export interface Course {
   id: number;
   nombre: string;

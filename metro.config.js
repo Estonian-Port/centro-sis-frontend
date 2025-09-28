@@ -1,25 +1,23 @@
 const { getDefaultConfig } = require('expo/metro-config');
-const { withNativeWind } = require('nativewind/metro');
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname, {
-  isEager: true, // acelera builds locales
+  isCSSEnabled: true, // mejor que isEager para Expo 54
 });
 
-// Transformador para SVG
+// Configuración mejorada para SVG + otros assets
 config.transformer = {
   ...config.transformer,
   babelTransformerPath: require.resolve('react-native-svg-transformer'),
+  // Asegurar que otros assets también funcionen
+  assetPlugins: ['expo-asset/tools/hashAssetFiles'],
 };
 
-// Resolver SVG
+// Resolver SVG sin afectar otros assets
 config.resolver = {
   ...config.resolver,
   assetExts: config.resolver.assetExts.filter((ext) => ext !== 'svg'),
   sourceExts: [...config.resolver.sourceExts, 'svg'],
 };
 
-// No incluir opciones obsoletas
-// watcher.unstable_lazySha1, watcher.unstable_workerThreads, watcher.unstable_autoSaveCache, server.forwardClientLogs
-
-module.exports = withNativeWind(config, { input: './app/globals.css' });
+module.exports = config;

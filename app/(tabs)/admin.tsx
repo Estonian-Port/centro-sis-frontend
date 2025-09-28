@@ -10,8 +10,8 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { User, Course, PaginatedResponse } from '../../types';
-import { mockApi } from '../../services/api';
+import { User, Course, PaginatedResponse } from '@/types';
+import { mockApi } from '@/services/api';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { Button } from '@/components/ui/Button';
