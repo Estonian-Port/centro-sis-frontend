@@ -1,17 +1,36 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
   SafeAreaView,
-  TouchableOpacity 
+  TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
 import { Button } from '../../components/ui/Button';
+
+// Mock rápido
+const useAuth = () => {
+  return {
+    user: {
+      id: 1,
+      nombre: 'Juan',
+      apellido: 'Pérez',
+      roles: [
+        { id: 1, nombre: 'ALUMNO' },
+        { id: 2, nombre: 'PROFESOR' },
+      ],
+      firstLogin: false,
+    },
+    selectedRole: 'ALUMNO', // Cambiá entre 'ALUMNO', 'PROFESOR', 'ADMINISTRADOR'
+    hasMultipleRoles: () => true,
+    setSelectedRole: (role: string) => console.log('Role set to', role),
+  };
+};
+
 
 export default function HomeScreen() {
   const { user, selectedRole } = useAuth();
@@ -20,13 +39,13 @@ export default function HomeScreen() {
     <ScrollView style={styles.container}>
       <SafeAreaView>
         <Text style={styles.title}>Mis Cursos</Text>
-        
+
         <Card style={styles.courseCard}>
           <View style={styles.courseHeader}>
             <Text style={styles.courseName}>Matemáticas Básicas</Text>
             <Tag label="ACTIVO" variant="success" />
           </View>
-          
+
           <View style={styles.courseDetails}>
             <View style={styles.detailRow}>
               <Ionicons name="calendar-outline" size={16} color="#6b7280" />
@@ -81,10 +100,10 @@ export default function HomeScreen() {
     <ScrollView style={styles.container}>
       <SafeAreaView>
         <Text style={styles.title}>Dashboard - Profesor</Text>
-        
+
         <Card>
           <Text style={styles.cardTitle}>Mis Cursos</Text>
-          
+
           <TouchableOpacity style={styles.courseItem}>
             <View>
               <Text style={styles.courseName}>Matemáticas Básicas</Text>
@@ -123,23 +142,23 @@ export default function HomeScreen() {
     <ScrollView style={styles.container}>
       <SafeAreaView>
         <Text style={styles.title}>Dashboard - Administrador</Text>
-        
+
         <View style={styles.statsGrid}>
           <Card style={styles.statCard}>
             <Text style={styles.statNumber}>156</Text>
             <Text style={styles.statLabel}>Alumnos Activos</Text>
           </Card>
-          
+
           <Card style={styles.statCard}>
             <Text style={styles.statNumber}>12</Text>
             <Text style={styles.statLabel}>Cursos Activos</Text>
           </Card>
-          
+
           <Card style={styles.statCard}>
             <Text style={styles.statNumber}>8</Text>
             <Text style={styles.statLabel}>Profesores</Text>
           </Card>
-          
+
           <Card style={styles.statCard}>
             <Text style={styles.statNumber}>$2.1M</Text>
             <Text style={styles.statLabel}>Ingresos Mes</Text>
@@ -148,7 +167,7 @@ export default function HomeScreen() {
 
         <Card>
           <Text style={styles.cardTitle}>Acciones Rápidas</Text>
-          
+
           <TouchableOpacity style={styles.actionItem}>
             <Ionicons name="person-add-outline" size={20} color="#3b82f6" />
             <Text style={styles.actionText}>Crear Usuario</Text>

@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { useAuthStore } from '../stores/authStore';
 import type { User, Role, Course } from '../types';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_BASE_URL || 'http://localhost:8080/api';
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_BASE_URL || 'http://localhost:8080/api';
 const MOCK_MODE = process.env.EXPO_PUBLIC_MOCK_MODE === 'true';
 
 // ---------------- Axios instance ----------------
@@ -43,9 +43,8 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      const { logout } = useAuthStore.getState();
       await tokenStorage.removeToken();
-      logout();
+      // Aquí podrías agregar lógica para redirigir al login si usas React Navigation}
     }
     return Promise.reject(error);
   }
@@ -55,7 +54,10 @@ api.interceptors.response.use(
 export const mockApi: {
   users: User[];
   courses: Course[];
-  login: (email: string, password: string) => Promise<{ token: string; user: User }>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ token: string; user: User }>;
   getUsers: (params?: any) => Promise<any>;
   getCourses: (params?: any) => Promise<any>;
 } = {
@@ -69,10 +71,12 @@ export const mockApi: {
       tipoPago: 'MENSUAL',
       estado: 'ALTA',
       profesor: {
-        id: 2, nombre: 'María', apellido: 'García',
+        id: 2,
+        nombre: 'María',
+        apellido: 'García',
         email: '',
         roles: [],
-        estado: 'ALTA'
+        estado: 'ALTA',
       },
     },
     {
@@ -84,10 +88,12 @@ export const mockApi: {
       tipoPago: 'MENSUAL',
       estado: 'ALTA',
       profesor: {
-        id: 2, nombre: 'María', apellido: 'García',
+        id: 2,
+        nombre: 'María',
+        apellido: 'García',
         email: '',
         roles: [],
-        estado: 'ALTA'
+        estado: 'ALTA',
       },
     },
   ],
@@ -136,32 +142,49 @@ export const mockApi: {
   ],
 
   login: async (email: string, password: string) => {
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simula delay
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Simula delay
 
-    const user = mockApi.users.find(u => u.email === email);
-    if (!user || password !== '123456') throw new Error('Credenciales inválidas');
+    const user = mockApi.users.find((u) => u.email === email);
+    if (!user || password !== '123456')
+      throw new Error('Credenciales inválidas');
 
     return { token: 'mock-jwt-token-' + Date.now(), user };
   },
 
   getUsers: async (params: any = {}) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     let filteredUsers = [...mockApi.users];
-    if (params.role) filteredUsers = filteredUsers.filter(u => u.roles.some(r => r.nombre === params.role));
+    if (params.role)
+      filteredUsers = filteredUsers.filter((u) =>
+        u.roles.some((r) => r.nombre === params.role)
+      );
     if (params.q)
-      filteredUsers = filteredUsers.filter(u =>
-        u.nombre?.toLowerCase().includes(params.q.toLowerCase()) ||
-        u.apellido?.toLowerCase().includes(params.q.toLowerCase()) ||
-        u.dni?.includes(params.q)
+      filteredUsers = filteredUsers.filter(
+        (u) =>
+          u.nombre?.toLowerCase().includes(params.q.toLowerCase()) ||
+          u.apellido?.toLowerCase().includes(params.q.toLowerCase()) ||
+          u.dni?.includes(params.q)
       );
 
-    return { content: filteredUsers, totalElements: filteredUsers.length, totalPages: 1, page: 0, size: 10 };
+    return {
+      content: filteredUsers,
+      totalElements: filteredUsers.length,
+      totalPages: 1,
+      page: 0,
+      size: 10,
+    };
   },
 
   getCourses: async (params: any = {}) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return { content: mockApi.courses, totalElements: mockApi.courses.length, totalPages: 1, page: 0, size: 10 };
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    return {
+      content: mockApi.courses,
+      totalElements: mockApi.courses.length,
+      totalPages: 1,
+      page: 0,
+      size: 10,
+    };
   },
 };
 

@@ -8,17 +8,15 @@ interface CardProps {
   titleStyle?: TextStyle;
 }
 
-export const Card: React.FC<CardProps> = ({ 
-  children, 
-  style, 
-  title, 
-  titleStyle 
+export const Card: React.FC<CardProps> = ({
+  children,
+  style,
+  title,
+  titleStyle,
 }) => {
   return (
     <View style={[styles.card, style]}>
-      {title && (
-        <Text style={[styles.title, titleStyle]}>{title}</Text>
-      )}
+      {title && <Text style={[styles.title, titleStyle]}>{title}</Text>}
       {children}
     </View>
   );

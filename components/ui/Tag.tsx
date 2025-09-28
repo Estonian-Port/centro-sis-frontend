@@ -7,10 +7,10 @@ interface TagProps {
   style?: ViewStyle;
 }
 
-export const Tag: React.FC<TagProps> = ({ 
-  label, 
-  variant = 'default', 
-  style 
+export const Tag: React.FC<TagProps> = ({
+  label,
+  variant = 'default',
+  style,
 }) => {
   return (
     <View style={[styles.tag, styles[variant], style]}>

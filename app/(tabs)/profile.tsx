@@ -1,18 +1,45 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
   SafeAreaView,
   TouchableOpacity,
-  Alert
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
 import { Button } from '../../components/ui/Button';
+
+// Mock rápido
+// Mock rápido
+const useAuth = () => {
+  return {
+    user: {
+      id: 1,
+      nombre: 'Juan',
+      apellido: 'Pérez',
+      email: 'juan@test.com',
+      dni: '12345678',
+      telefono: '1234567890',
+      estado: 'ALTA',
+      roles: [
+        { id: 1, nombre: 'ALUMNO' },
+        { id: 2, nombre: 'PROFESOR' },
+      ],
+      firstLogin: false,
+      beneficios: ['Pago total', 'Familiar'],
+    },
+    selectedRole: 'ALUMNO', // Cambiá entre 'ALUMNO', 'PROFESOR', 'ADMINISTRADOR'
+    hasMultipleRoles: () => true,
+    setSelectedRole: (role: string) => console.log('Role set to', role),
+    logout: () => console.log('Logout ejecutado'), // <- Esto hace que tu botón funcione
+  };
+};
+
+
 
 export default function ProfileScreen() {
   const { user, logout, hasMultipleRoles } = useAuth();
@@ -44,7 +71,10 @@ export default function ProfileScreen() {
     {
       title: 'Información Personal',
       items: [
-        { label: 'Nombre completo', value: `${user?.nombre} ${user?.apellido}` },
+        {
+          label: 'Nombre completo',
+          value: `${user?.nombre} ${user?.apellido}`,
+        },
         { label: 'Email', value: user?.email },
         { label: 'DNI', value: user?.dni },
         { label: 'Teléfono', value: user?.telefono },
@@ -54,11 +84,11 @@ export default function ProfileScreen() {
       title: 'Información de Cuenta',
       items: [
         { label: 'Estado', value: user?.estado, isTag: true },
-        { 
-          label: 'Roles', 
-          value: user?.roles.map(r => r.nombre).join(', '),
+        {
+          label: 'Roles',
+          value: user?.roles.map((r: { nombre: any }) => r.nombre).join(', '),
           isTag: true,
-          multiple: true 
+          multiple: true,
         },
       ],
     },
@@ -94,7 +124,7 @@ export default function ProfileScreen() {
           dni: user?.dni,
           email: user?.email,
         };
-        
+
         Alert.alert(
           'Descarga de Información',
           `Datos exportados:\n${JSON.stringify(userData, null, 2)}`,
@@ -114,12 +144,14 @@ export default function ProfileScreen() {
           {user?.nombre} {user?.apellido}
         </Text>
         <Text style={styles.userEmail}>{user?.email}</Text>
-        
+
         {user?.beneficios && user.beneficios.length > 0 && (
           <View style={styles.beneficiosContainer}>
-            {user.beneficios.map((beneficio, index) => (
-              <Tag key={index} label={beneficio} variant="info" />
-            ))}
+            {user.beneficios.map(
+              (beneficio: string, index: React.Key | null | undefined) => (
+                <Tag key={index} label={beneficio} variant="info" />
+              )
+            )}
           </View>
         )}
       </View>
@@ -128,30 +160,37 @@ export default function ProfileScreen() {
         {profileSections.map((section, sectionIndex) => (
           <Card key={sectionIndex} style={styles.section}>
             <Text style={styles.sectionTitle}>{section.title}</Text>
-            
+
             {section.items.map((item, itemIndex) => (
               <View key={itemIndex} style={styles.infoRow}>
                 <Text style={styles.infoLabel}>{item.label}:</Text>
                 {item.isTag ? (
                   item.multiple ? (
                     <View style={styles.tagsContainer}>
-                      {user?.roles.map((role) => (
-                        <Tag 
-                          key={role.id} 
-                          label={role.nombre} 
-                          variant="info"
-                          style={styles.roleTag}
-                        />
-                      ))}
+                      {user?.roles.map(
+                        (role: {
+                          id: React.Key | null | undefined;
+                          nombre: string;
+                        }) => (
+                          <Tag
+                            key={role.id}
+                            label={role.nombre}
+                            variant="info"
+                            style={styles.roleTag}
+                          />
+                        )
+                      )}
                     </View>
                   ) : (
-                    <Tag 
-                      label={item.value || ''} 
-                      variant={item.value === 'ALTA' ? 'success' : 'error'} 
+                    <Tag
+                      label={item.value || ''}
+                      variant={item.value === 'ALTA' ? 'success' : 'error'}
                     />
                   )
                 ) : (
-                  <Text style={styles.infoValue}>{item.value || 'No disponible'}</Text>
+                  <Text style={styles.infoValue}>
+                    {item.value || 'No disponible'}
+                  </Text>
                 )}
               </View>
             ))}
@@ -160,28 +199,24 @@ export default function ProfileScreen() {
 
         <Card style={styles.actionsSection}>
           <Text style={styles.sectionTitle}>Acciones</Text>
-          
+
           {actionItems.map((action, index) => (
-            <TouchableOpacity 
-              key={index} 
+            <TouchableOpacity
+              key={index}
               style={styles.actionItem}
               onPress={action.onPress}
             >
-              <Ionicons 
-                name={action.icon as any} 
-                size={24} 
-                color="#3b82f6" 
+              <Ionicons
+                name={action.icon as any}
+                size={24}
+                color="#3b82f6"
                 style={styles.actionIcon}
               />
               <View style={styles.actionContent}>
                 <Text style={styles.actionTitle}>{action.title}</Text>
                 <Text style={styles.actionSubtitle}>{action.subtitle}</Text>
               </View>
-              <Ionicons 
-                name="chevron-forward" 
-                size={20} 
-                color="#9ca3af" 
-              />
+              <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
           ))}
         </Card>

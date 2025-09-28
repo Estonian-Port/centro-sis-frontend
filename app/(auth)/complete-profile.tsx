@@ -45,10 +45,10 @@ export default function CompleteProfileScreen() {
     try {
       // Here you would typically make an API call to update the user profile
       console.log('Updating profile:', data);
-      
+
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       Alert.alert(
         'Perfil Completado',
         'Tu perfil ha sido actualizado correctamente.',
@@ -70,8 +70,8 @@ export default function CompleteProfileScreen() {
         <Card style={styles.card}>
           <Text style={styles.title}>Completar Perfil</Text>
           <Text style={styles.subtitle}>
-            Para continuar, necesitamos que completes tu información personal
-            y cambies tu contraseña.
+            Para continuar, necesitamos que completes tu información personal y
+            cambies tu contraseña.
           </Text>
 
           <View style={styles.form}>

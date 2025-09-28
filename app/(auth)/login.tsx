@@ -3,7 +3,19 @@ import { View, Text, StyleSheet, Platform, SafeAreaView } from 'react-native';
 import { router } from 'expo-router';
 import { LoginForm } from '../../components/forms/LoginForm';
 import { Card } from '../../components/ui/Card';
-import { useAuth } from '../../hooks/useAuth';
+
+// ---------------- MOCK useAuth ----------------
+const useAuth = () => {
+  const user = {
+    firstLogin: false,
+    roles: ['ALUMNO'],
+  };
+
+  const hasMultipleRoles = () => user.roles.length > 1;
+
+  return { user, hasMultipleRoles };
+};
+// ------------------------------------------------
 
 export default function LoginScreen() {
   const { user, hasMultipleRoles } = useAuth();
@@ -31,14 +43,14 @@ export default function LoginScreen() {
           <LoginForm onSuccess={handleLoginSuccess} />
         </Card>
 
-  {process.env.EXPO_PUBLIC_MOCK_MODE === 'true' && (
+        {process.env.EXPO_PUBLIC_MOCK_MODE === 'true' && (
           <Card style={styles.demoCard}>
             <Text style={styles.demoTitle}>Modo Demo</Text>
             <Text style={styles.demoText}>
-              Credenciales de prueba:{'\n'}
-              • Alumno: alumno@test.com / 123456{'\n'}
-              • Profesor: profesor@test.com / 123456{'\n'}
-              • Admin: admin@test.com / 123456
+              Credenciales de prueba:
+              {'\n'}• Alumno: alumno@test.com / 123456
+              {'\n'}• Profesor: profesor@test.com / 123456
+              {'\n'}• Admin: admin@test.com / 123456
             </Text>
           </Card>
         )}

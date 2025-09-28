@@ -1,17 +1,11 @@
 import React from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Role } from '../../types';
 
 interface RoleSelectionModalProps {
   visible: boolean;
   roles: Role[];
-  onSelectRole: (role: string) => void;
+  onSelectRole: (role: Role) => void;
 }
 
 export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
@@ -39,7 +33,7 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
               <TouchableOpacity
                 key={role.id}
                 style={styles.option}
-                onPress={() => onSelectRole(role.nombre)}
+                onPress={() => onSelectRole(role)}
               >
                 <Text style={styles.optionText}>
                   Ver vista como {roleLabels[role.nombre]}

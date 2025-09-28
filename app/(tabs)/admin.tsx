@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
   SafeAreaView,
   TouchableOpacity,
   TextInput,
-  Alert
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Card } from '../../components/ui/Card';
-import { Tag } from '../../components/ui/Tag';
-import { Button } from '../../components/ui/Button';
 import { User, Course, PaginatedResponse } from '../../types';
 import { mockApi } from '../../services/api';
+import { Card } from '@/components/ui/Card';
+import { Tag } from '@/components/ui/Tag';
+import { Button } from '@/components/ui/Button';
 
 export default function AdminScreen() {
   const [activeTab, setActiveTab] = useState<'users' | 'courses'>('users');
@@ -34,16 +34,16 @@ export default function AdminScreen() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const response = await mockApi.getUsers({ 
-        q: searchQuery 
+      const response = await mockApi.getUsers({
+        q: searchQuery,
       });
       // Map roles.nombre to the allowed string literals
       const mappedContent = response.content.map((user: any) => ({
         ...user,
         roles: user.roles.map((role: any) => ({
           ...role,
-          nombre: role.nombre as "ALUMNO" | "PROFESOR" | "ADMINISTRADOR"
-        }))
+          nombre: role.nombre as 'ALUMNO' | 'PROFESOR' | 'ADMINISTRADOR',
+        })),
       }));
       setUsers(mappedContent);
     } catch (error) {
@@ -55,8 +55,8 @@ export default function AdminScreen() {
   const loadCourses = async () => {
     setLoading(true);
     try {
-      const response = await mockApi.getCourses({ 
-        q: searchQuery 
+      const response = await mockApi.getCourses({
+        q: searchQuery,
       });
       // Map each course's profesor to a full User object (add missing fields with defaults)
       const mappedCourses = response.content.map((course: any) => ({
@@ -87,18 +87,18 @@ export default function AdminScreen() {
           <Text style={styles.userDetail}>{user.email}</Text>
           <Text style={styles.userDetail}>DNI: {user.dni}</Text>
         </View>
-        <Tag 
-          label={user.estado} 
-          variant={user.estado === 'ALTA' ? 'success' : 'error'} 
+        <Tag
+          label={user.estado}
+          variant={user.estado === 'ALTA' ? 'success' : 'error'}
         />
       </View>
-      
+
       <View style={styles.rolesContainer}>
         {user.roles.map((role) => (
-          <Tag 
-            key={role.id} 
-            label={role.nombre} 
-            variant="info" 
+          <Tag
+            key={role.id}
+            label={role.nombre}
+            variant="info"
             style={styles.roleTag}
           />
         ))}
@@ -136,9 +136,9 @@ export default function AdminScreen() {
             Arancel: ${course.arancel.toLocaleString()}
           </Text>
         </View>
-        <Tag 
-          label={course.estado} 
-          variant={course.estado === 'ALTA' ? 'success' : 'error'} 
+        <Tag
+          label={course.estado}
+          variant={course.estado === 'ALTA' ? 'success' : 'error'}
         />
       </View>
 
@@ -163,28 +163,32 @@ export default function AdminScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Administración</Text>
-        
+
         <View style={styles.tabContainer}>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'users' && styles.activeTab]}
             onPress={() => setActiveTab('users')}
           >
-            <Text style={[
-              styles.tabText, 
-              activeTab === 'users' && styles.activeTabText
-            ]}>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'users' && styles.activeTabText,
+              ]}
+            >
               Usuarios
             </Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.tab, activeTab === 'courses' && styles.activeTab]}
             onPress={() => setActiveTab('courses')}
           >
-            <Text style={[
-              styles.tabText, 
-              activeTab === 'courses' && styles.activeTabText
-            ]}>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'courses' && styles.activeTabText,
+              ]}
+            >
               Cursos
             </Text>
           </TouchableOpacity>
@@ -213,14 +217,16 @@ export default function AdminScreen() {
       <ScrollView style={styles.content}>
         {activeTab === 'users' && users.map(renderUserItem)}
         {activeTab === 'courses' && courses.map(renderCourseItem)}
-        
-        {((activeTab === 'users' && users.length === 0) || 
+
+        {((activeTab === 'users' && users.length === 0) ||
           (activeTab === 'courses' && courses.length === 0)) && (
           <View style={styles.emptyState}>
-            <Ionicons 
-              name={activeTab === 'users' ? 'people-outline' : 'library-outline'} 
-              size={48} 
-              color="#9ca3af" 
+            <Ionicons
+              name={
+                activeTab === 'users' ? 'people-outline' : 'library-outline'
+              }
+              size={48}
+              color="#9ca3af"
             />
             <Text style={styles.emptyText}>
               No se encontraron {activeTab === 'users' ? 'usuarios' : 'cursos'}

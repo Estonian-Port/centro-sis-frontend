@@ -1,8 +1,21 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../hooks/useAuth';
+
+//MOCK
+const useAuth = () => {
+  return {
+    user: { nombre: 'Juan', apellido: 'Pérez' },
+    selectedRole: 'ADMINISTRADOR',
+    logout: () => alert('Sesión cerrada'),
+  };
+};
 
 export const DrawerContent = (props: any) => {
   const { user, selectedRole, logout } = useAuth();
@@ -31,8 +44,8 @@ export const DrawerContent = (props: any) => {
     },
   ];
 
-  const filteredItems = menuItems.filter(item => 
-    !item.roles || item.roles.includes(selectedRole || '')
+  const filteredItems = menuItems.filter(
+    (item) => !item.roles || item.roles.includes(selectedRole || '')
   );
 
   return (
@@ -44,9 +57,7 @@ export const DrawerContent = (props: any) => {
         <Text style={styles.userName}>
           {user?.nombre} {user?.apellido}
         </Text>
-        <Text style={styles.userRole}>
-          {selectedRole}
-        </Text>
+        <Text style={styles.userRole}>{selectedRole}</Text>
       </View>
 
       <View style={styles.menu}>

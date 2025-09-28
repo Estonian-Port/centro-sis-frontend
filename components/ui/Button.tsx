@@ -1,11 +1,11 @@
 import React from 'react';
-import { 
-  TouchableOpacity, 
-  Text, 
-  StyleSheet, 
-  ViewStyle, 
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  ViewStyle,
   TextStyle,
-  ActivityIndicator 
+  ActivityIndicator,
 } from 'react-native';
 
 interface ButtonProps {
@@ -44,9 +44,9 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={isDisabled}
     >
       {loading ? (
-        <ActivityIndicator 
-          color={variant === 'outline' ? '#3b82f6' : '#ffffff'} 
-          size="small" 
+        <ActivityIndicator
+          color={variant === 'outline' ? '#3b82f6' : '#ffffff'}
+          size="small"
         />
       ) : (
         <Text style={[styles.text, styles[`${variant}Text`], textStyle]}>

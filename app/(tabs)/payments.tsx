@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
   SafeAreaView,
   TouchableOpacity,
-  Alert
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../../components/ui/Card';
@@ -67,7 +67,11 @@ export default function PaymentsScreen() {
   const paymentMethods = [
     { id: 'efectivo', label: 'Efectivo', icon: 'cash-outline' },
     { id: 'transferencia', label: 'Transferencia', icon: 'card-outline' },
-    { id: 'tarjeta_credito', label: 'Tarjeta de Crédito', icon: 'card-outline' },
+    {
+      id: 'tarjeta_credito',
+      label: 'Tarjeta de Crédito',
+      icon: 'card-outline',
+    },
     { id: 'tarjeta_debito', label: 'Tarjeta de Débito', icon: 'card-outline' },
   ];
 
@@ -79,7 +83,7 @@ export default function PaymentsScreen() {
           key={course.id}
           style={[
             styles.selectionItem,
-            selectedCourse?.id === course.id && styles.selectedItem
+            selectedCourse?.id === course.id && styles.selectedItem,
           ]}
           onPress={() => setSelectedCourse(course)}
         >
@@ -92,14 +96,18 @@ export default function PaymentsScreen() {
               Arancel: ${course.arancel.toLocaleString()}
             </Text>
           </View>
-          <Ionicons 
-            name={selectedCourse?.id === course.id ? 'checkmark-circle' : 'ellipse-outline'} 
-            size={24} 
-            color={selectedCourse?.id === course.id ? '#3b82f6' : '#9ca3af'} 
+          <Ionicons
+            name={
+              selectedCourse?.id === course.id
+                ? 'checkmark-circle'
+                : 'ellipse-outline'
+            }
+            size={24}
+            color={selectedCourse?.id === course.id ? '#3b82f6' : '#9ca3af'}
           />
         </TouchableOpacity>
       ))}
-      
+
       <Button
         title="Continuar"
         onPress={() => setStep(2)}
@@ -117,7 +125,7 @@ export default function PaymentsScreen() {
           key={student.id}
           style={[
             styles.selectionItem,
-            selectedStudent?.id === student.id && styles.selectedItem
+            selectedStudent?.id === student.id && styles.selectedItem,
           ]}
           onPress={() => setSelectedStudent(student)}
         >
@@ -127,7 +135,7 @@ export default function PaymentsScreen() {
             </Text>
             <Text style={styles.studentDetail}>DNI: {student.dni}</Text>
             <Text style={styles.studentDetail}>{student.email}</Text>
-            
+
             {student.beneficios && student.beneficios.length > 0 && (
               <View style={styles.beneficiosContainer}>
                 {student.beneficios.map((beneficio, index) => (
@@ -136,14 +144,18 @@ export default function PaymentsScreen() {
               </View>
             )}
           </View>
-          <Ionicons 
-            name={selectedStudent?.id === student.id ? 'checkmark-circle' : 'ellipse-outline'} 
-            size={24} 
-            color={selectedStudent?.id === student.id ? '#3b82f6' : '#9ca3af'} 
+          <Ionicons
+            name={
+              selectedStudent?.id === student.id
+                ? 'checkmark-circle'
+                : 'ellipse-outline'
+            }
+            size={24}
+            color={selectedStudent?.id === student.id ? '#3b82f6' : '#9ca3af'}
           />
         </TouchableOpacity>
       ))}
-      
+
       <View style={styles.stepButtons}>
         <Button
           title="Anterior"
@@ -170,44 +182,48 @@ export default function PaymentsScreen() {
     return (
       <View>
         <Text style={styles.stepTitle}>Paso 3: Confirmar Pago</Text>
-        
+
         <Card style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>Resumen del Pago</Text>
-          
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Curso:</Text>
             <Text style={styles.summaryValue}>{selectedCourse?.nombre}</Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Alumno:</Text>
             <Text style={styles.summaryValue}>
               {selectedStudent?.nombre} {selectedStudent?.apellido}
             </Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Monto base:</Text>
-            <Text style={styles.summaryValue}>${baseAmount.toLocaleString()}</Text>
+            <Text style={styles.summaryValue}>
+              ${baseAmount.toLocaleString()}
+            </Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Descuento (10%):</Text>
             <Text style={[styles.summaryValue, styles.discountText]}>
               -${(baseAmount * discount).toLocaleString()}
             </Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Recargo por atraso (5%):</Text>
             <Text style={[styles.summaryValue, styles.surchargeText]}>
               +${(baseAmount * surcharge).toLocaleString()}
             </Text>
           </View>
-          
+
           <View style={[styles.summaryRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>Total a pagar:</Text>
-            <Text style={styles.totalValue}>${finalAmount.toLocaleString()}</Text>
+            <Text style={styles.totalValue}>
+              ${finalAmount.toLocaleString()}
+            </Text>
           </View>
         </Card>
 
@@ -258,20 +274,22 @@ export default function PaymentsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Procesar Pago</Text>
-        
+
         <View style={styles.progressIndicator}>
           {[1, 2, 3].map((stepNumber) => (
             <View
               key={stepNumber}
               style={[
                 styles.progressStep,
-                stepNumber <= step && styles.activeProgressStep
+                stepNumber <= step && styles.activeProgressStep,
               ]}
             >
-              <Text style={[
-                styles.progressStepText,
-                stepNumber <= step && styles.activeProgressStepText
-              ]}>
+              <Text
+                style={[
+                  styles.progressStepText,
+                  stepNumber <= step && styles.activeProgressStepText,
+                ]}
+              >
                 {stepNumber}
               </Text>
             </View>

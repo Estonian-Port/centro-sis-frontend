@@ -1,11 +1,11 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  StyleSheet, 
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
   TextInputProps,
-  ViewStyle 
+  ViewStyle,
 } from 'react-native';
 
 interface InputProps extends TextInputProps {
@@ -25,11 +25,7 @@ export const Input: React.FC<InputProps> = ({
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={styles.label}>{label}</Text>}
       <TextInput
-        style={[
-          styles.input,
-          error && styles.inputError,
-          style,
-        ]}
+        style={[styles.input, error && styles.inputError, style]}
         {...props}
       />
       {error && <Text style={styles.error}>{error}</Text>}

@@ -5,13 +5,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
-import { useAuth } from '../../hooks/useAuth';
 
 const schema = yup.object().shape({
-  email: yup
-    .string()
-    .email('Email inválido')
-    .required('El email es requerido'),
+  email: yup.string().email('Email inválido').required('El email es requerido'),
   password: yup
     .string()
     .min(6, 'La contraseña debe tener al menos 6 caracteres')
@@ -28,8 +24,7 @@ interface LoginFormProps {
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
-  const { login } = useAuth();
-  
+
   const {
     control,
     handleSubmit,
@@ -44,7 +39,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await login(data.email, data.password);
+      // Llama a la función de login
       onSuccess();
     } catch (error) {
       Alert.alert('Error', 'Credenciales inválidas');
