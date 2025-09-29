@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Role } from '../../types';
+import { Role } from '../../model/model';
 
 interface RoleSelectionModalProps {
   visible: boolean;
@@ -10,10 +10,10 @@ interface RoleSelectionModalProps {
 
 export const RoleSelectionModal: React.FC<RoleSelectionModalProps> =
   ({ visible, roles, onSelectRole }) => {
-    const roleLabels: Record<Role['nombre'], string> = {
-      ALUMNO: 'Alumno',
-      PROFESOR: 'Profesor',
-      ADMINISTRADOR: 'Administrador',
+    const roleLabels: Record<Role, string> = {
+      [Role.ALUMNO]: 'Alumno',
+      [Role.PROFESOR]: 'Profesor',
+      [Role.ADMINISTRADOR]: 'Administrador',
     };
 
     return (
@@ -28,12 +28,12 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> =
             <View style={styles.options}>
               {roles.map((role) => (
                 <TouchableOpacity
-                  key={role.id}
+                  key={role}
                   style={styles.option}
                   onPress={() => onSelectRole(role)}
                 >
                   <Text style={styles.optionText}>
-                    Ver vista como {roleLabels[role.nombre]}
+                    Ver vista como {roleLabels[role]}
                   </Text>
                 </TouchableOpacity>
               ))}

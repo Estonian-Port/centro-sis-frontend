@@ -1,10 +1,10 @@
-import React from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+import React from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Alert, StyleSheet, View } from 'react-native';
 import * as yup from 'yup';
-import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
 const schema = yup.object().shape({
   email: yup.string().email('Email inválido').required('El email es requerido'),

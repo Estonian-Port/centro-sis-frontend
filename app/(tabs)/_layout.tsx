@@ -1,11 +1,11 @@
-import { useAuth } from '@/services/auth.service';
-import { Role } from '@/types';
+import { Role } from '@/model/model';
+import { useAuth } from '@/services/useAuth.service';
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Tabs } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import { RoleSelectionModal } from '../../components/modals/RoleSelectionModal';
+import { RoleSelectionModal } from '../../components/modals/roleSelectionModal';
 import { DrawerContent } from '../../components/navigation/DrawerContent';
 import AdminScreen from './admin';
 import HomeScreen from './index';
@@ -15,15 +15,51 @@ import ProfileScreen from './profile';
 const Drawer = createDrawerNavigator();
 
 function DrawerNavigator() {
+  const { selectedRole } = useAuth();
+
   return (
     <Drawer.Navigator 
       drawerContent={(props) => <DrawerContent {...props} />}
-      screenOptions={{ headerShown: true }}
+      screenOptions={{ 
+        headerShown: true,
+        drawerStyle: {
+          width: 280,
+        },
+      }}
     >
-      <Drawer.Screen name="Dashboard" component={HomeScreen} />
-      <Drawer.Screen name="Admin" component={AdminScreen} />
-      <Drawer.Screen name="Payments" component={PaymentsScreen} />
-      <Drawer.Screen name="Profile" component={ProfileScreen} />
+      <Drawer.Screen 
+        name="Dashboard" 
+        component={HomeScreen}
+        options={{
+          title: 'Dashboard',
+        }}
+      />
+      
+      {selectedRole === Role.ADMINISTRADOR && (
+        <Drawer.Screen 
+          name="Admin" 
+          component={AdminScreen}
+          options={{
+            title: 'Administración',
+          }}
+        />
+      )}
+      
+      <Drawer.Screen 
+        name="Payments" 
+        component={PaymentsScreen}
+        options={{
+          title: 'Pagos',
+        }}
+      />
+      
+      <Drawer.Screen 
+        name="Profile" 
+        component={ProfileScreen}
+        options={{
+          title: 'Perfil',
+        }}
+      />
     </Drawer.Navigator>
   );
 }
@@ -43,10 +79,21 @@ export default function TabLayout() {
     setShowRoleModal(false);
   };
 
+  // Para web, usa el Drawer
   if (Platform.OS === 'web') {
-    return <DrawerNavigator />;
+    return (
+      <>
+        <DrawerNavigator />
+        <RoleSelectionModal
+          visible={showRoleModal}
+          roles={user?.roles || []}
+          onSelectRole={handleRoleSelection}
+        />
+      </>
+    );
   }
 
+  // Para móvil, usa Tabs
   return (
     <>
       <Tabs
@@ -64,7 +111,8 @@ export default function TabLayout() {
             ),
           }}
         />
-        {selectedRole === 'ADMINISTRADOR' && (
+        
+        {selectedRole === Role.ADMINISTRADOR && (
           <Tabs.Screen
             name="admin"
             options={{
@@ -75,6 +123,7 @@ export default function TabLayout() {
             }}
           />
         )}
+        
         <Tabs.Screen
           name="payments"
           options={{
@@ -84,6 +133,7 @@ export default function TabLayout() {
             ),
           }}
         />
+        
         <Tabs.Screen
           name="profile"
           options={{

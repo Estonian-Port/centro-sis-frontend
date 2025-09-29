@@ -1,10 +1,9 @@
-import { useAuth, useFrameworkReady } from '@/services/auth.service';
+import { useAuth } from '@/services/useAuth.service';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 
 export default function RootLayout() {
-  useFrameworkReady();
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
@@ -18,7 +17,7 @@ export default function RootLayout() {
   }, [isAuthenticated, isLoading]);
 
   if (isLoading) {
-    return null; // loading screen
+    return null;
   }
 
   return (

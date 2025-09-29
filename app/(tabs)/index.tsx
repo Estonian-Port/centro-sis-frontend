@@ -1,4 +1,5 @@
-import { useAuth } from '@/services/auth.service';
+import { Role } from '@/model/model';
+import { useAuth } from '@/services/useAuth.service';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
@@ -173,11 +174,11 @@ export default function HomeScreen() {
 
   const renderContent = () => {
     switch (selectedRole) {
-      case 'ALUMNO':
+      case Role.ALUMNO:
         return renderAlumnoView();
-      case 'PROFESOR':
+      case Role.PROFESOR:
         return renderProfesorView();
-      case 'ADMINISTRADOR':
+      case Role.ADMINISTRADOR:
         return renderAdminView();
       default:
         return (

@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { User, Course, PaginatedResponse } from '@/types';
-import { mockApi } from '@/services/api';
+import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
-import { Button } from '@/components/ui/Button';
+import { Course, User } from '@/model/model';
+import { apiMock } from '@/services/apiMock.service';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
+import {
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function AdminScreen() {
   const [activeTab, setActiveTab] = useState<'users' | 'courses'>('users');
@@ -34,7 +34,7 @@ export default function AdminScreen() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const response = await mockApi.getUsers({
+      const response = await apiMock.getUsers({
         q: searchQuery,
       });
       // Map roles.nombre to the allowed string literals
@@ -55,7 +55,7 @@ export default function AdminScreen() {
   const loadCourses = async () => {
     setLoading(true);
     try {
-      const response = await mockApi.getCourses({
+      const response = await apiMock.getCourses({
         q: searchQuery,
       });
       // Map each course's profesor to a full User object (add missing fields with defaults)
@@ -96,8 +96,7 @@ export default function AdminScreen() {
       <View style={styles.rolesContainer}>
         {user.roles.map((role) => (
           <Tag
-            key={role.id}
-            label={role.nombre}
+            label={role}
             variant="info"
             style={styles.roleTag}
           />

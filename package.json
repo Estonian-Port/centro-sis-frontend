@@ -8,7 +8,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "deploy": "gh-pages --nojekyll -d dist --cname centrosis.tenri.com.ar",
+    "predeploy": "npx expo export --platform web && cp dist/index.html dist/404.html"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -32,6 +34,7 @@
     "expo-symbols": "~1.0.7",
     "expo-system-ui": "~6.0.7",
     "expo-web-browser": "~15.0.7",
+    "gh-pages": "^6.3.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.63.0",

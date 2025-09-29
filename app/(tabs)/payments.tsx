@@ -1,18 +1,18 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-  TouchableOpacity,
   Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
-import { Button } from '../../components/ui/Button';
-import { Course, User } from '../../types';
+import { Course, EstadoUsuario, Role, TipoPago, User } from '../../model/model';
 
 export default function PaymentsScreen() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -27,8 +27,8 @@ export default function PaymentsScreen() {
       dias: ['Lunes', 'Miércoles', 'Viernes'],
       horario: '14:00-16:00',
       arancel: 15000,
-      tipoPago: 'MENSUAL',
-      estado: 'ALTA',
+      tipoPago: TipoPago.MENSUAL,
+      estado: EstadoUsuario.ALTA,
     },
     {
       id: 2,
@@ -36,8 +36,8 @@ export default function PaymentsScreen() {
       dias: ['Martes', 'Jueves'],
       horario: '16:00-18:00',
       arancel: 20000,
-      tipoPago: 'MENSUAL',
-      estado: 'ALTA',
+      tipoPago: TipoPago.MENSUAL,
+      estado: EstadoUsuario.ALTA,
     },
   ];
 
@@ -48,8 +48,8 @@ export default function PaymentsScreen() {
       nombre: 'Juan',
       apellido: 'Pérez',
       dni: '12345678',
-      roles: [{ id: 1, nombre: 'ALUMNO' }],
-      estado: 'ALTA',
+      roles: [Role.ALUMNO],
+      estado: EstadoUsuario.ALTA,
       beneficios: ['Pago total', 'Familiar'],
     },
     {
@@ -58,8 +58,8 @@ export default function PaymentsScreen() {
       nombre: 'María',
       apellido: 'González',
       dni: '87654321',
-      roles: [{ id: 1, nombre: 'ALUMNO' }],
-      estado: 'ALTA',
+      roles: [Role.ALUMNO],
+      estado: EstadoUsuario.ALTA,
       beneficios: ['Descuento hermanos'],
     },
   ];

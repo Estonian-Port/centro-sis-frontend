@@ -1,24 +1,26 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
-import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
+import { Role } from '@/model/model';
+import { useAuth } from '@/services/useAuth.service';
 import { Ionicons } from '@expo/vector-icons';
+import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
+import React, { useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { ModalLogout } from '../modals/ModalLogout';
 
-//MOCK
-const useAuth = () => {
-  return {
-    user: { nombre: 'Juan', apellido: 'Pérez' },
-    selectedRole: 'ADMINISTRADOR',
-    logout: () => alert('Sesión cerrada'),
-  };
-};
+// Configuración de labels de roles
+const ROLE_LABELS = {
+  [Role.ALUMNO]: 'Alumno',
+  [Role.PROFESOR]: 'Profesor',
+  [Role.ADMINISTRADOR]: 'Administrador',
+} as const;
 
 export const DrawerContent = (props: any) => {
   const { user, selectedRole, logout } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const menuItems = [
     {
@@ -30,7 +32,7 @@ export const DrawerContent = (props: any) => {
       label: 'Administración',
       icon: 'settings-outline',
       onPress: () => props.navigation.navigate('Admin'),
-      roles: ['ADMINISTRADOR'],
+      roles: [Role.ADMINISTRADOR],
     },
     {
       label: 'Pagos',
@@ -44,42 +46,67 @@ export const DrawerContent = (props: any) => {
     },
   ];
 
-  const filteredItems = menuItems.filter(
-    (item) => !item.roles || item.roles.includes(selectedRole || '')
-  );
+  const filteredItems = menuItems.filter((item) => {
+    if (!item.roles) return true;
+    return selectedRole && item.roles.includes(selectedRole);
+  });
+
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    logout();
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
+  };
 
   return (
-    <DrawerContentScrollView {...props}>
-      <View style={styles.header}>
-        <View style={styles.profileIcon}>
-          <Ionicons name="person" size={24} color="#ffffff" />
+    <>
+      <DrawerContentScrollView {...props}>
+        <View style={styles.header}>
+          <View style={styles.profileIcon}>
+            <Ionicons name="person" size={24} color="#ffffff" />
+          </View>
+          <Text style={styles.userName}>
+            {user?.nombre} {user?.apellido}
+          </Text>
+          <Text style={styles.userRole}>
+            {selectedRole ? ROLE_LABELS[selectedRole] : 'Sin rol'}
+          </Text>
         </View>
-        <Text style={styles.userName}>
-          {user?.nombre} {user?.apellido}
-        </Text>
-        <Text style={styles.userRole}>{selectedRole}</Text>
-      </View>
 
-      <View style={styles.menu}>
-        {filteredItems.map((item, index) => (
-          <DrawerItem
-            key={index}
-            label={item.label}
-            icon={({ color, size }) => (
-              <Ionicons name={item.icon as any} color={color} size={size} />
-            )}
-            onPress={item.onPress}
-          />
-        ))}
-      </View>
+        <View style={styles.menu}>
+          {filteredItems.map((item, index) => (
+            <DrawerItem
+              key={index}
+              label={item.label}
+              icon={({ color, size }) => (
+                <Ionicons name={item.icon as any} color={color} size={size} />
+              )}
+              onPress={item.onPress}
+            />
+          ))}
+        </View>
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-          <Ionicons name="log-out-outline" size={20} color="#ef4444" />
-          <Text style={styles.logoutText}>Cerrar Sesión</Text>
-        </TouchableOpacity>
-      </View>
-    </DrawerContentScrollView>
+        <View style={styles.footer}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={20} color="#ef4444" />
+            <Text style={styles.logoutText}>Cerrar Sesión</Text>
+          </TouchableOpacity>
+        </View>
+      </DrawerContentScrollView>
+
+      <ModalLogout
+        visible={showLogoutModal}
+        message="¿Estás seguro de que quieres cerrar sesión?"
+        onClose={cancelLogout}
+        onCerrarSesion={confirmLogout}
+      />
+    </>
   );
 };
 

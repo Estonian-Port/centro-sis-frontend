@@ -1,3 +1,32 @@
+export enum Role {
+  ALUMNO = 'ALUMNO',
+  PROFESOR = 'PROFESOR',
+  ADMINISTRADOR = 'ADMINISTRADOR'
+}
+
+export enum EstadoUsuario {
+  ALTA = 'ALTA',
+  BAJA = 'BAJA',
+  SUSPENDIDO = 'SUSPENDIDO'
+}
+
+export enum TipoPago {
+  MENSUAL = 'MENSUAL',
+  TRIMESTRAL = 'TRIMESTRAL',
+  ANUAL = 'ANUAL'
+}
+
+export enum TipoAcceso {
+  ENTRADA = 'ENTRADA',
+  SALIDA = 'SALIDA'
+}
+
+export enum PaymentType {
+  EFECTIVO = 'EFECTIVO',
+  TRANSFERENCIA = 'TRANSFERENCIA',
+  TARJETA = 'TARJETA'
+}
+
 export interface User {
   id: number;
   email: string;
@@ -6,18 +35,12 @@ export interface User {
   dni?: string;
   telefono?: string;
   roles: Role[];
-  estado: 'ALTA' | 'BAJA';
+  estado: EstadoUsuario;
   cursosActivos?: Course[];
   cursosDadosDeBaja?: Course[];
   beneficios?: string[];
   firstLogin?: boolean;
 }
-
-export interface Role {
-  id: number;
-  nombre: 'ALUMNO' | 'PROFESOR' | 'ADMINISTRADOR';
-}
-
 
 export interface Course {
   id: number;
@@ -26,8 +49,8 @@ export interface Course {
   horario: string;
   profesor?: User;
   arancel: number;
-  tipoPago: 'MENSUAL' | 'POR_MESES' | 'PAGO_UNICO';
-  estado: 'ALTA' | 'BAJA';
+  tipoPago: TipoPago;
+  estado: EstadoUsuario;
   alumnos?: User[];
   alumnosActivos?: User[];
   alumnosDadosDeBaja?: User[];
@@ -38,7 +61,7 @@ export interface Payment {
   curso: Course;
   alumno: User;
   monto: number;
-  tipo: 'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA_CREDITO' | 'TARJETA_DEBITO';
+  tipo: PaymentType;
   fecha: string;
   recargo?: number;
   beneficios?: string[];
@@ -48,7 +71,7 @@ export interface Access {
   id: number;
   usuario: User;
   fecha: string;
-  tipo: 'ENTRADA' | 'SALIDA';
+  tipo: TipoAcceso;
 }
 
 export interface AuthResponse {

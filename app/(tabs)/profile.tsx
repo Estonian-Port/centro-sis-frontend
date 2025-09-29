@@ -1,6 +1,8 @@
-import { useAuth } from '@/services/auth.service';
+import { ModalLogout } from '@/components/modals/ModalLogout';
+import { EstadoUsuario, Role } from '@/model/model';
+import { useAuth } from '@/services/useAuth.service';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   SafeAreaView,
@@ -14,23 +16,47 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
 
+// Configuración de roles
+const ROLE_CONFIG = {
+  [Role.ALUMNO]: {
+    variant: 'info' as const,
+    label: 'Alumno',
+  },
+  [Role.PROFESOR]: {
+    variant: 'success' as const,
+    label: 'Profesor',
+  },
+  [Role.ADMINISTRADOR]: {
+    variant: 'warning' as const,
+    label: 'Administrador',
+  },
+} as const;
+
+// Helper para obtener configuración del rol
+const getRoleConfig = (roleName: Role) => {
+  return ROLE_CONFIG[roleName] || { variant: 'info' as const, label: roleName };
+};
+
 export default function ProfileScreen() {
-  const { user2, logout } = useAuth();
+  const { user, logout } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogout = () => {
-    Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás seguro de que quieres cerrar sesión?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Salir', style: 'destructive', onPress: logout },
-      ]
-    );
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    logout();
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   type ProfileSectionItem = {
     label: string;
-    value: string | undefined;
+    value?: string;
     isTag?: boolean;
     multiple?: boolean;
   };
@@ -46,20 +72,20 @@ export default function ProfileScreen() {
       items: [
         {
           label: 'Nombre completo',
-          value: `${user2?.nombre} ${user2?.apellido}`,
+          value: `${user?.nombre} ${user?.apellido}`,
         },
-        { label: 'Email', value: user2?.email },
-        { label: 'DNI', value: user2?.dni },
-        { label: 'Teléfono', value: user2?.telefono },
+        { label: 'Email', value: user?.email },
+        { label: 'DNI', value: user?.dni },
+        { label: 'Teléfono', value: user?.telefono },
       ],
     },
     {
       title: 'Información de Cuenta',
       items: [
-        { label: 'Estado', value: user2?.estado, isTag: true },
+        { label: 'Estado', value: user?.estado, isTag: true },
         {
           label: 'Roles',
-          value: user2?.roles.map((r: { nombre: any }) => r.nombre).join(', '),
+          value: undefined,
           isTag: true,
           multiple: true,
         },
@@ -72,19 +98,25 @@ export default function ProfileScreen() {
       icon: 'person-outline',
       title: 'Editar Perfil',
       subtitle: 'Actualizar información personal',
-      onPress: () => {},
+      onPress: () => {
+        Alert.alert('Editar Perfil', 'Funcionalidad en desarrollo');
+      },
     },
     {
       icon: 'key-outline',
       title: 'Cambiar Contraseña',
       subtitle: 'Actualizar credenciales de acceso',
-      onPress: () => {},
+      onPress: () => {
+        Alert.alert('Cambiar Contraseña', 'Funcionalidad en desarrollo');
+      },
     },
     {
       icon: 'time-outline',
       title: 'Historial de Accesos',
       subtitle: 'Ver últimos inicios de sesión',
-      onPress: () => {},
+      onPress: () => {
+        Alert.alert('Historial de Accesos', 'Funcionalidad en desarrollo');
+      },
     },
     {
       icon: 'download-outline',
@@ -92,10 +124,11 @@ export default function ProfileScreen() {
       subtitle: 'Exportar datos personales',
       onPress: () => {
         const userData = {
-          nombre: user2?.nombre,
-          apellido: user2?.apellido,
-          dni: user2?.dni,
-          email: user2?.email,
+          nombre: user?.nombre,
+          apellido: user?.apellido,
+          dni: user?.dni,
+          email: user?.email,
+          roles: user?.roles.map(r => r),
         };
 
         Alert.alert(
@@ -114,17 +147,15 @@ export default function ProfileScreen() {
           <Ionicons name="person" size={32} color="#ffffff" />
         </View>
         <Text style={styles.userName}>
-          {user2?.nombre} {user2?.apellido}
+          {user?.nombre} {user?.apellido}
         </Text>
-        <Text style={styles.userEmail}>{user2?.email}</Text>
+        <Text style={styles.userEmail}>{user?.email}</Text>
 
-        {user2?.beneficios && user2.beneficios.length > 0 && (
+        {user?.beneficios && user.beneficios.length > 0 && (
           <View style={styles.beneficiosContainer}>
-            {user2.beneficios.map(
-              (beneficio: string, index: React.Key | null | undefined) => (
-                <Tag key={index} label={beneficio} variant="info" />
-              )
-            )}
+            {user.beneficios.map((beneficio, index) => (
+              <Tag key={index} label={beneficio} variant="info" />
+            ))}
           </View>
         )}
       </View>
@@ -137,30 +168,32 @@ export default function ProfileScreen() {
             {section.items.map((item, itemIndex) => (
               <View key={itemIndex} style={styles.infoRow}>
                 <Text style={styles.infoLabel}>{item.label}:</Text>
+                
                 {item.isTag ? (
                   item.multiple ? (
+                    // Múltiples roles
                     <View style={styles.tagsContainer}>
-                      {user2?.roles.map(
-                        (role: {
-                          id: React.Key | null | undefined;
-                          nombre: string;
-                        }) => (
+                      {user?.roles.map((role) => {
+                        const config = getRoleConfig(role);
+                        return (
                           <Tag
-                            key={role.id}
-                            label={role.nombre}
-                            variant="info"
+                            key={role}
+                            label={config.label}
+                            variant={config.variant}
                             style={styles.roleTag}
                           />
-                        )
-                      )}
+                        );
+                      })}
                     </View>
                   ) : (
+                    // Tag único (Estado)
                     <Tag
                       label={item.value || ''}
-                      variant={item.value === 'ALTA' ? 'success' : 'error'}
+                      variant={item.value === EstadoUsuario.ALTA ? 'success' : 'error'}
                     />
                   )
                 ) : (
+                  // Texto normal
                   <Text style={styles.infoValue}>
                     {item.value || 'No disponible'}
                   </Text>
@@ -203,6 +236,14 @@ export default function ProfileScreen() {
           />
         </Card>
       </ScrollView>
+
+      {/* Modal de Logout */}
+      <ModalLogout
+        visible={showLogoutModal}
+        message="¿Estás seguro de que quieres cerrar sesión?"
+        onClose={cancelLogout}
+        onCerrarSesion={confirmLogout}
+      />
     </SafeAreaView>
   );
 }
@@ -243,6 +284,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     marginTop: 8,
+    gap: 8,
   },
   content: {
     flex: 1,
@@ -262,11 +304,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    paddingVertical: 8,
   },
   infoLabel: {
     fontSize: 14,
     color: '#6b7280',
     flex: 1,
+    fontWeight: '500',
   },
   infoValue: {
     fontSize: 14,
@@ -280,9 +324,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-end',
+    gap: 6,
   },
   roleTag: {
-    marginLeft: 4,
     marginBottom: 4,
   },
   actionsSection: {

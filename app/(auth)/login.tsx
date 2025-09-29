@@ -1,8 +1,8 @@
-import { useAuth } from '@/services/auth.service';
+import { useAuth } from '@/services/useAuth.service';
 import { router } from 'expo-router';
 import React from 'react';
 import { Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { LoginForm } from '../../components/forms/LoginForm';
+import { LoginForm } from '../../components/forms/loginForm';
 import { Card } from '../../components/ui/Card';
 
 
