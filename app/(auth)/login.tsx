@@ -1,5 +1,3 @@
-import { useAuth } from '@/context/authContext';
-import { router } from 'expo-router';
 import React from 'react';
 import { Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { LoginForm } from '../../components/forms/loginForm';
@@ -7,16 +5,9 @@ import { Card } from '../../components/ui/Card';
 
 
 export default function LoginScreen() {
-  const { user, hasMultipleRoles } = useAuth();
-
   const handleLoginSuccess = () => {
-    if (user?.firstLogin) {
-      router.replace('/(auth)/complete-profile');
-    } else if (hasMultipleRoles()) {
-      router.replace('/(tabs)/' as any);
-    } else {
-      router.replace('/(tabs)/' as any);
-    }
+    // No hacer nada, el layout maneja la navegación
+    console.log('Login exitoso');
   };
 
   return (
@@ -26,12 +17,10 @@ export default function LoginScreen() {
           <Text style={styles.title}>Centro-sis</Text>
           <Text style={styles.subtitle}>Sistema de Gestión Educativa</Text>
         </View>
-
         <Card style={styles.loginCard}>
           <Text style={styles.cardTitle}>Iniciar Sesión</Text>
           <LoginForm onSuccess={handleLoginSuccess} />
         </Card>
-
         {process.env.EXPO_PUBLIC_MOCK_MODE === 'true' && (
           <Card style={styles.demoCard}>
             <Text style={styles.demoTitle}>Modo Demo</Text>

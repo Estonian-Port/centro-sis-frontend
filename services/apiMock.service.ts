@@ -19,7 +19,7 @@ const mockUsers: User[] = [
     roles: [ Role.ALUMNO ],
     estado: EstadoUsuario.ALTA,
     beneficios: ['Pago total', 'Familiar'],
-    firstLogin: false,
+    firstLogin: true,
     cursosActivos: [],
     cursosDadosDeBaja: [],
   },

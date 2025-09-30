@@ -1,14 +1,14 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Alert } from 'react-native';
-import { router } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
+import { useAuth } from '@/context/authContext'; // AGREGAR
 import { yupResolver } from '@hookform/resolvers/yup';
+import { router } from 'expo-router';
+import React from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Alert, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import * as yup from 'yup';
-import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
 
-// 🔹 Schema de validación
 const schema = yup.object({
   nombre: yup.string().required('El nombre es requerido'),
   apellido: yup.string().required('El apellido es requerido'),
@@ -24,7 +24,6 @@ const schema = yup.object({
     .required('Confirma la nueva contraseña'),
 });
 
-// 🔹 Interface del formulario
 interface CompleteProfileData {
   nombre: string;
   apellido: string;
@@ -35,7 +34,8 @@ interface CompleteProfileData {
 }
 
 export default function CompleteProfileScreen() {
-  // 🔹 useForm correctamente tipado
+  const { user, setUser, hasMultipleRoles } = useAuth(); // AGREGAR
+  
   const {
     control,
     handleSubmit,
@@ -43,10 +43,10 @@ export default function CompleteProfileScreen() {
   } = useForm<CompleteProfileData>({
     resolver: yupResolver(schema) as any,
     defaultValues: {
-      nombre: '',
-      apellido: '',
-      dni: '',
-      telefono: '',
+      nombre: user?.nombre || '',
+      apellido: user?.apellido || '',
+      dni: user?.dni || '',
+      telefono: user?.telefono || '',
       password: '',
       confirmPassword: '',
     },
@@ -56,8 +56,21 @@ export default function CompleteProfileScreen() {
     try {
       console.log('Updating profile:', data);
 
-      // Simula API
+      // Simula API - aquí deberías hacer la llamada real
       await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Actualizar el usuario en el contexto
+      if (user) {
+        const updatedUser = {
+          ...user,
+          nombre: data.nombre,
+          apellido: data.apellido,
+          dni: data.dni,
+          telefono: data.telefono,
+          firstLogin: false, // IMPORTANTE: Marcar como completado
+        };
+        setUser(updatedUser);
+      }
 
       Alert.alert(
         'Perfil Completado',
@@ -65,7 +78,13 @@ export default function CompleteProfileScreen() {
         [
           {
             text: 'Continuar',
-            onPress: () => router.replace('/(tabs)/' as any),
+            onPress: () => {
+              if (hasMultipleRoles()) {
+                router.replace('/(tabs)/' as any);
+              } else {
+                router.replace('/(tabs)/' as any);
+              }
+            },
           },
         ]
       );
