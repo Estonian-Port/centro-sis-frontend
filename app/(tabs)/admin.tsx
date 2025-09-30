@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
-import { Course, User } from '@/model/model';
+import { Course, EstadoUsuario, Role, User } from '@/model/model';
 import { apiMock } from '@/services/apiMock.service';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
@@ -13,7 +13,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 export default function AdminScreen() {
@@ -31,51 +31,52 @@ export default function AdminScreen() {
     }
   }, [activeTab, searchQuery]);
 
-  const loadUsers = async () => {
-    setLoading(true);
-    try {
-      const response = await apiMock.getUsers({
-        q: searchQuery,
-      });
-      // Map roles.nombre to the allowed string literals
-      const mappedContent = response.content.map((user: any) => ({
-        ...user,
-        roles: user.roles.map((role: any) => ({
-          ...role,
-          nombre: role.nombre as 'ALUMNO' | 'PROFESOR' | 'ADMINISTRADOR',
-        })),
-      }));
-      setUsers(mappedContent);
-    } catch (error) {
-      Alert.alert('Error', 'Error al cargar usuarios');
-    }
-    setLoading(false);
-  };
+const loadUsers = async () => {
+  setLoading(true);
+  try {
+    const response = await apiMock.getUsers({
+      q: searchQuery,
+    });
 
-  const loadCourses = async () => {
-    setLoading(true);
-    try {
-      const response = await apiMock.getCourses({
-        q: searchQuery,
-      });
-      // Map each course's profesor to a full User object (add missing fields with defaults)
-      const mappedCourses = response.content.map((course: any) => ({
-        ...course,
-        profesor: course.profesor
-          ? {
-              ...course.profesor,
-              email: course.profesor.email ?? '',
-              roles: course.profesor.roles ?? [],
-              estado: course.profesor.estado ?? 'ALTA',
-            }
-          : undefined,
-      }));
-      setCourses(mappedCourses);
-    } catch (error) {
-      Alert.alert('Error', 'Error al cargar cursos');
-    }
-    setLoading(false);
-  };
+    // Mantenemos roles como Role[] (strings del enum)
+    const mappedContent: User[] = response.content.map((user: any) => ({
+      ...user,
+      roles: user.roles as Role[],
+    }));
+
+    setUsers(mappedContent);
+  } catch (error) {
+    Alert.alert('Error', 'Error al cargar usuarios');
+  }
+  setLoading(false);
+};
+
+const loadCourses = async () => {
+  setLoading(true);
+  try {
+    const response = await apiMock.getCourses({
+      q: searchQuery,
+    });
+
+    const mappedCourses = response.content.map((course: any) => ({
+      ...course,
+      profesor: course.profesor
+        ? {
+            ...course.profesor,
+            email: course.profesor.email ?? '',
+            roles: (course.profesor.roles as Role[]) ?? [],
+            estado: course.profesor.estado ?? EstadoUsuario.ALTA,
+          }
+        : undefined,
+    }));
+
+    setCourses(mappedCourses);
+  } catch (error) {
+    Alert.alert('Error', 'Error al cargar cursos');
+  }
+  setLoading(false);
+};
+
 
   const renderUserItem = (user: User) => (
     <Card key={user.id} style={styles.listItem}>
@@ -89,13 +90,14 @@ export default function AdminScreen() {
         </View>
         <Tag
           label={user.estado}
-          variant={user.estado === 'ALTA' ? 'success' : 'error'}
+          variant={user.estado === EstadoUsuario.ALTA ? 'success' : 'error'}
         />
       </View>
 
       <View style={styles.rolesContainer}>
         {user.roles.map((role) => (
           <Tag
+            key={role}
             label={role}
             variant="info"
             style={styles.roleTag}
@@ -111,8 +113,8 @@ export default function AdminScreen() {
           onPress={() => {}}
         />
         <Button
-          title={user.estado === 'ALTA' ? 'Dar de Baja' : 'Dar de Alta'}
-          variant={user.estado === 'ALTA' ? 'danger' : 'primary'}
+          title={user.estado === EstadoUsuario.ALTA ? 'Dar de Baja' : 'Dar de Alta'}
+          variant={user.estado === EstadoUsuario.ALTA ? 'danger' : 'primary'}
           size="small"
           onPress={() => {}}
         />
@@ -137,7 +139,7 @@ export default function AdminScreen() {
         </View>
         <Tag
           label={course.estado}
-          variant={course.estado === 'ALTA' ? 'success' : 'error'}
+          variant={course.estado === EstadoUsuario.ALTA ? 'success' : 'error'}
         />
       </View>
 
