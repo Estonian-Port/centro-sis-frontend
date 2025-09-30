@@ -1,6 +1,6 @@
 import { ModalLogout } from '@/components/modals/ModalLogout';
+import { useAuth } from '@/context/authContext';
 import { EstadoUsuario, Role } from '@/model/model';
-import { useAuth } from '@/services/useAuth.service';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {

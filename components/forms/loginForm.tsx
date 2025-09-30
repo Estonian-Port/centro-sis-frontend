@@ -1,3 +1,4 @@
+import { useAuth } from '@/context/authContext';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -25,6 +26,8 @@ interface LoginFormProps {
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 
+  const { login } = useAuth();
+  
   const {
     control,
     handleSubmit,
@@ -39,7 +42,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      // Llama a la función de login
+      await login(data.email, data.password);
       onSuccess();
     } catch (error) {
       Alert.alert('Error', 'Credenciales inválidas');

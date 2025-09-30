@@ -1,5 +1,5 @@
+import { useAuth } from '@/context/authContext';
 import { Role } from '@/model/model';
-import { useAuth } from '@/services/useAuth.service';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import React, { useState } from 'react';

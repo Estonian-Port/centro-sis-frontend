@@ -1,4 +1,4 @@
-import { useAuth } from '@/services/useAuth.service';
+import { useAuth } from '@/context/authContext';
 import { router } from 'expo-router';
 import React from 'react';
 import { Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
@@ -40,6 +40,8 @@ export default function LoginScreen() {
               {'\n'}• Alumno: alumno@test.com / 123456
               {'\n'}• Profesor: profesor@test.com / 123456
               {'\n'}• Admin: admin@test.com / 123456
+              {'\n'}• Profesor y Alumno: profesoralumno@test.com / 123456
+              {'\n'}• Todos: completo@test.com / 123456
             </Text>
           </Card>
         )}
