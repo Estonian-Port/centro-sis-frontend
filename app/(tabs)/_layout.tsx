@@ -5,12 +5,15 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Tabs } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import { RoleSelectionModal } from '../../components/modals/roleSelectionModal';
+import { RoleSelectionModal } from '../../components/modals/RoleSelectionModal';
 import { DrawerContent } from '../../components/navigation/DrawerContent';
+import AccessesScreen from './accesses';
 import AdminScreen from './admin';
 import HomeScreen from './index';
 import PaymentsScreen from './payments';
+import ProfessorEarningsScreen from './professor-earnings';
 import ProfileScreen from './profile';
+import StudentPaymentsScreen from './student-payments';
 
 const Drawer = createDrawerNavigator();
 
@@ -35,21 +38,30 @@ function DrawerNavigator() {
         }}
       />
       
-      {selectedRole === Role.ADMINISTRADOR && (
-        <Drawer.Screen 
-          name="Admin" 
-          component={AdminScreen}
-          options={{
-            title: 'Administración',
-          }}
-        />
+      {selectedRole === 'ADMINISTRADOR' && (
+        <>
+          <Drawer.Screen name="Admin" component={AdminScreen} />
+          <Drawer.Screen name="Payments" component={PaymentsScreen} />
+        </>
       )}
-      
+      {selectedRole === 'ALUMNO' && (
+        <Drawer.Screen 
+          name="StudentPayments" 
+          component={StudentPaymentsScreen} 
+          options={{ title: 'Mis Pagos' }} />
+      )}
+      {selectedRole === 'PROFESOR' && (
+        <Drawer.Screen 
+          name="ProfessorEarnings" 
+          component={ProfessorEarningsScreen} 
+          options={{ title: 'Mis Cobros' }} />
+      )}
+
       <Drawer.Screen 
-        name="Payments" 
-        component={PaymentsScreen}
+        name="Accesses" 
+        component={AccessesScreen}
         options={{
-          title: 'Pagos',
+          title: 'Accesos',
         }}
       />
       

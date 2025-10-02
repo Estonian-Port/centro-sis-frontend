@@ -1,6 +1,8 @@
+import { apiMock } from '@/services/apiMock.service';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   SafeAreaView,
   ScrollView,
@@ -12,57 +14,15 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
-import { Course, EstadoUsuario, Role, TipoPago, User } from '../../model/model';
+import { Course, EstadoUsuario, Role, User } from '../../model/model';
 
 export default function PaymentsScreen() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
-
-  // Mock data
-  const courses: Course[] = [
-    {
-      id: 1,
-      nombre: 'Matemáticas Básicas',
-      dias: ['Lunes', 'Miércoles', 'Viernes'],
-      horario: '14:00-16:00',
-      arancel: 15000,
-      tipoPago: TipoPago.MENSUAL,
-      estado: EstadoUsuario.ALTA,
-    },
-    {
-      id: 2,
-      nombre: 'Física Avanzada',
-      dias: ['Martes', 'Jueves'],
-      horario: '16:00-18:00',
-      arancel: 20000,
-      tipoPago: TipoPago.MENSUAL,
-      estado: EstadoUsuario.ALTA,
-    },
-  ];
-
-  const students: User[] = [
-    {
-      id: 1,
-      email: 'alumno1@test.com',
-      nombre: 'Juan',
-      apellido: 'Pérez',
-      dni: '12345678',
-      roles: [Role.ALUMNO],
-      estado: EstadoUsuario.ALTA,
-      beneficios: ['Pago total', 'Familiar'],
-    },
-    {
-      id: 2,
-      email: 'alumno2@test.com',
-      nombre: 'María',
-      apellido: 'González',
-      dni: '87654321',
-      roles: [Role.ALUMNO],
-      estado: EstadoUsuario.ALTA,
-      beneficios: ['Descuento hermanos'],
-    },
-  ];
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [students, setStudents] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const paymentMethods = [
     { id: 'efectivo', label: 'Efectivo', icon: 'cash-outline' },
@@ -75,38 +35,112 @@ export default function PaymentsScreen() {
     { id: 'tarjeta_debito', label: 'Tarjeta de Débito', icon: 'card-outline' },
   ];
 
+  // Cargar cursos al montar el componente
+  useEffect(() => {
+    loadCourses();
+  }, []);
+
+  // Cargar alumnos cuando se selecciona un curso
+  useEffect(() => {
+    if (selectedCourse) {
+      loadStudents();
+    }
+  }, [selectedCourse]);
+
+  const loadCourses = async () => {
+    setLoading(true);
+    try {
+      const response = await apiMock.getCourses({
+        estado: EstadoUsuario.ALTA, // Solo cursos activos
+      });
+      
+      const mappedCourses = response.content.map((course: any) => ({
+        ...course,
+        profesor: course.profesor
+          ? {
+              ...course.profesor,
+              email: course.profesor.email ?? '',
+              roles: (course.profesor.roles as Role[]) ?? [],
+              estado: course.profesor.estado ?? EstadoUsuario.ALTA,
+            }
+          : undefined,
+      }));
+
+      setCourses(mappedCourses);
+    } catch (error) {
+      Alert.alert('Error', 'Error al cargar cursos');
+      console.error(error);
+    }
+    setLoading(false);
+  };
+
+  const loadStudents = async () => {
+    setLoading(true);
+    try {
+      const response = await apiMock.getUsers({
+        role: Role.ALUMNO, // Solo alumnos
+        estado: EstadoUsuario.ALTA, // Solo usuarios activos
+      });
+
+      const mappedStudents: User[] = response.content.map((user: any) => ({
+        ...user,
+        roles: user.roles as Role[],
+      }));
+
+      setStudents(mappedStudents);
+    } catch (error) {
+      Alert.alert('Error', 'Error al cargar alumnos');
+      console.error(error);
+    }
+    setLoading(false);
+  };
+
   const renderStep1 = () => (
     <View>
       <Text style={styles.stepTitle}>Paso 1: Seleccionar Curso</Text>
-      {courses.map((course) => (
-        <TouchableOpacity
-          key={course.id}
-          style={[
-            styles.selectionItem,
-            selectedCourse?.id === course.id && styles.selectedItem,
-          ]}
-          onPress={() => setSelectedCourse(course)}
-        >
-          <View style={styles.courseInfo}>
-            <Text style={styles.courseName}>{course.nombre}</Text>
-            <Text style={styles.courseDetail}>
-              {course.dias.join(', ')} - {course.horario}
-            </Text>
-            <Text style={styles.courseDetail}>
-              Arancel: ${course.arancel.toLocaleString()}
-            </Text>
-          </View>
-          <Ionicons
-            name={
-              selectedCourse?.id === course.id
-                ? 'checkmark-circle'
-                : 'ellipse-outline'
-            }
-            size={24}
-            color={selectedCourse?.id === course.id ? '#3b82f6' : '#9ca3af'}
-          />
-        </TouchableOpacity>
-      ))}
+      
+      {loading ? (
+        <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 20 }} />
+      ) : courses.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No hay cursos disponibles</Text>
+        </View>
+      ) : (
+        courses.map((course) => (
+          <TouchableOpacity
+            key={course.id}
+            style={[
+              styles.selectionItem,
+              selectedCourse?.id === course.id && styles.selectedItem,
+            ]}
+            onPress={() => setSelectedCourse(course)}
+          >
+            <View style={styles.courseInfo}>
+              <Text style={styles.courseName}>{course.nombre}</Text>
+              <Text style={styles.courseDetail}>
+                {course.dias.join(', ')} - {course.horario}
+              </Text>
+              <Text style={styles.courseDetail}>
+                Arancel: ${course.arancel.toLocaleString()}
+              </Text>
+              {course.profesor && (
+                <Text style={styles.courseDetail}>
+                  Profesor: {course.profesor.nombre} {course.profesor.apellido}
+                </Text>
+              )}
+            </View>
+            <Ionicons
+              name={
+                selectedCourse?.id === course.id
+                  ? 'checkmark-circle'
+                  : 'ellipse-outline'
+              }
+              size={24}
+              color={selectedCourse?.id === course.id ? '#3b82f6' : '#9ca3af'}
+            />
+          </TouchableOpacity>
+        ))
+      )}
 
       <Button
         title="Continuar"
@@ -120,47 +154,59 @@ export default function PaymentsScreen() {
   const renderStep2 = () => (
     <View>
       <Text style={styles.stepTitle}>Paso 2: Seleccionar Alumno</Text>
-      {students.map((student) => (
-        <TouchableOpacity
-          key={student.id}
-          style={[
-            styles.selectionItem,
-            selectedStudent?.id === student.id && styles.selectedItem,
-          ]}
-          onPress={() => setSelectedStudent(student)}
-        >
-          <View style={styles.studentInfo}>
-            <Text style={styles.studentName}>
-              {student.nombre} {student.apellido}
-            </Text>
-            <Text style={styles.studentDetail}>DNI: {student.dni}</Text>
-            <Text style={styles.studentDetail}>{student.email}</Text>
+      
+      {loading ? (
+        <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 20 }} />
+      ) : students.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No hay alumnos disponibles</Text>
+        </View>
+      ) : (
+        students.map((student) => (
+          <TouchableOpacity
+            key={student.id}
+            style={[
+              styles.selectionItem,
+              selectedStudent?.id === student.id && styles.selectedItem,
+            ]}
+            onPress={() => setSelectedStudent(student)}
+          >
+            <View style={styles.studentInfo}>
+              <Text style={styles.studentName}>
+                {student.nombre} {student.apellido}
+              </Text>
+              <Text style={styles.studentDetail}>DNI: {student.dni}</Text>
+              <Text style={styles.studentDetail}>{student.email}</Text>
 
-            {student.beneficios && student.beneficios.length > 0 && (
-              <View style={styles.beneficiosContainer}>
-                {student.beneficios.map((beneficio, index) => (
-                  <Tag key={index} label={beneficio} variant="info" />
-                ))}
-              </View>
-            )}
-          </View>
-          <Ionicons
-            name={
-              selectedStudent?.id === student.id
-                ? 'checkmark-circle'
-                : 'ellipse-outline'
-            }
-            size={24}
-            color={selectedStudent?.id === student.id ? '#3b82f6' : '#9ca3af'}
-          />
-        </TouchableOpacity>
-      ))}
+              {student.beneficios && student.beneficios.length > 0 && (
+                <View style={styles.beneficiosContainer}>
+                  {student.beneficios.map((beneficio, index) => (
+                    <Tag key={index} label={beneficio} variant="info" style={{ marginRight: 4, marginTop: 4 }} />
+                  ))}
+                </View>
+              )}
+            </View>
+            <Ionicons
+              name={
+                selectedStudent?.id === student.id
+                  ? 'checkmark-circle'
+                  : 'ellipse-outline'
+              }
+              size={24}
+              color={selectedStudent?.id === student.id ? '#3b82f6' : '#9ca3af'}
+            />
+          </TouchableOpacity>
+        ))
+      )}
 
       <View style={styles.stepButtons}>
         <Button
           title="Anterior"
           variant="outline"
-          onPress={() => setStep(1)}
+          onPress={() => {
+            setStep(1);
+            setSelectedStudent(null);
+          }}
           style={styles.backButton}
         />
         <Button
@@ -258,6 +304,7 @@ export default function PaymentsScreen() {
                       setStep(1);
                       setSelectedCourse(null);
                       setSelectedStudent(null);
+                      loadCourses(); // Recargar cursos
                     },
                   },
                 ]
@@ -487,5 +534,13 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 16,
     color: '#374151',
+  },
+  emptyState: {
+    paddingVertical: 32,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#6b7280',
   },
 });

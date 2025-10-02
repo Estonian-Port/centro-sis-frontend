@@ -1,8 +1,12 @@
+import { CreateCourseModal } from '@/components/modals/CreateCourseModal';
+import { CreateUserModal } from '@/components/modals/CreateUserModal';
 import { useAuth } from '@/context/authContext';
 import { Role } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
 import {
+  Alert,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -16,18 +20,57 @@ import { Tag } from '../../components/ui/Tag';
 
 export default function HomeScreen() {
   const { selectedRole } = useAuth();
+  const navigation = useNavigation();
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+
+  const handleVerPagos = () => {
+    Alert.alert('Ver Pagos', 'Navegando a historial de pagos...');
+    // navigation.navigate('Pagos'); // Descomentar cuando tengas la pantalla
+  };
+
+  const handleVerAccesos = () => {
+    Alert.alert('Ver Accesos', 'Navegando a control de accesos...');
+    // navigation.navigate('Accesos'); // Descomentar cuando tengas la pantalla
+  };
+
+  const handleVerCursoDetalle = (cursoNombre: string, cantidadAlumnos: number) => {
+    Alert.alert(
+      'Detalle del Curso',
+      `${cursoNombre}\n${cantidadAlumnos} alumnos activos`
+    );
+    // navigation.navigate('CursoDetalle', { cursoId: id }); // Descomentar cuando tengas la pantalla
+  };
+
+  const handleCrearUsuario = () => {
+    console.log('Opening create user modal');
+    setShowCreateUserModal(true);
+  };
+
+  const handleCrearCurso = () => {
+    console.log('Opening create course modal');
+    setShowCreateCourseModal(true);
+  };
+
+  const handleGestionarUsuarios = () => {
+    // @ts-ignore - Navigation types
+    navigation.navigate('Admin');
+  };
+
+  const handleModalSuccess = () => {
+    Alert.alert('Éxito', 'Operación completada exitosamente');
+    // Aquí podrías recargar datos si fuera necesario
+  };
 
   const renderAlumnoView = () => (
     <ScrollView style={styles.container}>
       <SafeAreaView>
         <Text style={styles.title}>Mis Cursos</Text>
-
         <Card style={styles.courseCard}>
           <View style={styles.courseHeader}>
-            <Text style={styles.courseName}>Matemáticas Básicas</Text>
+            <Text style={styles.courseName}>Clase de idioma japones T</Text>
             <Tag label="ACTIVO" variant="success" />
           </View>
-
           <View style={styles.courseDetails}>
             <View style={styles.detailRow}>
               <Ionicons name="calendar-outline" size={16} color="#6b7280" />
@@ -42,7 +85,6 @@ export default function HomeScreen() {
               <Text style={styles.detailText}>$15,000 / mes</Text>
             </View>
           </View>
-
           <View style={styles.beneficios}>
             <Text style={styles.beneficiosTitle}>Beneficios:</Text>
             <View style={styles.tagContainer}>
@@ -50,26 +92,24 @@ export default function HomeScreen() {
               <Tag label="Familiar" variant="default" />
             </View>
           </View>
-
           <View style={styles.paymentStatus}>
             <Text style={styles.paymentText}>
               Estado de pago: <Text style={styles.paidText}>Al día</Text>
             </Text>
           </View>
-
           <View style={styles.actions}>
             <Button
               title="Ver Pagos"
               variant="outline"
               size="small"
-              onPress={() => {}}
+              onPress={handleVerPagos}
               style={styles.actionButton}
             />
             <Button
               title="Ver Accesos"
               variant="outline"
               size="small"
-              onPress={() => {}}
+              onPress={handleVerAccesos}
               style={styles.actionButton}
             />
           </View>
@@ -82,19 +122,22 @@ export default function HomeScreen() {
     <ScrollView style={styles.container}>
       <SafeAreaView>
         <Text style={styles.title}>Dashboard - Profesor</Text>
-
         <Card>
           <Text style={styles.cardTitle}>Mis Cursos</Text>
-
-          <TouchableOpacity style={styles.courseItem}>
+          <TouchableOpacity 
+            style={styles.courseItem}
+            onPress={() => handleVerCursoDetalle('Matemáticas Básicas', 12)}
+          >
             <View>
               <Text style={styles.courseName}>Matemáticas Básicas</Text>
               <Text style={styles.courseInfo}>12 alumnos activos</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#6b7280" />
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.courseItem}>
+          <TouchableOpacity 
+            style={styles.courseItem}
+            onPress={() => handleVerCursoDetalle('Física Avanzada', 8)}
+          >
             <View>
               <Text style={styles.courseName}>Física Avanzada</Text>
               <Text style={styles.courseInfo}>8 alumnos activos</Text>
@@ -102,7 +145,6 @@ export default function HomeScreen() {
             <Ionicons name="chevron-forward" size={20} color="#6b7280" />
           </TouchableOpacity>
         </Card>
-
         <Card>
           <Text style={styles.cardTitle}>Resumen del Mes</Text>
           <View style={styles.statsRow}>
@@ -124,51 +166,70 @@ export default function HomeScreen() {
     <ScrollView style={styles.container}>
       <SafeAreaView>
         <Text style={styles.title}>Dashboard - Administrador</Text>
-
         <View style={styles.statsGrid}>
           <Card style={styles.statCard}>
             <Text style={styles.statNumber}>156</Text>
             <Text style={styles.statLabel}>Alumnos Activos</Text>
           </Card>
-
           <Card style={styles.statCard}>
             <Text style={styles.statNumber}>12</Text>
             <Text style={styles.statLabel}>Cursos Activos</Text>
           </Card>
-
           <Card style={styles.statCard}>
             <Text style={styles.statNumber}>8</Text>
             <Text style={styles.statLabel}>Profesores</Text>
           </Card>
-
           <Card style={styles.statCard}>
             <Text style={styles.statNumber}>$2.1M</Text>
             <Text style={styles.statLabel}>Ingresos Mes</Text>
           </Card>
         </View>
-
         <Card>
           <Text style={styles.cardTitle}>Acciones Rápidas</Text>
-
-          <TouchableOpacity style={styles.actionItem}>
+          <TouchableOpacity 
+            style={styles.actionItem}
+            onPress={handleCrearUsuario}
+          >
             <Ionicons name="person-add-outline" size={20} color="#3b82f6" />
             <Text style={styles.actionText}>Crear Usuario</Text>
             <Ionicons name="chevron-forward" size={20} color="#6b7280" />
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionItem}>
+          <TouchableOpacity 
+            style={styles.actionItem}
+            onPress={handleCrearCurso}
+          >
             <Ionicons name="library-outline" size={20} color="#3b82f6" />
             <Text style={styles.actionText}>Crear Curso</Text>
             <Ionicons name="chevron-forward" size={20} color="#6b7280" />
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionItem}>
+          <TouchableOpacity 
+            style={styles.actionItem}
+            onPress={handleGestionarUsuarios}
+          >
             <Ionicons name="people-outline" size={20} color="#3b82f6" />
             <Text style={styles.actionText}>Gestionar Usuarios</Text>
             <Ionicons name="chevron-forward" size={20} color="#6b7280" />
           </TouchableOpacity>
         </Card>
       </SafeAreaView>
+
+      <CreateUserModal
+        visible={showCreateUserModal}
+        onClose={() => {
+          console.log('Closing create user modal');
+          setShowCreateUserModal(false);
+        }}
+        onSuccess={handleModalSuccess}
+      />
+
+      <CreateCourseModal
+        visible={showCreateCourseModal}
+        onClose={() => {
+          console.log('Closing create course modal');
+          setShowCreateCourseModal(false);
+        }}
+        onSuccess={handleModalSuccess}
+      />
     </ScrollView>
   );
 

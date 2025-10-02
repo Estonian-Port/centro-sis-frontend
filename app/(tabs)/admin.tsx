@@ -1,3 +1,6 @@
+import { CreateCourseModal } from '@/components/modals/CreateCourseModal';
+import { CreateUserModal } from '@/components/modals/CreateUserModal';
+import { PayProfessorModal } from '@/components/modals/PayProfessorModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
@@ -22,6 +25,78 @@ export default function AdminScreen() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+  const [showPayProfessorModal, setShowPayProfessorModal] = useState(false);
+  const [selectedProfessor, setSelectedProfessor] = useState<User | null>(null);
+
+  const handleCreateUser = () => {
+    setShowCreateUserModal(true);
+  };
+
+  const handleCreateCourse = () => {
+    setShowCreateCourseModal(true);
+  };
+
+  const handlePayProfessor = (professor: User) => {
+    setSelectedProfessor(professor);
+    setShowPayProfessorModal(true);
+  };
+
+  const handleViewUserDetails = (user: User) => {
+    Alert.alert(
+      'Ver Detalles de Usuario',
+      `Funcionalidad pendiente para: ${user.nombre} ${user.apellido}`
+    );
+  };
+
+  const handleToggleUserStatus = async (user: User) => {
+    const newStatus = user.estado === EstadoUsuario.ALTA ? EstadoUsuario.BAJA : EstadoUsuario.ALTA;
+    Alert.alert(
+      'Cambiar Estado',
+      `¿Estás seguro de ${newStatus === EstadoUsuario.ALTA ? 'dar de alta' : 'dar de baja'} a ${user.nombre} ${user.apellido}?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Confirmar',
+          onPress: async () => {
+            try {
+              // Aquí llamarías a tu API para cambiar el estado
+              // await apiMock.updateUserStatus(user.id, newStatus);
+              Alert.alert('Éxito', 'Estado actualizado correctamente');
+              loadUsers();
+            } catch (error) {
+              Alert.alert('Error', 'No se pudo actualizar el estado');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleViewCourseDetails = (course: Course) => {
+    Alert.alert(
+      'Ver Detalles de Curso',
+      `Funcionalidad pendiente para: ${course.nombre}`
+    );
+  };
+
+  const handleManageStudents = (course: Course) => {
+    Alert.alert(
+      'Gestionar Alumnos',
+      `Funcionalidad pendiente para: ${course.nombre}`
+    );
+  };
+
+  const handleModalSuccess = () => {
+    console.log('Modal success, reloading data');
+    // Reload data after successful creation
+    if (activeTab === 'users') {
+      loadUsers();
+    } else {
+      loadCourses();
+    }
+  };
 
   useEffect(() => {
     if (activeTab === 'users') {
@@ -31,52 +106,50 @@ export default function AdminScreen() {
     }
   }, [activeTab, searchQuery]);
 
-const loadUsers = async () => {
-  setLoading(true);
-  try {
-    const response = await apiMock.getUsers({
-      q: searchQuery,
-    });
+  const loadUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await apiMock.getUsers({
+        q: searchQuery,
+      });
 
-    // Mantenemos roles como Role[] (strings del enum)
-    const mappedContent: User[] = response.content.map((user: any) => ({
-      ...user,
-      roles: user.roles as Role[],
-    }));
+      const mappedContent: User[] = response.content.map((user: any) => ({
+        ...user,
+        roles: user.roles as Role[],
+      }));
 
-    setUsers(mappedContent);
-  } catch (error) {
-    Alert.alert('Error', 'Error al cargar usuarios');
-  }
-  setLoading(false);
-};
+      setUsers(mappedContent);
+    } catch (error) {
+      Alert.alert('Error', 'Error al cargar usuarios');
+    }
+    setLoading(false);
+  };
 
-const loadCourses = async () => {
-  setLoading(true);
-  try {
-    const response = await apiMock.getCourses({
-      q: searchQuery,
-    });
+  const loadCourses = async () => {
+    setLoading(true);
+    try {
+      const response = await apiMock.getCourses({
+        q: searchQuery,
+      });
 
-    const mappedCourses = response.content.map((course: any) => ({
-      ...course,
-      profesor: course.profesor
-        ? {
-            ...course.profesor,
-            email: course.profesor.email ?? '',
-            roles: (course.profesor.roles as Role[]) ?? [],
-            estado: course.profesor.estado ?? EstadoUsuario.ALTA,
-          }
-        : undefined,
-    }));
+      const mappedCourses = response.content.map((course: any) => ({
+        ...course,
+        profesor: course.profesor
+          ? {
+              ...course.profesor,
+              email: course.profesor.email ?? '',
+              roles: (course.profesor.roles as Role[]) ?? [],
+              estado: course.profesor.estado ?? EstadoUsuario.ALTA,
+            }
+          : undefined,
+      }));
 
-    setCourses(mappedCourses);
-  } catch (error) {
-    Alert.alert('Error', 'Error al cargar cursos');
-  }
-  setLoading(false);
-};
-
+      setCourses(mappedCourses);
+    } catch (error) {
+      Alert.alert('Error', 'Error al cargar cursos');
+    }
+    setLoading(false);
+  };
 
   const renderUserItem = (user: User) => (
     <Card key={user.id} style={styles.listItem}>
@@ -110,14 +183,23 @@ const loadCourses = async () => {
           title="Ver Detalles"
           variant="outline"
           size="small"
-          onPress={() => {}}
+          onPress={() => handleViewUserDetails(user)}
         />
         <Button
           title={user.estado === EstadoUsuario.ALTA ? 'Dar de Baja' : 'Dar de Alta'}
           variant={user.estado === EstadoUsuario.ALTA ? 'danger' : 'primary'}
           size="small"
-          onPress={() => {}}
+          onPress={() => handleToggleUserStatus(user)}
         />
+
+        {user.roles.some(role => role === Role.PROFESOR) && (
+          <Button
+            title="Pagar"
+            variant="secondary"
+            size="small"
+            onPress={() => handlePayProfessor(user)}
+          />
+        )}
       </View>
     </Card>
   );
@@ -148,13 +230,13 @@ const loadCourses = async () => {
           title="Ver Detalles"
           variant="outline"
           size="small"
-          onPress={() => {}}
+          onPress={() => handleViewCourseDetails(course)}
         />
         <Button
           title="Gestionar Alumnos"
           variant="secondary"
           size="small"
-          onPress={() => {}}
+          onPress={() => handleManageStudents(course)}
         />
       </View>
     </Card>
@@ -211,7 +293,7 @@ const loadCourses = async () => {
           title={`Crear ${activeTab === 'users' ? 'Usuario' : 'Curso'}`}
           variant="primary"
           size="small"
-          onPress={() => {}}
+          onPress={activeTab === 'users' ? handleCreateUser : handleCreateCourse}
         />
       </View>
 
@@ -235,6 +317,37 @@ const loadCourses = async () => {
           </View>
         )}
       </ScrollView>
+      
+      <CreateUserModal
+        visible={showCreateUserModal}
+        onClose={() => {
+          console.log('Closing create user modal');
+          setShowCreateUserModal(false);
+        }}
+        onSuccess={handleModalSuccess}
+      />
+
+      <CreateCourseModal
+        visible={showCreateCourseModal}
+        onClose={() => {
+          console.log('Closing create course modal');
+          setShowCreateCourseModal(false);
+        }}
+        onSuccess={handleModalSuccess}
+      />
+
+      {selectedProfessor && (
+        <PayProfessorModal
+          visible={showPayProfessorModal}
+          onClose={() => {
+            console.log('Closing pay professor modal');
+            setShowPayProfessorModal(false);
+            setSelectedProfessor(null);
+          }}
+          onSuccess={handleModalSuccess}
+          professor={selectedProfessor}
+        />
+      )}
     </SafeAreaView>
   );
 }

@@ -71,7 +71,6 @@ export interface Access {
   id: number;
   usuario: User;
   fecha: string;
-  tipo: TipoAcceso;
 }
 
 export interface AuthResponse {

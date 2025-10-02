@@ -1,3 +1,4 @@
+import { ModalLogout } from '@/components/modals/ModalLogout';
 import { useAuth } from '@/context/authContext';
 import { Role } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,7 +10,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { ModalLogout } from '../modals/ModalLogout';
 
 // Configuración de labels de roles
 const ROLE_LABELS = {
@@ -38,6 +38,24 @@ export const DrawerContent = (props: any) => {
       label: 'Pagos',
       icon: 'card-outline',
       onPress: () => props.navigation.navigate('Payments'),
+      roles: [Role.ADMINISTRADOR],
+    },
+        {
+      label: 'Mis Pagos',
+      icon: 'card-outline',
+      onPress: () => props.navigation.navigate('StudentPayments'),
+      roles: [Role.ALUMNO],
+    },
+        {
+      label: 'Mis Cobros',
+      icon: 'wallet-outline',
+      onPress: () => props.navigation.navigate('ProfessorEarnings'),
+      roles: [Role.PROFESOR],
+    },
+    {
+      label: 'Accesos',
+      icon: 'time-outline',
+      onPress: () => props.navigation.navigate('Accesses'),
     },
     {
       label: 'Perfil',

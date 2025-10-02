@@ -81,7 +81,7 @@ const mockUsers: User[] = [
 const mockCourses: Course[] = [
   {
     id: 1,
-    nombre: 'Matemáticas Básicas',
+    nombre: 'Clase de Idioma Japones T',
     dias: ['Lunes', 'Miércoles', 'Viernes'],
     horario: '14:00-16:00',
     arancel: 15000,
@@ -91,7 +91,7 @@ const mockCourses: Course[] = [
   },
   {
     id: 2,
-    nombre: 'Física Avanzada',
+    nombre: 'Taekwondo',
     dias: ['Martes', 'Jueves'],
     horario: '16:00-18:00',
     arancel: 20000,
@@ -101,7 +101,7 @@ const mockCourses: Course[] = [
   },
   {
     id: 3,
-    nombre: 'Química Orgánica',
+    nombre: 'Kendo - Aido',
     dias: ['Lunes', 'Miércoles'],
     horario: '10:00-12:00',
     arancel: 18000,
