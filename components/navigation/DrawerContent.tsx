@@ -1,6 +1,6 @@
 import { ModalLogout } from '@/components/modals/ModalLogout';
 import { useAuth } from '@/context/authContext';
-import { Role } from '@/model/model';
+import { Rol } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import React, { useState } from 'react';
@@ -13,9 +13,9 @@ import {
 
 // Configuración de labels de roles
 const ROLE_LABELS = {
-  [Role.ALUMNO]: 'Alumno',
-  [Role.PROFESOR]: 'Profesor',
-  [Role.ADMINISTRADOR]: 'Administrador',
+  [Rol.ALUMNO]: 'Alumno',
+  [Rol.PROFESOR]: 'Profesor',
+  [Rol.ADMINISTRADOR]: 'Administrador',
 } as const;
 
 export const DrawerContent = (props: any) => {
@@ -32,25 +32,25 @@ export const DrawerContent = (props: any) => {
       label: 'Administración',
       icon: 'settings-outline',
       onPress: () => props.navigation.navigate('Admin'),
-      roles: [Role.ADMINISTRADOR],
+      roles: [Rol.ADMINISTRADOR],
     },
     {
       label: 'Pagos',
       icon: 'card-outline',
       onPress: () => props.navigation.navigate('Payments'),
-      roles: [Role.ADMINISTRADOR],
+      roles: [Rol.ADMINISTRADOR],
     },
         {
       label: 'Mis Pagos',
       icon: 'card-outline',
       onPress: () => props.navigation.navigate('StudentPayments'),
-      roles: [Role.ALUMNO],
+      roles: [Rol.ALUMNO],
     },
         {
       label: 'Mis Cobros',
       icon: 'wallet-outline',
       onPress: () => props.navigation.navigate('ProfessorEarnings'),
-      roles: [Role.PROFESOR],
+      roles: [Rol.PROFESOR],
     },
     {
       label: 'Accesos',

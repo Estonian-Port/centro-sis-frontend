@@ -1,9 +1,9 @@
 import { useAuth } from '@/context/authContext';
-import { Role } from '@/model/model';
+import { Rol } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Tabs } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { RoleSelectionModal } from '../../components/modals/RoleSelectionModal';
 import { DrawerContent } from '../../components/navigation/DrawerContent';
@@ -22,7 +22,7 @@ function DrawerNavigator() {
 
   return (
     <Drawer.Navigator 
-      drawerContent={(props) => <DrawerContent {...props} />}
+      drawerContent={(props: any) => <DrawerContent {...props} />}
       screenOptions={{ 
         headerShown: true,
         drawerStyle: {
@@ -77,7 +77,7 @@ function DrawerNavigator() {
 }
 
 export default function TabLayout() {
-  const { user, selectedRole, setSelectedRole, hasMultipleRoles } = useAuth();
+  const { usuario, selectedRole, setSelectedRole, hasMultipleRoles } = useAuth();
   const [showRoleModal, setShowRoleModal] = useState(false);
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function TabLayout() {
     }
   }, [hasMultipleRoles, selectedRole]);
 
-  const handleRoleSelection = (role: Role) => {
+  const handleRoleSelection = (role: Rol) => {
     setSelectedRole(role);
     setShowRoleModal(false);
   };
@@ -98,7 +98,7 @@ export default function TabLayout() {
         <DrawerNavigator />
         <RoleSelectionModal
           visible={showRoleModal}
-          roles={user?.roles || []}
+          roles={usuario?.listaRol || []}
           onSelectRole={handleRoleSelection}
         />
       </>
@@ -124,7 +124,7 @@ export default function TabLayout() {
           }}
         />
         
-        {selectedRole === Role.ADMINISTRADOR && (
+        {selectedRole === Rol.ADMINISTRADOR && (
           <Tabs.Screen
             name="admin"
             options={{
@@ -159,7 +159,7 @@ export default function TabLayout() {
 
       <RoleSelectionModal
         visible={showRoleModal}
-        roles={user?.roles || []}
+        roles={usuario?.listaRol || []}
         onSelectRole={handleRoleSelection}
       />
     </>

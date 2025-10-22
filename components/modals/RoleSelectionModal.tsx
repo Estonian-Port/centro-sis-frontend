@@ -1,19 +1,19 @@
 import React from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Role } from '../../model/model';
+import { Rol } from '../../model/model';
 
 interface RoleSelectionModalProps {
   visible: boolean;
-  roles: Role[];
-  onSelectRole: (role: Role) => void;
+  roles: Rol[];
+  onSelectRole: (role: Rol) => void;
 }
 
 export const RoleSelectionModal: React.FC<RoleSelectionModalProps> =
   ({ visible, roles, onSelectRole }) => {
-    const roleLabels: Record<Role, string> = {
-      [Role.ALUMNO]: 'Alumno',
-      [Role.PROFESOR]: 'Profesor',
-      [Role.ADMINISTRADOR]: 'Administrador',
+    const roleLabels: Record<Rol, string> = {
+      [Rol.ALUMNO]: 'Alumno',
+      [Rol.PROFESOR]: 'Profesor',
+      [Rol.ADMINISTRADOR]: 'Administrador',
     };
 
     return (

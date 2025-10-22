@@ -1,7 +1,7 @@
 import { CreateCourseModal } from '@/components/modals/CreateCourseModal';
 import { CreateUserModal } from '@/components/modals/CreateUserModal';
 import { useAuth } from '@/context/authContext';
-import { Role } from '@/model/model';
+import { Rol } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
@@ -235,11 +235,11 @@ export default function HomeScreen() {
 
   const renderContent = () => {
     switch (selectedRole) {
-      case Role.ALUMNO:
+      case Rol.ALUMNO:
         return renderAlumnoView();
-      case Role.PROFESOR:
+      case Rol.PROFESOR:
         return renderProfesorView();
-      case Role.ADMINISTRADOR:
+      case Rol.ADMINISTRADOR:
         return renderAdminView();
       default:
         return (

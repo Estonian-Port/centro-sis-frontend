@@ -1,16 +1,16 @@
-import { User } from '@/model/model';
+import { Usuario } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-  Alert,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import * as yup from 'yup';
 import { Button } from '../ui/Button';
@@ -36,7 +36,7 @@ interface PayProfessorModalProps {
   visible: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  professor? : User | null
+  professor? : Usuario | null
 }
 
 const months = [

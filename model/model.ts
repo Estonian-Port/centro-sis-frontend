@@ -1,4 +1,4 @@
-export enum Role {
+export enum Rol {
   ALUMNO = 'ALUMNO',
   PROFESOR = 'PROFESOR',
   ADMINISTRADOR = 'ADMINISTRADOR'
@@ -27,19 +27,19 @@ export enum PaymentType {
   TARJETA = 'TARJETA'
 }
 
-export interface User {
+export interface Usuario {
   id: number;
   email: string;
   nombre?: string;
   apellido?: string;
   dni?: string;
   telefono?: string;
-  roles: Role[];
+  listaRol: Rol[];
   estado: EstadoUsuario;
   cursosActivos?: Course[];
   cursosDadosDeBaja?: Course[];
   beneficios?: string[];
-  firstLogin?: boolean;
+  primerLogin?: boolean;
 }
 
 export interface Course {
@@ -47,19 +47,19 @@ export interface Course {
   nombre: string;
   dias: string[];
   horario: string;
-  profesor?: User;
+  profesor?: Usuario;
   arancel: number;
   tipoPago: TipoPago;
   estado: EstadoUsuario;
-  alumnos?: User[];
-  alumnosActivos?: User[];
-  alumnosDadosDeBaja?: User[];
+  alumnos?: Usuario[];
+  alumnosActivos?: Usuario[];
+  alumnosDadosDeBaja?: Usuario[];
 }
 
 export interface Payment {
   id: number;
   curso: Course;
-  alumno: User;
+  alumno: Usuario;
   monto: number;
   tipo: PaymentType;
   fecha: string;
@@ -69,13 +69,13 @@ export interface Payment {
 
 export interface Access {
   id: number;
-  usuario: User;
+  usuario: Usuario;
   fecha: string;
 }
 
 export interface AuthResponse {
   token: string;
-  user: User;
+  user: Usuario;
 }
 
 export interface PaginatedResponse<T> {

@@ -1,5 +1,6 @@
 import { useAuth } from '@/context/authContext';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { router } from 'expo-router';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, StyleSheet, View } from 'react-native';
@@ -11,7 +12,7 @@ const schema = yup.object().shape({
   email: yup.string().email('Email inválido').required('El email es requerido'),
   password: yup
     .string()
-    .min(6, 'La contraseña debe tener al menos 6 caracteres')
+    .min(3, 'La contraseña debe tener al menos 6 caracteres')
     .required('La contraseña es requerida'),
 });
 
@@ -21,12 +22,11 @@ interface LoginFormData {
 }
 
 interface LoginFormProps {
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
-
-  const { login } = useAuth();
+  const { login, usuario, isLoading } = useAuth();
   
   const {
     control,
@@ -43,7 +43,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   const onSubmit = async (data: LoginFormData) => {
     try {
       await login(data.email, data.password);
-      onSuccess();
+      
+      // Pequeño delay para asegurar que el contexto se actualizó
+      setTimeout(() => {
+        if (usuario?.primerLogin) {
+          router.replace('/complete-profile');
+        } else {
+          router.replace('/(tabs)');
+        }
+      }, 300);
+      
+      onSuccess?.();
     } catch (error) {
       Alert.alert('Error', 'Credenciales inválidas');
     }
@@ -62,6 +72,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
             keyboardType="email-address"
             autoCapitalize="none"
             error={errors.email?.message}
+            editable={!isSubmitting}
           />
         )}
       />
@@ -76,6 +87,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
             onChangeText={onChange}
             secureTextEntry
             error={errors.password?.message}
+            editable={!isSubmitting}
           />
         )}
       />
@@ -83,8 +95,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
       <Button
         title="Iniciar Sesión"
         onPress={handleSubmit(onSubmit)}
-        loading={isSubmitting}
+        loading={isSubmitting || isLoading}
         style={styles.loginButton}
+        disabled={isSubmitting || isLoading}
       />
     </View>
   );

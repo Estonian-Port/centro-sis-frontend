@@ -3,12 +3,12 @@ import {
   Course,
   EstadoUsuario,
   PaginatedResponse,
-  Role,
+  Rol,
   TipoPago,
-  User
+  Usuario
 } from '@/model/model';
 
-const mockUsers: User[] = [
+const mockUsers: Usuario[] = [
   {
     id: 1,
     email: 'alumno@test.com',
@@ -16,10 +16,10 @@ const mockUsers: User[] = [
     apellido: 'Pérez',
     dni: '12345678',
     telefono: '1234567890',
-    roles: [ Role.ALUMNO ],
+    listaRol: [ Rol.ALUMNO ],
     estado: EstadoUsuario.ALTA,
     beneficios: ['Pago total', 'Familiar'],
-    firstLogin: true,
+    primerLogin: true,
     cursosActivos: [],
     cursosDadosDeBaja: [],
   },
@@ -30,9 +30,9 @@ const mockUsers: User[] = [
     apellido: 'García',
     dni: '87654321',
     telefono: '0987654321',
-    roles: [ Role.PROFESOR ],
+    listaRol: [ Rol.PROFESOR ],
     estado: EstadoUsuario.ALTA,
-    firstLogin: false,
+    primerLogin: false,
     cursosActivos: [],
     cursosDadosDeBaja: [],
   },
@@ -43,9 +43,9 @@ const mockUsers: User[] = [
     apellido: 'Rodríguez',
     dni: '11111111',
     telefono: '1111111111',
-    roles: [ Role.ADMINISTRADOR ],
+    listaRol: [ Rol.ADMINISTRADOR ],
     estado: EstadoUsuario.ALTA,
-    firstLogin: false,
+    primerLogin: false,
     cursosActivos: [],
     cursosDadosDeBaja: [],
   },
@@ -56,9 +56,9 @@ const mockUsers: User[] = [
     apellido: 'López',
     dni: '22222222',
     telefono: '2222222222',
-    roles: [Role.ALUMNO, Role.PROFESOR],
+    listaRol: [Rol.ALUMNO, Rol.PROFESOR],
     estado: EstadoUsuario.ALTA,
-    firstLogin: false,
+    primerLogin: false,
     cursosActivos: [],
     cursosDadosDeBaja: [],
   },
@@ -69,10 +69,10 @@ const mockUsers: User[] = [
     apellido: 'Martínez',
     dni: '33333333',
     telefono: '3333333333',
-    roles: [ Role.ALUMNO, Role.PROFESOR, Role.ADMINISTRADOR ],
+    listaRol: [ Rol.ALUMNO, Rol.PROFESOR, Rol.ADMINISTRADOR ],
     estado: EstadoUsuario.ALTA,
     beneficios: ['Hermano'],
-    firstLogin: true,
+    primerLogin: true,
     cursosActivos: [],
     cursosDadosDeBaja: [],
   },
@@ -128,14 +128,14 @@ export const apiMock = {
   },
 
   // Users
-  getUsers: async (params: any = {}): Promise<PaginatedResponse<User>> => {
+  getUsers: async (params: any = {}): Promise<PaginatedResponse<Usuario>> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     let filteredUsers = [...mockUsers];
     
     if (params.role) {
       filteredUsers = filteredUsers.filter((u) =>
-        u.roles.some((r) => r === params.role)
+        u.listaRol.some((r) => r === params.role)
       );
     }
     
@@ -169,7 +169,7 @@ export const apiMock = {
     };
   },
 
-  getUser: async (id: number): Promise<User> => {
+  getUser: async (id: number): Promise<Usuario> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     
     const user = mockUsers.find(u => u.id === id);

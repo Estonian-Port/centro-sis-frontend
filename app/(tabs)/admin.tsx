@@ -4,31 +4,31 @@ import { PayProfessorModal } from '@/components/modals/PayProfessorModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
-import { Course, EstadoUsuario, Role, User } from '@/model/model';
+import { Course, EstadoUsuario, Rol, Usuario } from '@/model/model';
 import { apiMock } from '@/services/apiMock.service';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 export default function AdminScreen() {
   const [activeTab, setActiveTab] = useState<'users' | 'courses'>('users');
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<Usuario[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
   const [showPayProfessorModal, setShowPayProfessorModal] = useState(false);
-  const [selectedProfessor, setSelectedProfessor] = useState<User | null>(null);
+  const [selectedProfessor, setSelectedProfessor] = useState<Usuario | null>(null);
 
   const handleCreateUser = () => {
     setShowCreateUserModal(true);
@@ -38,19 +38,19 @@ export default function AdminScreen() {
     setShowCreateCourseModal(true);
   };
 
-  const handlePayProfessor = (professor: User) => {
+  const handlePayProfessor = (professor: Usuario) => {
     setSelectedProfessor(professor);
     setShowPayProfessorModal(true);
   };
 
-  const handleViewUserDetails = (user: User) => {
+  const handleViewUserDetails = (user: Usuario) => {
     Alert.alert(
       'Ver Detalles de Usuario',
       `Funcionalidad pendiente para: ${user.nombre} ${user.apellido}`
     );
   };
 
-  const handleToggleUserStatus = async (user: User) => {
+  const handleToggleUserStatus = async (user: Usuario) => {
     const newStatus = user.estado === EstadoUsuario.ALTA ? EstadoUsuario.BAJA : EstadoUsuario.ALTA;
     Alert.alert(
       'Cambiar Estado',
@@ -113,9 +113,9 @@ export default function AdminScreen() {
         q: searchQuery,
       });
 
-      const mappedContent: User[] = response.content.map((user: any) => ({
+      const mappedContent: Usuario[] = response.content.map((user: any) => ({
         ...user,
-        roles: user.roles as Role[],
+        roles: user.roles as Rol[],
       }));
 
       setUsers(mappedContent);
@@ -138,7 +138,7 @@ export default function AdminScreen() {
           ? {
               ...course.profesor,
               email: course.profesor.email ?? '',
-              roles: (course.profesor.roles as Role[]) ?? [],
+              roles: (course.profesor.roles as Rol[]) ?? [],
               estado: course.profesor.estado ?? EstadoUsuario.ALTA,
             }
           : undefined,
@@ -151,7 +151,7 @@ export default function AdminScreen() {
     setLoading(false);
   };
 
-  const renderUserItem = (user: User) => (
+  const renderUserItem = (user: Usuario) => (
     <Card key={user.id} style={styles.listItem}>
       <View style={styles.itemHeader}>
         <View style={styles.userInfo}>
@@ -168,7 +168,7 @@ export default function AdminScreen() {
       </View>
 
       <View style={styles.rolesContainer}>
-        {user.roles.map((role) => (
+        {user.listaRol.map((role) => (
           <Tag
             key={role}
             label={role}
@@ -192,7 +192,7 @@ export default function AdminScreen() {
           onPress={() => handleToggleUserStatus(user)}
         />
 
-        {user.roles.some(role => role === Role.PROFESOR) && (
+        {user.listaRol.some(role => role === Rol.PROFESOR) && (
           <Button
             title="Pagar"
             variant="secondary"

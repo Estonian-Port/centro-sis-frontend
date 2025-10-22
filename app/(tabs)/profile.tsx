@@ -1,6 +1,6 @@
 import { ModalLogout } from '@/components/modals/ModalLogout';
 import { useAuth } from '@/context/authContext';
-import { EstadoUsuario, Role } from '@/model/model';
+import { EstadoUsuario, Rol } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
@@ -18,27 +18,27 @@ import { Tag } from '../../components/ui/Tag';
 
 // Configuración de roles
 const ROLE_CONFIG = {
-  [Role.ALUMNO]: {
+  [Rol.ALUMNO]: {
     variant: 'info' as const,
     label: 'Alumno',
   },
-  [Role.PROFESOR]: {
+  [Rol.PROFESOR]: {
     variant: 'success' as const,
     label: 'Profesor',
   },
-  [Role.ADMINISTRADOR]: {
+  [Rol.ADMINISTRADOR]: {
     variant: 'warning' as const,
     label: 'Administrador',
   },
 } as const;
 
 // Helper para obtener configuración del rol
-const getRoleConfig = (roleName: Role) => {
+const getRoleConfig = (roleName: Rol) => {
   return ROLE_CONFIG[roleName] || { variant: 'info' as const, label: roleName };
 };
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { usuario, logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogout = () => {
@@ -72,17 +72,17 @@ export default function ProfileScreen() {
       items: [
         {
           label: 'Nombre completo',
-          value: `${user?.nombre} ${user?.apellido}`,
+          value: `${usuario?.nombre} ${usuario?.apellido}`,
         },
-        { label: 'Email', value: user?.email },
-        { label: 'DNI', value: user?.dni },
-        { label: 'Teléfono', value: user?.telefono },
+        { label: 'Email', value: usuario?.email },
+        { label: 'DNI', value: usuario?.dni },
+        { label: 'Teléfono', value: usuario?.telefono },
       ],
     },
     {
       title: 'Información de Cuenta',
       items: [
-        { label: 'Estado', value: user?.estado, isTag: true },
+        { label: 'Estado', value: usuario?.estado, isTag: true },
         {
           label: 'Roles',
           value: undefined,
@@ -124,11 +124,11 @@ export default function ProfileScreen() {
       subtitle: 'Exportar datos personales',
       onPress: () => {
         const userData = {
-          nombre: user?.nombre,
-          apellido: user?.apellido,
-          dni: user?.dni,
-          email: user?.email,
-          roles: user?.roles.map(r => r),
+          nombre: usuario?.nombre,
+          apellido: usuario?.apellido,
+          dni: usuario?.dni,
+          email: usuario?.email,
+          roles: usuario?.listaRol.map(r => r),
         };
 
         Alert.alert(
@@ -147,13 +147,13 @@ export default function ProfileScreen() {
           <Ionicons name="person" size={32} color="#ffffff" />
         </View>
         <Text style={styles.userName}>
-          {user?.nombre} {user?.apellido}
+          {usuario?.nombre} {usuario?.apellido}
         </Text>
-        <Text style={styles.userEmail}>{user?.email}</Text>
+        <Text style={styles.userEmail}>{usuario?.email}</Text>
 
-        {user?.beneficios && user.beneficios.length > 0 && (
+        {usuario?.beneficios && usuario.beneficios.length > 0 && (
           <View style={styles.beneficiosContainer}>
-            {user.beneficios.map((beneficio, index) => (
+            {usuario.beneficios.map((beneficio, index) => (
               <Tag key={index} label={beneficio} variant="info" />
             ))}
           </View>
@@ -173,7 +173,7 @@ export default function ProfileScreen() {
                   item.multiple ? (
                     // Múltiples roles
                     <View style={styles.tagsContainer}>
-                      {user?.roles.map((role) => {
+                      {usuario?.listaRol.map((role) => {
                         const config = getRoleConfig(role);
                         return (
                           <Tag

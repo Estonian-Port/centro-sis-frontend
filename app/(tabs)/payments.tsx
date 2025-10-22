@@ -2,26 +2,26 @@ import { apiMock } from '@/services/apiMock.service';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
-import { Course, EstadoUsuario, Role, User } from '../../model/model';
+import { Course, EstadoUsuario, Rol, Usuario } from '../../model/model';
 
 export default function PaymentsScreen() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Usuario | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [students, setStudents] = useState<User[]>([]);
+  const [students, setStudents] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(false);
 
   const paymentMethods = [
@@ -60,7 +60,7 @@ export default function PaymentsScreen() {
           ? {
               ...course.profesor,
               email: course.profesor.email ?? '',
-              roles: (course.profesor.roles as Role[]) ?? [],
+              roles: (course.profesor.roles as Rol[]) ?? [],
               estado: course.profesor.estado ?? EstadoUsuario.ALTA,
             }
           : undefined,
@@ -78,13 +78,13 @@ export default function PaymentsScreen() {
     setLoading(true);
     try {
       const response = await apiMock.getUsers({
-        role: Role.ALUMNO, // Solo alumnos
+        role: Rol.ALUMNO, // Solo alumnos
         estado: EstadoUsuario.ALTA, // Solo usuarios activos
       });
 
-      const mappedStudents: User[] = response.content.map((user: any) => ({
+      const mappedStudents: Usuario[] = response.content.map((user: any) => ({
         ...user,
-        roles: user.roles as Role[],
+        roles: user.roles as Rol[],
       }));
 
       setStudents(mappedStudents);

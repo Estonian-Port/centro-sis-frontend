@@ -1,14 +1,13 @@
-import { useAuth } from '@/context/authContext';
 import { EstadoUsuario, Payment, PaymentType, TipoPago } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
@@ -32,7 +31,7 @@ const mockStudentPayments: Payment[] = [
       nombre: 'Juan',
       apellido: 'Pérez',
       dni: '12345678',
-      roles: [],
+      listaRol: [],
       estado: EstadoUsuario.ALTA,
     },
     monto: 13500, // Con descuento
@@ -57,7 +56,7 @@ const mockStudentPayments: Payment[] = [
       nombre: 'Juan',
       apellido: 'Pérez',
       dni: '12345678',
-      roles: [],
+      listaRol: [],
       estado: EstadoUsuario.ALTA,
     },
     monto: 13500,
@@ -82,7 +81,7 @@ const mockStudentPayments: Payment[] = [
       nombre: 'Juan',
       apellido: 'Pérez',
       dni: '12345678',
-      roles: [],
+      listaRol: [],
       estado: EstadoUsuario.ALTA,
     },
     monto: 15750, // Con recargo
@@ -93,7 +92,6 @@ const mockStudentPayments: Payment[] = [
 ];
 
 export default function StudentPaymentsScreen() {
-  const { user } = useAuth();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);

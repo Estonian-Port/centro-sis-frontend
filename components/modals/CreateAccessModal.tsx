@@ -1,4 +1,4 @@
-import { User } from '@/model/model';
+import { Usuario } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React from 'react';
@@ -31,14 +31,14 @@ interface CreateAccessModalProps {
   visible: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  user: User | null
+  usuario: Usuario | null
 }
 
 export const CreateAccessModal: React.FC<CreateAccessModalProps> = ({
   visible,
   onClose,
   onSuccess,
-  user,
+  usuario,
 }) => {
   const {
     control,
@@ -66,7 +66,7 @@ export const CreateAccessModal: React.FC<CreateAccessModalProps> = ({
       
       Alert.alert(
         'Acceso Registrado',
-        `Se ha registrado el acceso manual para ${user?.nombre} ${user?.apellido}.`,
+        `Se ha registrado el acceso manual para ${usuario?.nombre} ${usuario?.apellido}.`,
         [
           {
             text: 'OK',
@@ -106,10 +106,10 @@ export const CreateAccessModal: React.FC<CreateAccessModalProps> = ({
           </View>
 
           <View style={styles.content}>
-            {user && (
+            {usuario && (
               <View style={styles.userInfo}>
                 <Text style={styles.userName}>
-                  {user.nombre} {user.apellido}
+                  {usuario.nombre} {usuario.apellido}
                 </Text>
               </View>
             )}

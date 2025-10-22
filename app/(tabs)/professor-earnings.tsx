@@ -1,14 +1,13 @@
-import { useAuth } from '@/context/authContext';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -97,7 +96,6 @@ const mockProfessorEarnings: ProfessorEarning[] = [
 ];
 
 export default function ProfessorEarningsScreen() {
-  const { user } = useAuth();
   const [earnings, setEarnings] = useState<ProfessorEarning[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<'TODOS' | 'PENDIENTE' | 'PAGADO'>('TODOS');

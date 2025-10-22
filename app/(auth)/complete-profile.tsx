@@ -1,13 +1,13 @@
-import { useAuth } from '@/context/authContext'; // AGREGAR
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { useAuth } from '@/context/authContext';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { router } from 'expo-router';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import * as yup from 'yup';
-import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
-import { Input } from '../../components/ui/Input';
 
 const schema = yup.object({
   nombre: yup.string().required('El nombre es requerido'),
@@ -34,7 +34,7 @@ interface CompleteProfileData {
 }
 
 export default function CompleteProfileScreen() {
-  const { user, setUser, hasMultipleRoles } = useAuth(); // AGREGAR
+  const { usuario, setUsuario, hasMultipleRoles } = useAuth();
   
   const {
     control,
@@ -43,10 +43,10 @@ export default function CompleteProfileScreen() {
   } = useForm<CompleteProfileData>({
     resolver: yupResolver(schema) as any,
     defaultValues: {
-      nombre: user?.nombre || '',
-      apellido: user?.apellido || '',
-      dni: user?.dni || '',
-      telefono: user?.telefono || '',
+      nombre: usuario?.nombre || '',
+      apellido: usuario?.apellido || '',
+      dni: usuario?.dni || '',
+      telefono: usuario?.telefono || '',
       password: '',
       confirmPassword: '',
     },
@@ -60,16 +60,16 @@ export default function CompleteProfileScreen() {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Actualizar el usuario en el contexto
-      if (user) {
+      if (usuario) {
         const updatedUser = {
-          ...user,
+          ...usuario,
           nombre: data.nombre,
           apellido: data.apellido,
           dni: data.dni,
           telefono: data.telefono,
-          firstLogin: false, // IMPORTANTE: Marcar como completado
+          firstLogin: false,
         };
-        setUser(updatedUser);
+        setUsuario(updatedUser);
       }
 
       Alert.alert(

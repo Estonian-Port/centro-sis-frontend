@@ -1,14 +1,12 @@
-import React from 'react';
+import { LoginForm } from '@/components/forms/loginForm';
+import { Card } from '@/components/ui/Card';
+import { useAuth } from '@/context/authContext';
 import { Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { LoginForm } from '../../components/forms/loginForm';
-import { Card } from '../../components/ui/Card';
 
 
 export default function LoginScreen() {
-  const handleLoginSuccess = () => {
-    // No hacer nada, el layout maneja la navegación
-    console.log('Login exitoso');
-  };
+  
+  const { usuario, isLoading, isAuthenticated } = useAuth();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -19,7 +17,7 @@ export default function LoginScreen() {
         </View>
         <Card style={styles.loginCard}>
           <Text style={styles.cardTitle}>Iniciar Sesión</Text>
-          <LoginForm onSuccess={handleLoginSuccess} />
+          <LoginForm />
         </Card>
         {process.env.EXPO_PUBLIC_MOCK_MODE === 'true' && (
           <Card style={styles.demoCard}>

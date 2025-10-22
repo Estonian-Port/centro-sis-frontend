@@ -19,63 +19,63 @@ import {
 const mockAccesses: Access[] = [
   {
     id: 1,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', roles: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
     fecha: '2024-03-15T08:30:00Z',
   },
   {
     id: 2,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', roles: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
     fecha: '2024-03-15T12:45:00Z',
   },
   {
     id: 3,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', roles: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
     fecha: '2024-03-14T09:15:00Z',
   },
   {
     id: 4,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', roles: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
     fecha: '2024-03-14T13:20:00Z',
   },
   {
     id: 5,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', roles: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
     fecha: '2024-03-13T08:45:00Z',
   },
   {
     id: 6,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', roles: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
     fecha: '2024-03-13T12:30:00Z',
   },
   {
     id: 7,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', roles: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
     fecha: '2024-03-12T09:00:00Z',
   },
   {
     id: 8,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', roles: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
     fecha: '2024-03-12T13:15:00Z',
   },
   {
     id: 9,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', roles: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
     fecha: '2024-03-11T08:20:00Z',
   },
   {
     id: 10,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', roles: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
     fecha: '2024-03-11T12:50:00Z',
   },
   {
     id: 11,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', roles: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
     fecha: '2024-03-11T12:50:00Z',
   },
 ];
 
 export default function AccessesScreen() {
-  const { user } = useAuth();
+  const { usuario } = useAuth();
   const [accesses, setAccesses] = useState<Access[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
@@ -224,7 +224,7 @@ export default function AccessesScreen() {
         visible={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSuccess={handleCreateAccessSuccess}
-        user={user}
+        usuario={usuario}
       />
     </SafeAreaView>
   );
