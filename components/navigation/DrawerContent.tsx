@@ -3,6 +3,7 @@ import { useAuth } from '@/context/authContext';
 import { Rol } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -19,7 +20,7 @@ const ROLE_LABELS = {
 } as const;
 
 export const DrawerContent = (props: any) => {
-  const { user, selectedRole, logout } = useAuth();
+  const { usuario, selectedRole, logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const menuItems = [
@@ -40,13 +41,13 @@ export const DrawerContent = (props: any) => {
       onPress: () => props.navigation.navigate('Payments'),
       roles: [Rol.ADMINISTRADOR],
     },
-        {
+    {
       label: 'Mis Pagos',
       icon: 'card-outline',
       onPress: () => props.navigation.navigate('StudentPayments'),
       roles: [Rol.ALUMNO],
     },
-        {
+    {
       label: 'Mis Cobros',
       icon: 'wallet-outline',
       onPress: () => props.navigation.navigate('ProfessorEarnings'),
@@ -73,9 +74,15 @@ export const DrawerContent = (props: any) => {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = () => {
+  const confirmLogout = async () => {
     setShowLogoutModal(false);
-    logout();
+    try {
+      await logout();
+      // Redirigir a login después de logout
+      router.replace('/login');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
   };
 
   const cancelLogout = () => {
@@ -90,13 +97,12 @@ export const DrawerContent = (props: any) => {
             <Ionicons name="person" size={24} color="#ffffff" />
           </View>
           <Text style={styles.userName}>
-            {user?.nombre} {user?.apellido}
+            {usuario?.nombre} {usuario?.apellido}
           </Text>
           <Text style={styles.userRole}>
             {selectedRole ? ROLE_LABELS[selectedRole] : 'Sin rol'}
           </Text>
         </View>
-
         <View style={styles.menu}>
           {filteredItems.map((item, index) => (
             <DrawerItem
@@ -109,7 +115,6 @@ export const DrawerContent = (props: any) => {
             />
           ))}
         </View>
-
         <View style={styles.footer}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#ef4444" />
@@ -117,7 +122,6 @@ export const DrawerContent = (props: any) => {
           </TouchableOpacity>
         </View>
       </DrawerContentScrollView>
-
       <ModalLogout
         visible={showLogoutModal}
         message="¿Estás seguro de que quieres cerrar sesión?"

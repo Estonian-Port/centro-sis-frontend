@@ -2,6 +2,7 @@ import { ModalLogout } from '@/components/modals/ModalLogout';
 import { useAuth } from '@/context/authContext';
 import { EstadoUsuario, Rol } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -45,9 +46,16 @@ export default function ProfileScreen() {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = () => {
+  const confirmLogout = async () => {
     setShowLogoutModal(false);
-    logout();
+    try {
+      await logout();
+      // Redirigir a login después del logout
+      router.replace('/login');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      Alert.alert('Error', 'Hubo un problema al cerrar sesión');
+    }
   };
 
   const cancelLogout = () => {
