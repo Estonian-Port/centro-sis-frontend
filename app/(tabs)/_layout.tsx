@@ -76,13 +76,18 @@ function DrawerNavigator() {
   );
 }
 
-export default function TabLayout() {
+ export default function TabLayout() {
   const { usuario, selectedRole, setSelectedRole, hasMultipleRoles } = useAuth();
   const [showRoleModal, setShowRoleModal] = useState(false);
 
   useEffect(() => {
     if (hasMultipleRoles() && !selectedRole) {
       setShowRoleModal(true);
+    }
+    else {
+        if(usuario?.listaRol[0] != null){
+            setSelectedRole(usuario?.listaRol[0]);
+        }
     }
   }, [hasMultipleRoles, selectedRole]);
 

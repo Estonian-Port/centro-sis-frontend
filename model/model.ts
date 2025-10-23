@@ -36,13 +36,13 @@ export interface Usuario {
   telefono?: string;
   listaRol: Rol[];
   estado: EstadoUsuario;
-  cursosActivos?: Course[];
-  cursosDadosDeBaja?: Course[];
+  cursosActivos?: Curso[];
+  cursosDadosDeBaja?: Curso[];
   beneficios?: string[];
   primerLogin?: boolean;
 }
 
-export interface Course {
+export interface Curso {
   id: number;
   nombre: string;
   dias: string[];
@@ -58,7 +58,7 @@ export interface Course {
 
 export interface Payment {
   id: number;
-  curso: Course;
+  curso: Curso;
   alumno: Usuario;
   monto: number;
   tipo: PaymentType;

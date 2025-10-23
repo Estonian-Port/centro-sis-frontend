@@ -73,7 +73,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // 5. Actualizar estado del contexto
       setUsuario(currentUser)
       setIsAuthenticated(true)
-      
     } catch (e) {
       console.error("Error en login:", e)
       // Limpiar en caso de error

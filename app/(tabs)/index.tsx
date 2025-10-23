@@ -1,10 +1,10 @@
 import { CreateCourseModal } from '@/components/modals/CreateCourseModal';
 import { CreateUserModal } from '@/components/modals/CreateUserModal';
 import { useAuth } from '@/context/authContext';
-import { Rol } from '@/model/model';
+import {Curso, Rol} from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Alert,
   SafeAreaView,
@@ -17,12 +17,26 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
+import {router} from "expo-router";
+import { cursoService } from '../../services/curso.service';
 
-export default function HomeScreen() {
-  const { selectedRole } = useAuth();
-  const navigation = useNavigation();
-  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
-  const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+    export default function HomeScreen() {
+      const { selectedRole, usuario } = useAuth();
+      const navigation = useNavigation();
+      const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+      const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+      const [curso, setCurso] = useState<Curso>()
+
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if(usuario != null){
+                let listaCursos = await cursoService.getAllByUsuario(usuario.id);
+                setCurso(listaCursos[0]);
+            }
+        }
+        fetchData();
+    }, [selectedRole]);
 
   const handleVerPagos = () => {
     Alert.alert('Ver Pagos', 'Navegando a historial de pagos...');
@@ -68,21 +82,21 @@ export default function HomeScreen() {
         <Text style={styles.title}>Mis Cursos</Text>
         <Card style={styles.courseCard}>
           <View style={styles.courseHeader}>
-            <Text style={styles.courseName}>Clase de idioma japones T</Text>
+            <Text style={styles.courseName}>{curso?.nombre}</Text>
             <Tag label="ACTIVO" variant="success" />
           </View>
           <View style={styles.courseDetails}>
             <View style={styles.detailRow}>
               <Ionicons name="calendar-outline" size={16} color="#6b7280" />
-              <Text style={styles.detailText}>Lunes, Miércoles, Viernes</Text>
+              <Text style={styles.detailText}>{curso?.dias}</Text>
             </View>
             <View style={styles.detailRow}>
               <Ionicons name="time-outline" size={16} color="#6b7280" />
-              <Text style={styles.detailText}>14:00 - 16:00</Text>
+              <Text style={styles.detailText}>{curso?.horario}</Text>
             </View>
             <View style={styles.detailRow}>
               <Ionicons name="card-outline" size={16} color="#6b7280" />
-              <Text style={styles.detailText}>$15,000 / mes</Text>
+              <Text style={styles.detailText}>${curso?.arancel} / mes</Text>
             </View>
           </View>
           <View style={styles.beneficios}>

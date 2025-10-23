@@ -1,6 +1,6 @@
 import {
   AuthResponse,
-  Course,
+  Curso,
   EstadoUsuario,
   PaginatedResponse,
   Rol,
@@ -78,7 +78,7 @@ const mockUsers: Usuario[] = [
   },
 ];
 
-const mockCourses: Course[] = [
+const mockCourses: Curso[] = [
   {
     id: 1,
     nombre: 'Clase de Idioma Japones T',
@@ -179,7 +179,7 @@ export const apiMock = {
   },
 
   // Courses
-  getCourses: async (params: any = {}): Promise<PaginatedResponse<Course>> => {
+  getCourses: async (params: any = {}): Promise<PaginatedResponse<Curso>> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     
     let filteredCourses = [...mockCourses];
@@ -217,7 +217,7 @@ export const apiMock = {
     };
   },
 
-  getCourse: async (id: number): Promise<Course> => {
+  getCourse: async (id: number): Promise<Curso> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     
     const course = mockCourses.find(c => c.id === id);

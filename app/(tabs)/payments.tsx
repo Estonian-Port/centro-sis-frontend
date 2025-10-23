@@ -14,13 +14,13 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
-import { Course, EstadoUsuario, Rol, Usuario } from '../../model/model';
+import { Curso, EstadoUsuario, Rol, Usuario } from '../../model/model';
 
 export default function PaymentsScreen() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<Curso | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Usuario | null>(null);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<Curso[]>([]);
   const [students, setStudents] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(false);
 

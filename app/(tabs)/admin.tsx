@@ -4,7 +4,7 @@ import { PayProfessorModal } from '@/components/modals/PayProfessorModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
-import { Course, EstadoUsuario, Rol, Usuario } from '@/model/model';
+import { Curso, EstadoUsuario, Rol, Usuario } from '@/model/model';
 import { apiMock } from '@/services/apiMock.service';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
@@ -22,7 +22,7 @@ import {
 export default function AdminScreen() {
   const [activeTab, setActiveTab] = useState<'users' | 'courses'>('users');
   const [users, setUsers] = useState<Usuario[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<Curso[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
@@ -74,14 +74,14 @@ export default function AdminScreen() {
     );
   };
 
-  const handleViewCourseDetails = (course: Course) => {
+  const handleViewCourseDetails = (course: Curso) => {
     Alert.alert(
       'Ver Detalles de Curso',
       `Funcionalidad pendiente para: ${course.nombre}`
     );
   };
 
-  const handleManageStudents = (course: Course) => {
+  const handleManageStudents = (course: Curso) => {
     Alert.alert(
       'Gestionar Alumnos',
       `Funcionalidad pendiente para: ${course.nombre}`
@@ -204,7 +204,7 @@ export default function AdminScreen() {
     </Card>
   );
 
-  const renderCourseItem = (course: Course) => (
+  const renderCourseItem = (course: Curso) => (
     <Card key={course.id} style={styles.listItem}>
       <View style={styles.itemHeader}>
         <View style={styles.courseInfo}>
