@@ -56,7 +56,7 @@ export interface Curso {
   alumnosDadosDeBaja?: Usuario[];
 }
 
-export interface Payment {
+export interface Pago {
   id: number;
   curso: Curso;
   alumno: Usuario;

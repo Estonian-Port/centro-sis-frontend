@@ -1,4 +1,4 @@
-import { EstadoUsuario, Payment, PaymentType, TipoPago } from '@/model/model';
+import { EstadoUsuario, Pago, PaymentType, TipoPago } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
@@ -11,9 +11,11 @@ import {
 } from 'react-native';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
+import {pagoService} from "@/services/pago.service";
+import {useAuth} from "@/context/authContext";
 
 // Mock payments data for student
-const mockStudentPayments: Payment[] = [
+const mockStudentPayments: Pago[] = [
   {
     id: 1,
     curso: {
@@ -92,15 +94,25 @@ const mockStudentPayments: Payment[] = [
 ];
 
 export default function StudentPaymentsScreen() {
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const { selectedRole, usuario } = useAuth();
+  const [payments, setPayments] = useState<Pago[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [listaPagos, setListaPagos] = useState<Pago[]>([]);
 
   const itemsPerPage = 10;
 
   useEffect(() => {
-    loadPayments();
+      const fetchData = async () => {
+          if(usuario != null){
+              let listaPagos = await pagoService.getAllByUsuario(usuario.id);
+              setListaPagos(listaPagos);
+              console.log(listaPagos);
+          }
+      }
+      fetchData();
+      loadPayments();
   }, [currentPage]);
 
   const loadPayments = async () => {
@@ -144,7 +156,7 @@ export default function StudentPaymentsScreen() {
   }
 };
 
-  const renderPaymentItem = (payment: Payment) => (
+  const renderPaymentItem = (payment: Pago) => (
     <Card key={payment.id} style={styles.paymentItem}>
       <View style={styles.paymentHeader}>
         <View style={styles.paymentInfo}>

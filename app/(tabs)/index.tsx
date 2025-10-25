@@ -24,7 +24,6 @@ export default function HomeScreen() {
     const fetchData = async () => {
       if (usuario != null) {
         const listaCursos = await cursoService.getAllByUsuario(usuario.id);
-        console.log(listaCurso)
         setListaCurso(listaCursos);
       }
     };
