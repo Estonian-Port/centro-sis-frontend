@@ -7,7 +7,6 @@ import { useNavigation } from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import {
   Alert,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,8 +16,9 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
-import {router} from "expo-router";
 import { cursoService } from '../../services/curso.service';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { administracionService } from '@/services/administracion.service';
 
     export default function HomeScreen() {
       const { selectedRole, usuario } = useAuth();
@@ -26,6 +26,12 @@ import { cursoService } from '../../services/curso.service';
       const [showCreateUserModal, setShowCreateUserModal] = useState(false);
       const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
       const [curso, setCurso] = useState<Curso>()
+      const [estadisticas, setEstadisticas] = useState({
+        alumnosActivos: 0,
+        cursos: 0,
+        profesores: 0,
+        ingresosMensuales: 0
+      });
 
 
     useEffect(() => {
@@ -34,9 +40,13 @@ import { cursoService } from '../../services/curso.service';
                 let listaCursos = await cursoService.getAllByUsuario(usuario.id);
                 setCurso(listaCursos[0]);
             }
+            if (selectedRole === Rol.ADMINISTRADOR) {
+              const stats = await administracionService.getEstadisticas();
+              setEstadisticas(stats);
+            }
         }
         fetchData();
-    }, [selectedRole]);
+    }, [selectedRole, usuario]);
 
   const handleVerPagos = () => {
     Alert.alert('Ver Pagos', 'Navegando a historial de pagos...');
@@ -182,19 +192,19 @@ import { cursoService } from '../../services/curso.service';
         <Text style={styles.title}>Dashboard - Administrador</Text>
         <View style={styles.statsGrid}>
           <Card style={styles.statCard}>
-            <Text style={styles.statNumber}>156</Text>
+            <Text style={styles.statNumber}>{estadisticas.alumnosActivos}</Text>
             <Text style={styles.statLabel}>Alumnos Activos</Text>
           </Card>
           <Card style={styles.statCard}>
-            <Text style={styles.statNumber}>12</Text>
+            <Text style={styles.statNumber}>{estadisticas.cursos}</Text>
             <Text style={styles.statLabel}>Cursos Activos</Text>
           </Card>
           <Card style={styles.statCard}>
-            <Text style={styles.statNumber}>8</Text>
+            <Text style={styles.statNumber}>{estadisticas.profesores}</Text>
             <Text style={styles.statLabel}>Profesores</Text>
           </Card>
           <Card style={styles.statCard}>
-            <Text style={styles.statNumber}>$2.1M</Text>
+            <Text style={styles.statNumber}>${estadisticas.ingresosMensuales}</Text>
             <Text style={styles.statLabel}>Ingresos Mes</Text>
           </Card>
         </View>

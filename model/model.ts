@@ -5,9 +5,10 @@ export enum Rol {
 }
 
 export enum EstadoUsuario {
-  ALTA = 'ALTA',
+  ACTIVO = 'ACTIVO',
+  INACTIVO = 'INACTIVO',
+  PENDIENTE = 'PENDIENTE',
   BAJA = 'BAJA',
-  SUSPENDIDO = 'SUSPENDIDO'
 }
 
 export enum TipoPago {
@@ -27,6 +28,7 @@ export enum PaymentType {
   TARJETA = 'TARJETA'
 }
 
+// Interace inicial, creada por la IA
 export interface Usuario {
   id: number;
   email: string;
@@ -42,6 +44,20 @@ export interface Usuario {
   primerLogin?: boolean;
 }
 
+// Interface para usar en la lista de usuarios de la vista de administracion
+export interface UsuarioAdministracion {
+  id: number;
+  nombre: string;
+  apellido: string;
+  dni: string;
+  email: string;
+  celular: string;
+  estado: EstadoUsuario;
+  primerLogin: boolean;
+  listaRol: Rol[];
+}
+
+// Interace inicial, creada por la IA
 export interface Curso {
   id: number;
   nombre: string;
@@ -54,6 +70,22 @@ export interface Curso {
   alumnos?: Usuario[];
   alumnosActivos?: Usuario[];
   alumnosDadosDeBaja?: Usuario[];
+}
+
+// Interface para usar en la lista de cursos de la vista de administracion
+export interface CursoAdministracion {
+  id: number;
+  nombre: string;
+  horarios: Horario[];
+  arancel: number;
+  tiposPago: TipoPago[];
+  profesores: string[];
+}
+
+export interface Horario {
+  dia: string;
+  horaInicio: string;
+  horaFin: string;
 }
 
 export interface Payment {
@@ -84,4 +116,11 @@ export interface PaginatedResponse<T> {
   totalPages: number;
   page: number;
   size: number;
+}
+
+export interface Estadistica {
+  alumnosActivos: number;
+  cursos: number;
+  profesores: number;
+  ingresosMensuales: number;
 }
