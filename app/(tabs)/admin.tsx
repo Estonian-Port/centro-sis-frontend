@@ -4,13 +4,14 @@ import { PayProfessorModal } from '@/components/modals/PayProfessorModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
-import { Curso, EstadoUsuario, Rol, Usuario } from '@/model/model';
-import { apiMock } from '@/services/apiMock.service';
+import { useAuth } from '@/context/authContext';
+import { CursoAdministracion, EstadoUsuario, Rol, Usuario, UsuarioAdministracion } from '@/model/model';
+import { cursoService } from '@/services/curso.service';
+import { usuarioService } from '@/services/usuario.service';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
     Alert,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
@@ -18,11 +19,13 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AdminScreen() {
+  const {usuario} = useAuth();
   const [activeTab, setActiveTab] = useState<'users' | 'courses'>('users');
-  const [users, setUsers] = useState<Usuario[]>([]);
-  const [courses, setCourses] = useState<Curso[]>([]);
+  const [users, setUsers] = useState<UsuarioAdministracion[]>([]);
+  const [courses, setCourses] = useState<CursoAdministracion[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
@@ -51,10 +54,10 @@ export default function AdminScreen() {
   };
 
   const handleToggleUserStatus = async (user: Usuario) => {
-    const newStatus = user.estado === EstadoUsuario.ALTA ? EstadoUsuario.BAJA : EstadoUsuario.ALTA;
+    const newStatus = user.estado === EstadoUsuario.ACTIVO ? EstadoUsuario.INACTIVO : EstadoUsuario.ACTIVO;
     Alert.alert(
       'Cambiar Estado',
-      `¿Estás seguro de ${newStatus === EstadoUsuario.ALTA ? 'dar de alta' : 'dar de baja'} a ${user.nombre} ${user.apellido}?`,
+      `¿Estás seguro de ${newStatus === EstadoUsuario.ACTIVO ? 'dar de alta' : 'dar de baja'} a ${user.nombre} ${user.apellido}?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -65,7 +68,7 @@ export default function AdminScreen() {
               // await apiMock.updateUserStatus(user.id, newStatus);
               Alert.alert('Éxito', 'Estado actualizado correctamente');
               loadUsers();
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'No se pudo actualizar el estado');
             }
           }
@@ -74,14 +77,14 @@ export default function AdminScreen() {
     );
   };
 
-  const handleViewCourseDetails = (course: Curso) => {
+  const handleViewCourseDetails = (course: CursoAdministracion) => {
     Alert.alert(
       'Ver Detalles de Curso',
       `Funcionalidad pendiente para: ${course.nombre}`
     );
   };
 
-  const handleManageStudents = (course: Curso) => {
+  const handleManageStudents = (course: CursoAdministracion) => {
     Alert.alert(
       'Gestionar Alumnos',
       `Funcionalidad pendiente para: ${course.nombre}`
@@ -109,17 +112,12 @@ export default function AdminScreen() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const response = await apiMock.getUsers({
-        q: searchQuery,
-      });
-
-      const mappedContent: Usuario[] = response.content.map((user: any) => ({
-        ...user,
-        roles: user.roles as Rol[],
-      }));
-
-      setUsers(mappedContent);
-    } catch (error) {
+      if (!usuario) {
+        throw new Error('Usuario no autenticado');
+      }
+      const response = await usuarioService.getAllUsuarios(usuario.id);
+      setUsers(response);
+    } catch {
       Alert.alert('Error', 'Error al cargar usuarios');
     }
     setLoading(false);
@@ -128,30 +126,15 @@ export default function AdminScreen() {
   const loadCourses = async () => {
     setLoading(true);
     try {
-      const response = await apiMock.getCourses({
-        q: searchQuery,
-      });
-
-      const mappedCourses = response.content.map((course: any) => ({
-        ...course,
-        profesor: course.profesor
-          ? {
-              ...course.profesor,
-              email: course.profesor.email ?? '',
-              roles: (course.profesor.roles as Rol[]) ?? [],
-              estado: course.profesor.estado ?? EstadoUsuario.ALTA,
-            }
-          : undefined,
-      }));
-
-      setCourses(mappedCourses);
-    } catch (error) {
+      const response = await cursoService.getAllCursos();
+      setCourses(response);
+    } catch {
       Alert.alert('Error', 'Error al cargar cursos');
     }
     setLoading(false);
   };
 
-  const renderUserItem = (user: Usuario) => (
+  const renderUserItem = (user: UsuarioAdministracion) => (
     <Card key={user.id} style={styles.listItem}>
       <View style={styles.itemHeader}>
         <View style={styles.userInfo}>
@@ -163,7 +146,7 @@ export default function AdminScreen() {
         </View>
         <Tag
           label={user.estado}
-          variant={user.estado === EstadoUsuario.ALTA ? 'success' : 'error'}
+          variant={user.estado === EstadoUsuario.ACTIVO ? 'success' : 'error'}
         />
       </View>
 
@@ -186,8 +169,8 @@ export default function AdminScreen() {
           onPress={() => handleViewUserDetails(user)}
         />
         <Button
-          title={user.estado === EstadoUsuario.ALTA ? 'Dar de Baja' : 'Dar de Alta'}
-          variant={user.estado === EstadoUsuario.ALTA ? 'danger' : 'primary'}
+          title={user.estado === EstadoUsuario.ACTIVO ? 'Dar de Baja' : 'Dar de Alta'}
+          variant={user.estado === EstadoUsuario.ACTIVO ? 'danger' : 'primary'}
           size="small"
           onPress={() => handleToggleUserStatus(user)}
         />
@@ -204,25 +187,28 @@ export default function AdminScreen() {
     </Card>
   );
 
-  const renderCourseItem = (course: Curso) => (
+  const renderCourseItem = (course: CursoAdministracion) => (
     <Card key={course.id} style={styles.listItem}>
       <View style={styles.itemHeader}>
         <View style={styles.courseInfo}>
           <Text style={styles.courseName}>{course.nombre}</Text>
+          {course.horarios.map((horario, index) => (
+            <Text key={index} style={styles.courseDetail}>
+              {horario.dia}: {horario.horaInicio} - {horario.horaFin}
+            </Text>
+          ))}
           <Text style={styles.courseDetail}>
-            {course.dias.join(', ')} - {course.horario}
-          </Text>
-          <Text style={styles.courseDetail}>
-            Profesor: {course.profesor?.nombre} {course.profesor?.apellido}
+            Profesor: {course.profesores.length > 0 ? course.profesores.join(', ') : 'Sin asignar'}
           </Text>
           <Text style={styles.courseDetail}>
             Arancel: ${course.arancel.toLocaleString()}
           </Text>
         </View>
-        <Tag
+        {/* <Tag
           label={course.estado}
           variant={course.estado === EstadoUsuario.ALTA ? 'success' : 'error'}
         />
+        */}
       </View>
 
       <View style={styles.itemActions}>

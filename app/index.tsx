@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAuth } from '@/context/authContext';
 import { router } from 'expo-router';
+import { TIPOGRAFIA } from '@/util/tipografia';
 
 export default function RootIndex() {
   const { isAuthenticated, isLoading, usuario } = useAuth();
@@ -34,7 +35,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    marginTop: 10,
-    fontSize: 16,
+    ...TIPOGRAFIA.titleL,
   },
 });

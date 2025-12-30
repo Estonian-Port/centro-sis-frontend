@@ -1,94 +1,72 @@
-import { LoginForm } from '@/components/forms/loginForm';
-import { Card } from '@/components/ui/Card';
-import { useAuth } from '@/context/authContext';
-import { Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-
+import { LoginForm } from "@/components/forms/loginForm";
+import { Card } from "@/components/ui/Card";
+import { useAuth } from "@/context/authContext";
+import { Platform, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { TIPOGRAFIA } from "@/util/tipografia";
+import { COLORES } from "@/util/colores";
+import { LinearGradient } from "expo-linear-gradient";
+import { Logo } from "@/components/ui/Logo";
 
 export default function LoginScreen() {
-  
   const { usuario, isLoading, isAuthenticated } = useAuth();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Centro-sis</Text>
-          <Text style={styles.subtitle}>Sistema de Gestión Educativa</Text>
-        </View>
-        <Card style={styles.loginCard}>
-          <Text style={styles.cardTitle}>Iniciar Sesión</Text>
-          <LoginForm />
-        </Card>
-        {process.env.EXPO_PUBLIC_MOCK_MODE === 'true' && (
-          <Card style={styles.demoCard}>
-            <Text style={styles.demoTitle}>Modo Demo</Text>
-            <Text style={styles.demoText}>
-              Credenciales de prueba:
-              {'\n'}• Alumno: alumno@test.com / 123456
-              {'\n'}• Profesor: profesor@test.com / 123456
-              {'\n'}• Admin: admin@test.com / 123456
-              {'\n'}• Profesor y Alumno: profesoralumno@test.com / 123456
-              {'\n'}• Todos: completo@test.com / 123456
-            </Text>
+    <LinearGradient
+      colors={[COLORES.gris_alt, COLORES.gris_alt, COLORES.violeta]}
+      style={styles.container}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+    >
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Logo size={200} color={COLORES.violeta} />
+            <Text style={styles.title}>CENTRO SIS</Text>
+            <Text style={styles.subtitle}>Sistema de Gestión Educativa</Text>
+          </View>
+          <Card style={styles.loginCard}>
+            <LoginForm />
           </Card>
-        )}
-      </View>
-    </SafeAreaView>
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingHorizontal: 20,
-    maxWidth: Platform.OS === 'web' ? 400 : '100%',
-    alignSelf: 'center',
-    width: '100%',
+    maxWidth: Platform.OS === "web" ? 400 : "100%",
+    alignSelf: "center",
+    width: "100%",
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 32,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 8,
+    ...TIPOGRAFIA.titleXL,
+    color: COLORES.violeta,
+    textAlign: "center",
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
+    ...TIPOGRAFIA.subtitle,
+    color: COLORES.violeta,
+    textAlign: "center",
+  },
+  cardTitle: {
+    ...TIPOGRAFIA.titleL,
+    color: COLORES.textPrimary,
+    textAlign: "center",
+    marginBottom: 24,
   },
   loginCard: {
     marginBottom: 20,
-  },
-  cardTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#1f2937',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  demoCard: {
-    backgroundColor: '#fef3c7',
-    borderColor: '#f59e0b',
-    borderWidth: 1,
-  },
-  demoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#92400e',
-    marginBottom: 8,
-  },
-  demoText: {
-    fontSize: 14,
-    color: '#92400e',
-    lineHeight: 20,
   },
 });

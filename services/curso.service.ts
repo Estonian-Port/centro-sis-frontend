@@ -1,13 +1,24 @@
 import api from "@/helper/auth.interceptor";
-import {Curso} from "@/model/model";
+import {CursoAdministracion, CursoAlumno, CursoProfesor} from "@/model/model";
 
 const CURSO = '/curso';
 
 class CursoService {
-    getAllByUsuario = async (id: number): Promise<Curso[]> => {
-    const response = await api.get(`${CURSO}/getAllByUsuarioId/${id}`);
+    getAllByAlumno = async (id: number): Promise<CursoAlumno[]> => {
+    const response = await api.get(`${CURSO}/getAllByAlumnoId/${id}`);
     return response.data.data;
   };
+
+  getAllByProfesor = async (id: number): Promise<CursoProfesor[]> => {
+    const response = await api.get(`${CURSO}/getAllByProfesorId/${id}`);
+    return response.data.data;
+  }
+
+  getAllCursos = async (): Promise<CursoAdministracion[]> => {
+    const response = await api.get(`${CURSO}/all`);
+    return response.data.data;
+  };
+
 }
 
 export const cursoService = new CursoService();
