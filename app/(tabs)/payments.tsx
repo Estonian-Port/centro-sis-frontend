@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
@@ -15,6 +14,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
 import { Curso, EstadoUsuario, Rol, Usuario } from '../../model/model';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PaymentsScreen() {
   const [step, setStep] = useState<1 | 2 | 3>(1);

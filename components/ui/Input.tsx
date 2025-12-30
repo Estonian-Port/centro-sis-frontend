@@ -1,3 +1,4 @@
+import { NOTO } from '@/app/_layout';
 import React from 'react';
 import {
   View,
@@ -6,12 +7,14 @@ import {
   StyleSheet,
   TextInputProps,
   ViewStyle,
+  TextStyle,
 } from 'react-native';
 
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
   containerStyle?: ViewStyle;
+  labelStyle?: TextStyle;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -19,11 +22,12 @@ export const Input: React.FC<InputProps> = ({
   error,
   containerStyle,
   style,
+  labelStyle,
   ...props
 }) => {
   return (
     <View style={[styles.container, containerStyle]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
       <TextInput
         style={[styles.input, error && styles.inputError, style]}
         {...props}
