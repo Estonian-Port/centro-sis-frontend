@@ -145,7 +145,7 @@ export interface Horario {
   horaFin: string;
 }
 
-export interface Payment {
+export interface Pago {
   id: number;
   curso: Curso;
   alumno: Usuario;

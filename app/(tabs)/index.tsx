@@ -217,14 +217,8 @@ export default function HomeScreen() {
         <Card>
           <Text style={styles.cardTitle}>Resumen del Mes</Text>
           <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>20</Text>
-              <Text style={styles.statLabel}>Alumnos</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>85%</Text>
-              <Text style={styles.statLabel}>Asistencia</Text>
-            </View>
+            <StatRow number={20} label="Alumnos" />
+            <StatRow number="85%" label="Asistencia" />
           </View>
         </Card>
       </SafeAreaView>
@@ -276,12 +270,18 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={styles.actionItem}
             onPress={handleGestionarUsuarios}
-          >
-            <Ionicons name="people-outline" size={20} color="#3b82f6" />
-            <Text style={styles.actionText}>Gestionar Usuarios</Text>
-            <Ionicons name="chevron-forward" size={20} color="#6b7280" />
-          </TouchableOpacity>
+          />
         </Card>
+        <CreateUserModal
+          visible={showCreateUserModal}
+          onClose={() => setShowCreateUserModal(false)}
+          onSuccess={handleModalSuccess}
+        />
+        <CreateCourseModal
+          visible={showCreateCourseModal}
+          onClose={() => setShowCreateCourseModal(false)}
+          onSuccess={handleModalSuccess}
+        />
       </SafeAreaView>
 
       <CreateUserModal
@@ -313,11 +313,7 @@ export default function HomeScreen() {
       case Rol.ADMINISTRADOR:
         return renderAdminView();
       default:
-        return (
-          <View style={styles.emptyState}>
-            <Text>Selecciona un rol para continuar</Text>
-          </View>
-        );
+        return <View style={styles.emptyState}><Text>Selecciona un rol</Text></View>;
     }
   };
 
