@@ -11,5 +11,6 @@ export const COLORES = {
 
   textPrimary: "#1f2937",
   textSecondary: "#6b7280",
+  resaltado:"#85409D",
   background: "#F5F5F5",
 };

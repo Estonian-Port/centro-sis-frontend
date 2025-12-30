@@ -1,7 +1,8 @@
 export enum Rol {
   ALUMNO = 'ALUMNO',
   PROFESOR = 'PROFESOR',
-  ADMINISTRADOR = 'ADMINISTRADOR'
+  ADMINISTRADOR = 'ADMINISTRADOR',
+  OFICINA = 'OFICINA'
 }
 
 export enum EstadoUsuario {
@@ -15,6 +16,7 @@ export enum EstadoCurso {
   ACTIVO = 'ACTIVO',
   INACTIVO = 'INACTIVO',
   FINALIZADO = 'FINALIZADO',
+  PENDIENTE = 'PENDIENTE',
 }
 
 export enum TipoPago {

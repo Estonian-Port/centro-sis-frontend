@@ -24,6 +24,11 @@ import { Tag } from "../../components/ui/Tag";
 import { cursoService } from "../../services/curso.service";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { administracionService } from "@/services/administracion.service";
+import { COLORES } from "@/util/colores";
+import { TIPOGRAFIA } from "@/util/tipografia";
+import { StatRow } from "@/components/cards/stats/StatRow";
+import { usuarioService } from "@/services/usuario.service";
+import { CalendarioProfesor } from "../calendario";
 
 export default function HomeScreen() {
   const { selectedRole, usuario } = useAuth();
@@ -46,7 +51,7 @@ export default function HomeScreen() {
         setCurso(listaCursos[0]);
       }
       if (usuario != null && selectedRole === Rol.PROFESOR) {
-        let listaCursos = await cursoService.getAllByProfesor(usuario.id);
+        let listaCursos = await usuarioService.getAllByProfesor(usuario.id);
         setCursoProfesor(listaCursos);
       }
       if (selectedRole === Rol.ADMINISTRADOR) {
@@ -178,57 +183,121 @@ export default function HomeScreen() {
     </ScrollView>
   );
 
-  const renderProfesorView = () => (
-    <ScrollView style={styles.container}>
-      <SafeAreaView>
-        <Text style={styles.title}>Dashboard - Profesor</Text>
-        {cursoProfesor.map((curso) => (
-          <Card key={curso.id}>
-            <Text style={styles.cardTitle}>Mis Cursos</Text>
+  const renderProfesorView = () => {
+    const [vistaActual, setVistaActual] = useState<"lista" | "calendario">(
+      "lista"
+    );
+
+    return (
+      <ScrollView style={styles.container}>
+        <SafeAreaView>
+          <Text style={styles.title}>Mis Cursos</Text>
+          {/* Toggle entre vistas */}
+          <View style={styles.vistaToggle}>
             <TouchableOpacity
-              style={styles.courseItem}
-              onPress={() => handleVerCursoDetalle("Matemáticas Básicas", 12)}
+              style={[
+                styles.toggleButton,
+                vistaActual === "lista" && styles.toggleButtonActive,
+              ]}
+              onPress={() => setVistaActual("lista")}
             >
-              <View>
-                <Text style={styles.courseName}>{curso.nombre}</Text>
-                <Text style={styles.courseInfo}>
-                  {curso.alumnosInscriptos} alumnos activos
-                </Text>
-                <Text style={styles.courseInfo}>
-                  {curso?.horarios.map((h) => h.dia).join(", ")}
-                </Text>
-                <Text style={styles.courseInfo}>
-                  {curso.horarios
-                    .map((h) => `${h.horaInicio} - ${h.horaFin}`)
-                    .join(", ")}
-                </Text>
-                <Text style={styles.courseInfo}>
-                  Inicio del curso: {curso.fechaInicio}
-                </Text>
-                <Text style={styles.courseInfo}>
-                  Fin del curso: {curso.fechaFin}
-                </Text>
-                <Text style={styles.courseInfo}>{curso.estado}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#6b7280" />
+              <Ionicons
+                name="list"
+                size={20}
+                color={
+                  vistaActual === "lista"
+                    ? COLORES.blanco
+                    : COLORES.textSecondary
+                }
+              />
             </TouchableOpacity>
-          </Card>
-        ))}
-        <Card>
-          <Text style={styles.cardTitle}>Resumen del Mes</Text>
-          <View style={styles.statsRow}>
-            <StatRow number={20} label="Alumnos" />
-            <StatRow number="85%" label="Asistencia" />
+
+            <TouchableOpacity
+              style={[
+                styles.toggleButton,
+                vistaActual === "calendario" && styles.toggleButtonActive,
+              ]}
+              onPress={() => setVistaActual("calendario")}
+            >
+              <Ionicons
+                name="calendar"
+                size={20}
+                color={
+                  vistaActual === "calendario"
+                    ? COLORES.blanco
+                    : COLORES.textSecondary
+                }
+              />
+            </TouchableOpacity>
           </View>
-        </Card>
-      </SafeAreaView>
-    </ScrollView>
-  );
+
+          {vistaActual === "lista" ? (
+            <>
+              {cursoProfesor.map((curso) => (
+                <Card key={curso.id}>
+                  <Text style={styles.cardTitle}>{curso.nombre}</Text>
+                  <TouchableOpacity
+                    style={styles.courseItem}
+                    onPress={() =>
+                      handleVerCursoDetalle("Matemáticas Básicas", 12)
+                    }
+                  >
+                    <View>
+                      <Text style={styles.courseName}>{curso.nombre}</Text>
+                      <Text style={styles.courseInfo}>
+                        {curso.alumnosInscriptos} alumnos activos
+                      </Text>
+                      <Text style={styles.courseInfo}>
+                        {curso?.horarios.map((h) => h.dia).join(", ")}
+                      </Text>
+                      <Text style={styles.courseInfo}>
+                        {curso.horarios
+                          .map((h) => `${h.horaInicio} - ${h.horaFin}`)
+                          .join(", ")}
+                      </Text>
+                      <Text style={styles.courseInfo}>
+                        Inicio del curso: {curso.fechaInicio}
+                      </Text>
+                      <Text style={styles.courseInfo}>
+                        Fin del curso: {curso.fechaFin}
+                      </Text>
+                      <Text style={styles.courseInfo}>{curso.estado}</Text>
+                    </View>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={20}
+                      color="#6b7280"
+                    />
+                  </TouchableOpacity>
+                </Card>
+              ))}
+            </>
+          ) : (
+            // Vista de calendario
+            <CalendarioProfesor
+              cursos={cursoProfesor}
+              onCursoPress={(curso) =>
+                handleVerCursoDetalle(curso.nombre, curso.id)
+              }
+            />
+          )}
+
+          <Card>
+            <Text style={styles.cardTitle}>Resumen del Mes</Text>
+            <View style={styles.statsRow}>
+              <StatRow number={20} label="Alumnos" />
+              <StatRow number="85%" label="Asistencia" />
+            </View>
+          </Card>
+        </SafeAreaView>
+      </ScrollView>
+    );
+  };
 
   const renderAdminView = () => (
     <ScrollView style={styles.container}>
       <SafeAreaView>
-        <Text style={styles.title}>Dashboard - Administrador</Text>
+        <Text style={styles.title}>Dashboard</Text>
         <View style={styles.statsGrid}>
           <Card style={styles.statCard}>
             <Text style={styles.statNumber}>{estadisticas.alumnosActivos}</Text>
@@ -255,22 +324,50 @@ export default function HomeScreen() {
             style={styles.actionItem}
             onPress={handleCrearUsuario}
           >
-            <Ionicons name="person-add-outline" size={20} color="#3b82f6" />
+            <Ionicons
+              name="person-add-outline"
+              size={20}
+              color={COLORES.resaltado}
+            />
             <Text style={styles.actionText}>Crear Usuario</Text>
-            <Ionicons name="chevron-forward" size={20} color="#6b7280" />
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORES.resaltado}
+            />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionItem}
             onPress={handleCrearCurso}
           >
-            <Ionicons name="library-outline" size={20} color="#3b82f6" />
+            <Ionicons
+              name="library-outline"
+              size={20}
+              color={COLORES.resaltado}
+            />
             <Text style={styles.actionText}>Crear Curso</Text>
-            <Ionicons name="chevron-forward" size={20} color="#6b7280" />
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORES.resaltado}
+            />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionItem}
             onPress={handleGestionarUsuarios}
-          />
+          >
+            <Ionicons
+              name="people-outline"
+              size={20}
+              color={COLORES.resaltado}
+            />
+            <Text style={styles.actionText}>Gestionar Usuarios</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORES.resaltado}
+            />
+          </TouchableOpacity>
         </Card>
         <CreateUserModal
           visible={showCreateUserModal}
@@ -313,7 +410,11 @@ export default function HomeScreen() {
       case Rol.ADMINISTRADOR:
         return renderAdminView();
       default:
-        return <View style={styles.emptyState}><Text>Selecciona un rol</Text></View>;
+        return (
+          <View style={styles.emptyState}>
+            <Text>Selecciona un rol</Text>
+          </View>
+        );
     }
   };
 
@@ -323,19 +424,17 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
+    backgroundColor: COLORES.background,
     padding: 16,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1f2937",
+    ...TIPOGRAFIA.titleL,
+    color: COLORES.textPrimary,
     marginBottom: 20,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1f2937",
+    ...TIPOGRAFIA.titleL,
+    color: COLORES.textPrimary,
     marginBottom: 16,
   },
   courseCard: {
@@ -405,8 +504,8 @@ const styles = StyleSheet.create({
     borderBottomColor: "#e5e7eb",
   },
   courseInfo: {
-    fontSize: 14,
-    color: "#6b7280",
+    ...TIPOGRAFIA.body,
+    color: COLORES.textSecondary,
     marginTop: 4,
   },
   statsGrid: {
@@ -429,14 +528,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   statNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#3b82f6",
+    ...TIPOGRAFIA.titleL,
+    color: COLORES.resaltado,
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 14,
-    color: "#6b7280",
+    ...TIPOGRAFIA.titleM,
+    color: COLORES.resaltado,
   },
   actionItem: {
     flexDirection: "row",
@@ -448,8 +546,8 @@ const styles = StyleSheet.create({
   actionText: {
     flex: 1,
     marginLeft: 12,
-    fontSize: 16,
-    color: "#374151",
+    ...TIPOGRAFIA.subtitle,
+    color: COLORES.textPrimary,
   },
   emptyState: {
     flex: 1,
@@ -472,5 +570,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#6b7280",
     textAlign: "center",
+  },
+  headerConToggle: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  vistaToggle: {
+    flexDirection: "row",
+    backgroundColor: COLORES.background,
+    borderRadius: 8,
+    padding: 2,
+  },
+  toggleButton: {
+    padding: 8,
+    borderRadius: 6,
+  },
+  toggleButtonActive: {
+    backgroundColor: COLORES.violeta,
   },
 });

@@ -9,11 +9,6 @@ class CursoService {
     return response.data.data;
   };
 
-  getAllByProfesor = async (id: number): Promise<CursoProfesor[]> => {
-    const response = await api.get(`${CURSO}/getAllByProfesorId/${id}`);
-    return response.data.data;
-  }
-
   getAllCursos = async (): Promise<CursoAdministracion[]> => {
     const response = await api.get(`${CURSO}/all`);
     return response.data.data;

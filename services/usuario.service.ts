@@ -1,5 +1,5 @@
 import api from "@/helper/auth.interceptor";
-import {UsuarioAdministracion} from "@/model/model";
+import {CursoProfesor, UsuarioAdministracion} from "@/model/model";
 
 const USER = '/usuario';
 
@@ -9,6 +9,11 @@ class UsuarioService {
     const response = await api.get(`${USER}/all/${id}`);
     return response.data.data;
   };
+
+  getAllByProfesor = async (id: number): Promise<CursoProfesor[]> => {
+    const response = await api.get(`${USER}/cursos-profesor/${id}`);
+    return response.data.data;
+  }
 
 }
 
