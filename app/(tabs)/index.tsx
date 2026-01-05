@@ -2,9 +2,7 @@ import { CreateCourseModal } from "@/components/modals/CreateCourseModal";
 import { CreateUserModal } from "@/components/modals/CreateUserModal";
 import { useAuth } from "@/context/authContext";
 import {
-  nuevoCursoAlquiler,
   CursoAlumno,
-  nuevoCursoComision,
   CursoInformacion,
   formatEstadoPago,
   NuevoUsuario,
@@ -100,6 +98,25 @@ export default function HomeScreen() {
   const handleGestionarUsuarios = () => {
     // @ts-ignore - Navigation types
     navigation.navigate("Admin");
+  };
+
+  const altaUsuario = async (nuevoUsuario: NuevoUsuario) => {
+    try {
+      const response = await usuarioService.altaUsuario(nuevoUsuario);
+      Toast.show({
+        type: "success",
+        text1: "Invitación enviada",
+        text2: `La invitación ha sido enviada a ${nuevoUsuario.email}.`,
+        position: "bottom",
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "No se pudo crear el usuario.",
+        position: "bottom",
+      });
+    }
   };
 
   const renderAlumnoView = () => (
@@ -355,11 +372,7 @@ export default function HomeScreen() {
             style={styles.actionItem}
             onPress={handleGestionarUsuarios}
           >
-            <Ionicons
-              name="apps-outline"
-              size={20}
-              color={COLORES.resaltado}
-            />
+            <Ionicons name="apps-outline" size={20} color={COLORES.resaltado} />
             <Text style={styles.actionText}>Ver Usuarios y Cursos</Text>
             <Ionicons
               name="chevron-forward"
@@ -371,6 +384,7 @@ export default function HomeScreen() {
         <CreateUserModal
           visible={showCreateUserModal}
           onClose={() => setShowCreateUserModal(false)}
+          onSuccess={(nuevoUsuario: NuevoUsuario) => altaUsuario(nuevoUsuario)}
         />
         <CreateCourseModal
           visible={showCreateCourseModal}
@@ -400,7 +414,7 @@ export default function HomeScreen() {
   return renderContent();
 }
 
- const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORES.background,

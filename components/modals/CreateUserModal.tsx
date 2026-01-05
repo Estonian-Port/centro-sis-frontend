@@ -16,8 +16,8 @@ import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Input } from "../ui/Input";
 import { NuevoUsuario } from "@/model/model";
-import { Toast } from "react-native-toast-message/lib/src/Toast";
 import { usuarioService } from "@/services/usuario.service";
+import Toast from "react-native-toast-message";
 
 const schema = yup.object().shape({
   email: yup.string().email("Email inválido").required("El email es requerido"),
@@ -30,6 +30,7 @@ const schema = yup.object().shape({
 interface CreateUserModalProps {
   visible: boolean;
   onClose: () => void;
+  onSuccess: (nuevoUsuario: NuevoUsuario) => Promise<void>;
 }
 
 const availableRoles = [
@@ -42,6 +43,7 @@ const availableRoles = [
 export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   visible,
   onClose,
+  onSuccess,
 }) => {
   const {
     control,
@@ -68,25 +70,27 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     setValue("roles", newRoles);
   };
 
-    const invitacionNuevoUsuario = async (nuevoUsuario: NuevoUsuario) => {
-      try {
-        const response = await usuarioService.altaUsuario(nuevoUsuario);
-        Toast.show({
-          type: "success",
-          text1: "Invitación enviada",
-          text2: `La invitación ha sido enviada a ${nuevoUsuario.email}.`,
-        });
-      } catch (error) {
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: "No se pudo crear el usuario.",
-        });
-      }
-    };
+  const invitacionNuevoUsuario = async (nuevoUsuario: NuevoUsuario) => {
+    try {
+      const response = await usuarioService.altaUsuario(nuevoUsuario);
+      Toast.show({
+        type: "success",
+        text1: "Invitación enviada",
+        text2: `La invitación ha sido enviada a ${nuevoUsuario.email}.`,
+        position: "bottom",
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "No se pudo crear el usuario.",
+        position: "bottom",
+      });
+    }
+  };
 
   const onSubmit = async (data: NuevoUsuario) => {
-    await invitacionNuevoUsuario(data);
+    await onSuccess(data);
     reset();
     onClose();
   };

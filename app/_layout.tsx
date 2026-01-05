@@ -3,6 +3,7 @@ import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { useFonts } from 'expo-font';
+import Toast from 'react-native-toast-message';
 
 export const Barlow = {
   regular: 'Barlow-Regular',
@@ -29,6 +30,7 @@ export default function RootLayout() {
     <AuthProvider>
       <Stack screenOptions={{ headerShown: false }} />
       <StatusBar style="auto" />
+      <Toast />
     </AuthProvider>
   );
 }

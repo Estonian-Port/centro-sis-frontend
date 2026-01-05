@@ -368,12 +368,14 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
           type: "success",
           text1: "Curso creado exitosamente",
           text2: `El curso ha sido creado correctamente.`,
+          position: "bottom",
         });
       } catch (error) {
         Toast.show({
           type: "error",
           text1: "Error",
           text2: "No se pudo crear el curso.",
+          position: "bottom",
         });
       }
     };

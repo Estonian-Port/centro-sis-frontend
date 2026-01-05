@@ -8,6 +8,7 @@ import { useAuth } from "@/context/authContext";
 import {
   CursoInformacion,
   EstadoUsuario,
+  NuevoUsuario,
   Rol,
   Usuario,
   UsuarioAdministracion,
@@ -30,6 +31,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { CalendarioProfesor } from "../calendario";
 import { COLORES } from "@/util/colores";
 import { TIPOGRAFIA } from "@/util/tipografia";
+import Toast from "react-native-toast-message";
 
 export default function AdminScreen() {
   const { usuario } = useAuth();
@@ -61,6 +63,25 @@ export default function AdminScreen() {
   const handleViewUserDetails = (user: Usuario) => {
     setSelectedUser(user);
     setShowModalDetailsUser(true);
+  };
+
+  const altaUsuario = async (nuevoUsuario: NuevoUsuario) => {
+    try {
+      const response = await usuarioService.altaUsuario(nuevoUsuario);
+      Toast.show({
+        type: "success",
+        text1: "Invitación enviada",
+        text2: `La invitación ha sido enviada a ${nuevoUsuario.email}.`,
+        position: "bottom",
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "No se pudo crear el usuario.",
+        position: "bottom",
+      });
+    }
   };
 
   const handleToggleUserStatus = async (user: Usuario) => {
@@ -293,62 +314,59 @@ export default function AdminScreen() {
       <ScrollView style={styles.content}>
         {activeTab === "users" && users.map(renderUserItem)}
         {activeTab === "courses" && (
-                  <SafeAreaView>
-                    <Text style={styles.title}>Mis Cursos</Text>
-                    {/* Toggle entre vistas */}
-                    <View style={styles.vistaToggle}>
-                      <TouchableOpacity
-                        style={[
-                          styles.toggleButton,
-                          vistaActual === "lista" && styles.toggleButtonActive,
-                        ]}
-                        onPress={() => setVistaActual("lista")}
-                      >
-                        <Ionicons
-                          name="list"
-                          size={20}
-                          color={
-                            vistaActual === "lista"
-                              ? COLORES.blanco
-                              : COLORES.textSecondary
-                          }
-                        />
-                      </TouchableOpacity>
-          
-                      <TouchableOpacity
-                        style={[
-                          styles.toggleButton,
-                          vistaActual === "calendario" && styles.toggleButtonActive,
-                        ]}
-                        onPress={() => setVistaActual("calendario")}
-                      >
-                        <Ionicons
-                          name="calendar"
-                          size={20}
-                          color={
-                            vistaActual === "calendario"
-                              ? COLORES.blanco
-                              : COLORES.textSecondary
-                          }
-                        />
-                      </TouchableOpacity>
-                    </View>
-          
-                    {vistaActual === "lista" ? (
-                      <>
-                        {courses.map(renderCourseItem)}
-                      </>
-                    ) : (
-                      // Vista de calendario
-                      <CalendarioProfesor
-                        cursos={courses}
-                        onCursoPress={(selectedCourse) =>
-                          handleViewCourseDetails(selectedCourse)
-                        }
-                      />
-                    )}
-        
-                  </SafeAreaView>
+          <SafeAreaView>
+            <Text style={styles.title}>Mis Cursos</Text>
+            {/* Toggle entre vistas */}
+            <View style={styles.vistaToggle}>
+              <TouchableOpacity
+                style={[
+                  styles.toggleButton,
+                  vistaActual === "lista" && styles.toggleButtonActive,
+                ]}
+                onPress={() => setVistaActual("lista")}
+              >
+                <Ionicons
+                  name="list"
+                  size={20}
+                  color={
+                    vistaActual === "lista"
+                      ? COLORES.blanco
+                      : COLORES.textSecondary
+                  }
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.toggleButton,
+                  vistaActual === "calendario" && styles.toggleButtonActive,
+                ]}
+                onPress={() => setVistaActual("calendario")}
+              >
+                <Ionicons
+                  name="calendar"
+                  size={20}
+                  color={
+                    vistaActual === "calendario"
+                      ? COLORES.blanco
+                      : COLORES.textSecondary
+                  }
+                />
+              </TouchableOpacity>
+            </View>
+
+            {vistaActual === "lista" ? (
+              <>{courses.map(renderCourseItem)}</>
+            ) : (
+              // Vista de calendario
+              <CalendarioProfesor
+                cursos={courses}
+                onCursoPress={(selectedCourse) =>
+                  handleViewCourseDetails(selectedCourse)
+                }
+              />
+            )}
+          </SafeAreaView>
         )}
 
         {((activeTab === "users" && users.length === 0) ||
@@ -370,10 +388,8 @@ export default function AdminScreen() {
 
       <CreateUserModal
         visible={showCreateUserModal}
-        onClose={() => {
-          console.log("Closing create user modal");
-          setShowCreateUserModal(false);
-        }}
+        onClose={() => setShowCreateUserModal(false)}
+        onSuccess={(nuevoUsuario: NuevoUsuario) => altaUsuario(nuevoUsuario)}
       />
 
       <CreateCourseModal
@@ -529,7 +545,7 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
     marginTop: 12,
   },
-    vistaToggle: {
+  vistaToggle: {
     flexDirection: "row",
     backgroundColor: COLORES.background,
     borderRadius: 8,
