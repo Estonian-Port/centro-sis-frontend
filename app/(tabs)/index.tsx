@@ -2,9 +2,12 @@ import { CreateCourseModal } from "@/components/modals/CreateCourseModal";
 import { CreateUserModal } from "@/components/modals/CreateUserModal";
 import { useAuth } from "@/context/authContext";
 import {
+  nuevoCursoAlquiler,
   CursoAlumno,
-  CursoProfesor,
+  nuevoCursoComision,
+  CursoInformacion,
   formatEstadoPago,
+  NuevoUsuario,
   Rol,
 } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,6 +32,7 @@ import { TIPOGRAFIA } from "@/util/tipografia";
 import { StatRow } from "@/components/cards/stats/StatRow";
 import { usuarioService } from "@/services/usuario.service";
 import { CalendarioProfesor } from "../calendario";
+import Toast from "react-native-toast-message";
 
 export default function HomeScreen() {
   const { selectedRole, usuario } = useAuth();
@@ -36,7 +40,7 @@ export default function HomeScreen() {
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
   const [curso, setCurso] = useState<CursoAlumno>();
-  const [cursoProfesor, setCursoProfesor] = useState<CursoProfesor[]>([]);
+  const [cursoProfesor, setCursoProfesor] = useState<CursoInformacion[]>([]);
   const [estadisticas, setEstadisticas] = useState({
     alumnosActivos: 0,
     cursos: 0,
@@ -96,11 +100,6 @@ export default function HomeScreen() {
   const handleGestionarUsuarios = () => {
     // @ts-ignore - Navigation types
     navigation.navigate("Admin");
-  };
-
-  const handleModalSuccess = () => {
-    Alert.alert("Éxito", "Operación completada exitosamente");
-    // Aquí podrías recargar datos si fuera necesario
   };
 
   const renderAlumnoView = () => (
@@ -357,11 +356,11 @@ export default function HomeScreen() {
             onPress={handleGestionarUsuarios}
           >
             <Ionicons
-              name="people-outline"
+              name="apps-outline"
               size={20}
               color={COLORES.resaltado}
             />
-            <Text style={styles.actionText}>Gestionar Usuarios</Text>
+            <Text style={styles.actionText}>Ver Usuarios y Cursos</Text>
             <Ionicons
               name="chevron-forward"
               size={20}
@@ -372,32 +371,12 @@ export default function HomeScreen() {
         <CreateUserModal
           visible={showCreateUserModal}
           onClose={() => setShowCreateUserModal(false)}
-          onSuccess={handleModalSuccess}
         />
         <CreateCourseModal
           visible={showCreateCourseModal}
           onClose={() => setShowCreateCourseModal(false)}
-          onSuccess={handleModalSuccess}
         />
       </SafeAreaView>
-
-      <CreateUserModal
-        visible={showCreateUserModal}
-        onClose={() => {
-          console.log("Closing create user modal");
-          setShowCreateUserModal(false);
-        }}
-        onSuccess={handleModalSuccess}
-      />
-
-      <CreateCourseModal
-        visible={showCreateCourseModal}
-        onClose={() => {
-          console.log("Closing create course modal");
-          setShowCreateCourseModal(false);
-        }}
-        onSuccess={handleModalSuccess}
-      />
     </ScrollView>
   );
 
@@ -421,7 +400,7 @@ export default function HomeScreen() {
   return renderContent();
 }
 
-const styles = StyleSheet.create({
+ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORES.background,

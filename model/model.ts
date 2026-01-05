@@ -19,12 +19,6 @@ export enum EstadoCurso {
   PENDIENTE = 'PENDIENTE',
 }
 
-export enum TipoPago {
-  MENSUAL = 'MENSUAL',
-  TRIMESTRAL = 'TRIMESTRAL',
-  ANUAL = 'ANUAL'
-}
-
 export enum EstadoPago {
   PENDIENTE = 'PENDIENTE',
   AL_DIA = 'AL DIA',
@@ -61,6 +55,11 @@ export enum Beneficio {
   FAMILIA = 'FAMILIA'
 }
 
+export interface NuevoUsuario {
+  email: string;
+  roles: string[];
+}
+
 // Interace inicial, creada por la IA
 export interface Usuario {
   id: number;
@@ -90,22 +89,26 @@ export interface UsuarioAdministracion {
   listaRol: Rol[];
 }
 
-/*
-// Interace inicial, creada por la IA
-export interface Curso {
+export interface nuevoCursoAlquiler {
   id: number;
   nombre: string;
-  dias: string[];
-  horario: string;
-  profesor?: Usuario;
-  arancel: number;
-  tipoPago: TipoPago;
-  estado: EstadoUsuario;
-  alumnos?: Usuario[];
-  alumnosActivos?: Usuario[];
-  alumnosDadosDeBaja?: Usuario[];
+  montoAlquiler: number;
+  profesoresId: number[];
+  fechaInicio: string; // formato "YYYY-MM-DD"
+  fechaFin: string; // formato "YYYY-MM-DD"
 }
-*/
+
+export interface nuevoCursoComision {
+  id: number;
+  nombre: string;
+  horarios: HorarioDto[];
+  tipoPago: TipoPagoDto[];
+  recargo: number | null;
+  comisionProfesor: number | null;
+  profesoresId: number[];
+  fechaInicio: string; // formato "YYYY-MM-DD"
+  fechaFin: string; // formato "YYYY-MM-DD"
+}
 
 export interface Curso {
   id: number;
@@ -121,7 +124,7 @@ export interface CursoAlumno extends Curso {
   estadoPago: EstadoPago;
 }
 
-export interface CursoProfesor {
+export interface CursoInformacion {
   id: number;
   nombre: string;
   horarios: Horario[];
@@ -129,15 +132,6 @@ export interface CursoProfesor {
   fechaInicio: string;
   fechaFin: string;
   estado: EstadoCurso;
-}
-
-// Interface para usar en la lista de cursos de la vista de administracion
-export interface CursoAdministracion {
-  id: number;
-  nombre: string;
-  horarios: Horario[];
-  arancel: number;
-  tiposPago: TipoPago[];
   profesores: string[];
 }
 
@@ -182,4 +176,41 @@ export interface Estadistica {
   cursos: number;
   profesores: number;
   ingresosMensuales: number;
+}
+
+// Enums y tipos
+export enum DayOfWeek {
+  MONDAY = "MONDAY",
+  TUESDAY = "TUESDAY",
+  WEDNESDAY = "WEDNESDAY",
+  THURSDAY = "THURSDAY",
+  FRIDAY = "FRIDAY",
+  SATURDAY = "SATURDAY",
+  SUNDAY = "SUNDAY",
+}
+
+export enum TipoPago {
+  MENSUAL = "MENSUAL",
+  TOTAL = "TOTAL",
+  // Comentados para uso futuro
+  // TRIMESTRAL = "TRIMESTRAL",
+  // SEMESTRAL = "SEMESTRAL",
+  // ANUAL = "ANUAL",
+}
+
+export interface HorarioDto {
+  diaSemana: DayOfWeek;
+  horaInicio: string; // formato "HH:mm"
+  horaFin: string; // formato "HH:mm"
+}
+
+export interface TipoPagoDto {
+  tipo: TipoPago;
+  monto: number;
+}
+
+export interface ProfesorLista {
+  id: number;
+  nombre: string;
+  apellido: string;
 }

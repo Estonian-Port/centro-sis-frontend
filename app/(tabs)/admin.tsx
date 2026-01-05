@@ -1,37 +1,54 @@
-import { CreateCourseModal } from '@/components/modals/CreateCourseModal';
-import { CreateUserModal } from '@/components/modals/CreateUserModal';
-import { PayProfessorModal } from '@/components/modals/PayProfessorModal';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Tag } from '@/components/ui/Tag';
-import { useAuth } from '@/context/authContext';
-import { CursoAdministracion, EstadoUsuario, Rol, Usuario, UsuarioAdministracion } from '@/model/model';
-import { cursoService } from '@/services/curso.service';
-import { usuarioService } from '@/services/usuario.service';
-import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import { CreateCourseModal } from "@/components/modals/CreateCourseModal";
+import { CreateUserModal } from "@/components/modals/CreateUserModal";
+import { PayProfessorModal } from "@/components/modals/PayProfessorModal";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Tag } from "@/components/ui/Tag";
+import { useAuth } from "@/context/authContext";
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+  CursoInformacion,
+  EstadoUsuario,
+  Rol,
+  Usuario,
+  UsuarioAdministracion,
+} from "@/model/model";
+import { cursoService } from "@/services/curso.service";
+import { usuarioService } from "@/services/usuario.service";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useState } from "react";
+import { set } from "react-hook-form";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { CalendarioProfesor } from "../calendario";
+import { COLORES } from "@/util/colores";
+import { TIPOGRAFIA } from "@/util/tipografia";
 
 export default function AdminScreen() {
-  const {usuario} = useAuth();
-  const [activeTab, setActiveTab] = useState<'users' | 'courses'>('users');
+  const { usuario } = useAuth();
+  const [activeTab, setActiveTab] = useState<"users" | "courses">("users");
   const [users, setUsers] = useState<UsuarioAdministracion[]>([]);
-  const [courses, setCourses] = useState<CursoAdministracion[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [courses, setCourses] = useState<CursoInformacion[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
   const [showPayProfessorModal, setShowPayProfessorModal] = useState(false);
-  const [selectedProfessor, setSelectedProfessor] = useState<Usuario | null>(null);
+  const [selectedProfessor, setSelectedProfessor] = useState<Usuario | null>(
+    null
+  );
+  const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
+  const [showModalDetailsUser, setShowModalDetailsUser] = useState(false);
+  const [vistaActual, setVistaActual] = useState<"lista" | "calendario">(
+    "lista"
+  );
 
   const handleCreateUser = () => {
     setShowCreateUserModal(true);
@@ -41,60 +58,58 @@ export default function AdminScreen() {
     setShowCreateCourseModal(true);
   };
 
-  const handlePayProfessor = (professor: Usuario) => {
-    setSelectedProfessor(professor);
-    setShowPayProfessorModal(true);
-  };
-
   const handleViewUserDetails = (user: Usuario) => {
-    Alert.alert(
-      'Ver Detalles de Usuario',
-      `Funcionalidad pendiente para: ${user.nombre} ${user.apellido}`
-    );
+    setSelectedUser(user);
+    setShowModalDetailsUser(true);
   };
 
   const handleToggleUserStatus = async (user: Usuario) => {
-    const newStatus = user.estado === EstadoUsuario.ACTIVO ? EstadoUsuario.INACTIVO : EstadoUsuario.ACTIVO;
+    const newStatus =
+      user.estado === EstadoUsuario.ACTIVO
+        ? EstadoUsuario.INACTIVO
+        : EstadoUsuario.ACTIVO;
     Alert.alert(
-      'Cambiar Estado',
-      `¿Estás seguro de ${newStatus === EstadoUsuario.ACTIVO ? 'dar de alta' : 'dar de baja'} a ${user.nombre} ${user.apellido}?`,
+      "Cambiar Estado",
+      `¿Estás seguro de ${
+        newStatus === EstadoUsuario.ACTIVO ? "dar de alta" : "dar de baja"
+      } a ${user.nombre} ${user.apellido}?`,
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: "Cancelar", style: "cancel" },
         {
-          text: 'Confirmar',
+          text: "Confirmar",
           onPress: async () => {
             try {
               // Aquí llamarías a tu API para cambiar el estado
               // await apiMock.updateUserStatus(user.id, newStatus);
-              Alert.alert('Éxito', 'Estado actualizado correctamente');
+              Alert.alert("Éxito", "Estado actualizado correctamente");
               loadUsers();
             } catch {
-              Alert.alert('Error', 'No se pudo actualizar el estado');
+              Alert.alert("Error", "No se pudo actualizar el estado");
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
 
-  const handleViewCourseDetails = (course: CursoAdministracion) => {
+  const handleViewCourseDetails = (course: CursoInformacion) => {
     Alert.alert(
-      'Ver Detalles de Curso',
+      "Ver Detalles de Curso",
       `Funcionalidad pendiente para: ${course.nombre}`
     );
   };
 
-  const handleManageStudents = (course: CursoAdministracion) => {
+  const handleManageStudents = (course: CursoInformacion) => {
     Alert.alert(
-      'Gestionar Alumnos',
+      "Gestionar Alumnos",
       `Funcionalidad pendiente para: ${course.nombre}`
     );
   };
 
   const handleModalSuccess = () => {
-    console.log('Modal success, reloading data');
+    console.log("Modal success, reloading data");
     // Reload data after successful creation
-    if (activeTab === 'users') {
+    if (activeTab === "users") {
       loadUsers();
     } else {
       loadCourses();
@@ -102,7 +117,7 @@ export default function AdminScreen() {
   };
 
   useEffect(() => {
-    if (activeTab === 'users') {
+    if (activeTab === "users") {
       loadUsers();
     } else {
       loadCourses();
@@ -113,12 +128,12 @@ export default function AdminScreen() {
     setLoading(true);
     try {
       if (!usuario) {
-        throw new Error('Usuario no autenticado');
+        throw new Error("Usuario no autenticado");
       }
       const response = await usuarioService.getAllUsuarios(usuario.id);
       setUsers(response);
     } catch {
-      Alert.alert('Error', 'Error al cargar usuarios');
+      Alert.alert("Error", "Error al cargar usuarios");
     }
     setLoading(false);
   };
@@ -129,7 +144,7 @@ export default function AdminScreen() {
       const response = await cursoService.getAllCursos();
       setCourses(response);
     } catch {
-      Alert.alert('Error', 'Error al cargar cursos');
+      Alert.alert("Error", "Error al cargar cursos");
     }
     setLoading(false);
   };
@@ -146,18 +161,13 @@ export default function AdminScreen() {
         </View>
         <Tag
           label={user.estado}
-          variant={user.estado === EstadoUsuario.ACTIVO ? 'success' : 'error'}
+          variant={user.estado === EstadoUsuario.ACTIVO ? "success" : "error"}
         />
       </View>
 
       <View style={styles.rolesContainer}>
         {user.listaRol.map((role) => (
-          <Tag
-            key={role}
-            label={role}
-            variant="info"
-            style={styles.roleTag}
-          />
+          <Tag key={role} label={role} variant="info" style={styles.roleTag} />
         ))}
       </View>
 
@@ -169,25 +179,18 @@ export default function AdminScreen() {
           onPress={() => handleViewUserDetails(user)}
         />
         <Button
-          title={user.estado === EstadoUsuario.ACTIVO ? 'Dar de Baja' : 'Dar de Alta'}
-          variant={user.estado === EstadoUsuario.ACTIVO ? 'danger' : 'primary'}
+          title={
+            user.estado === EstadoUsuario.ACTIVO ? "Dar de Baja" : "Dar de Alta"
+          }
+          variant={user.estado === EstadoUsuario.ACTIVO ? "danger" : "primary"}
           size="small"
           onPress={() => handleToggleUserStatus(user)}
         />
-
-        {user.listaRol.some(role => role === Rol.PROFESOR) && (
-          <Button
-            title="Pagar"
-            variant="secondary"
-            size="small"
-            onPress={() => handlePayProfessor(user)}
-          />
-        )}
       </View>
     </Card>
   );
 
-  const renderCourseItem = (course: CursoAdministracion) => (
+  const renderCourseItem = (course: CursoInformacion) => (
     <Card key={course.id} style={styles.listItem}>
       <View style={styles.itemHeader}>
         <View style={styles.courseInfo}>
@@ -198,10 +201,10 @@ export default function AdminScreen() {
             </Text>
           ))}
           <Text style={styles.courseDetail}>
-            Profesor: {course.profesores.length > 0 ? course.profesores.join(', ') : 'Sin asignar'}
-          </Text>
-          <Text style={styles.courseDetail}>
-            Arancel: ${course.arancel.toLocaleString()}
+            Profesor:{" "}
+            {course.profesores.length > 0
+              ? course.profesores.join(", ")
+              : "Sin asignar"}
           </Text>
         </View>
         {/* <Tag
@@ -235,13 +238,13 @@ export default function AdminScreen() {
 
         <View style={styles.tabContainer}>
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'users' && styles.activeTab]}
-            onPress={() => setActiveTab('users')}
+            style={[styles.tab, activeTab === "users" && styles.activeTab]}
+            onPress={() => setActiveTab("users")}
           >
             <Text
               style={[
                 styles.tabText,
-                activeTab === 'users' && styles.activeTabText,
+                activeTab === "users" && styles.activeTabText,
               ]}
             >
               Usuarios
@@ -249,13 +252,13 @@ export default function AdminScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'courses' && styles.activeTab]}
-            onPress={() => setActiveTab('courses')}
+            style={[styles.tab, activeTab === "courses" && styles.activeTab]}
+            onPress={() => setActiveTab("courses")}
           >
             <Text
               style={[
                 styles.tabText,
-                activeTab === 'courses' && styles.activeTabText,
+                activeTab === "courses" && styles.activeTabText,
               ]}
             >
               Cursos
@@ -269,64 +272,123 @@ export default function AdminScreen() {
           <Ionicons name="search-outline" size={20} color="#6b7280" />
           <TextInput
             style={styles.searchInput}
-            placeholder={`Buscar ${activeTab === 'users' ? 'usuarios' : 'cursos'}...`}
+            placeholder={`Buscar ${
+              activeTab === "users" ? "usuarios" : "cursos"
+            }...`}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
 
         <Button
-          title={`Crear ${activeTab === 'users' ? 'Usuario' : 'Curso'}`}
+          title={`Crear ${activeTab === "users" ? "Usuario" : "Curso"}`}
           variant="primary"
           size="small"
-          onPress={activeTab === 'users' ? handleCreateUser : handleCreateCourse}
+          onPress={
+            activeTab === "users" ? handleCreateUser : handleCreateCourse
+          }
         />
       </View>
 
       <ScrollView style={styles.content}>
-        {activeTab === 'users' && users.map(renderUserItem)}
-        {activeTab === 'courses' && courses.map(renderCourseItem)}
+        {activeTab === "users" && users.map(renderUserItem)}
+        {activeTab === "courses" && (
+                  <SafeAreaView>
+                    <Text style={styles.title}>Mis Cursos</Text>
+                    {/* Toggle entre vistas */}
+                    <View style={styles.vistaToggle}>
+                      <TouchableOpacity
+                        style={[
+                          styles.toggleButton,
+                          vistaActual === "lista" && styles.toggleButtonActive,
+                        ]}
+                        onPress={() => setVistaActual("lista")}
+                      >
+                        <Ionicons
+                          name="list"
+                          size={20}
+                          color={
+                            vistaActual === "lista"
+                              ? COLORES.blanco
+                              : COLORES.textSecondary
+                          }
+                        />
+                      </TouchableOpacity>
+          
+                      <TouchableOpacity
+                        style={[
+                          styles.toggleButton,
+                          vistaActual === "calendario" && styles.toggleButtonActive,
+                        ]}
+                        onPress={() => setVistaActual("calendario")}
+                      >
+                        <Ionicons
+                          name="calendar"
+                          size={20}
+                          color={
+                            vistaActual === "calendario"
+                              ? COLORES.blanco
+                              : COLORES.textSecondary
+                          }
+                        />
+                      </TouchableOpacity>
+                    </View>
+          
+                    {vistaActual === "lista" ? (
+                      <>
+                        {courses.map(renderCourseItem)}
+                      </>
+                    ) : (
+                      // Vista de calendario
+                      <CalendarioProfesor
+                        cursos={courses}
+                        onCursoPress={(selectedCourse) =>
+                          handleViewCourseDetails(selectedCourse)
+                        }
+                      />
+                    )}
+        
+                  </SafeAreaView>
+        )}
 
-        {((activeTab === 'users' && users.length === 0) ||
-          (activeTab === 'courses' && courses.length === 0)) && (
+        {((activeTab === "users" && users.length === 0) ||
+          (activeTab === "courses" && courses.length === 0)) && (
           <View style={styles.emptyState}>
             <Ionicons
               name={
-                activeTab === 'users' ? 'people-outline' : 'library-outline'
+                activeTab === "users" ? "people-outline" : "library-outline"
               }
               size={48}
               color="#9ca3af"
             />
             <Text style={styles.emptyText}>
-              No se encontraron {activeTab === 'users' ? 'usuarios' : 'cursos'}
+              No se encontraron {activeTab === "users" ? "usuarios" : "cursos"}
             </Text>
           </View>
         )}
       </ScrollView>
-      
+
       <CreateUserModal
         visible={showCreateUserModal}
         onClose={() => {
-          console.log('Closing create user modal');
+          console.log("Closing create user modal");
           setShowCreateUserModal(false);
         }}
-        onSuccess={handleModalSuccess}
       />
 
       <CreateCourseModal
         visible={showCreateCourseModal}
         onClose={() => {
-          console.log('Closing create course modal');
+          console.log("Closing create course modal");
           setShowCreateCourseModal(false);
         }}
-        onSuccess={handleModalSuccess}
       />
 
       {selectedProfessor && (
         <PayProfessorModal
           visible={showPayProfessorModal}
           onClose={() => {
-            console.log('Closing pay professor modal');
+            console.log("Closing pay professor modal");
             setShowPayProfessorModal(false);
             setSelectedProfessor(null);
           }}
@@ -341,23 +403,23 @@ export default function AdminScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: "#f9fafb",
   },
   header: {
     padding: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: "#e5e7eb",
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
+    fontWeight: "bold",
+    color: "#1f2937",
     marginBottom: 16,
   },
   tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#f3f4f6',
+    flexDirection: "row",
+    backgroundColor: "#f3f4f6",
     borderRadius: 8,
     padding: 2,
   },
@@ -366,32 +428,32 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 6,
-    alignItems: 'center',
+    alignItems: "center",
   },
   activeTab: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: "#3b82f6",
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#6b7280',
+    fontWeight: "500",
+    color: "#6b7280",
   },
   activeTabText: {
-    color: '#ffffff',
+    color: "#ffffff",
   },
   controls: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: "#e5e7eb",
     gap: 12,
   },
   searchContainer: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f9fafb",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -400,7 +462,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     fontSize: 16,
-    color: '#374151',
+    color: "#374151",
   },
   content: {
     flex: 1,
@@ -410,9 +472,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   itemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 12,
   },
   userInfo: {
@@ -423,29 +485,29 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
+    fontWeight: "600",
+    color: "#1f2937",
     marginBottom: 4,
   },
   courseName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
+    fontWeight: "600",
+    color: "#1f2937",
     marginBottom: 4,
   },
   userDetail: {
     fontSize: 14,
-    color: '#6b7280',
+    color: "#6b7280",
     marginBottom: 2,
   },
   courseDetail: {
     fontSize: 14,
-    color: '#6b7280',
+    color: "#6b7280",
     marginBottom: 2,
   },
   rolesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     marginBottom: 12,
   },
   roleTag: {
@@ -453,18 +515,31 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   itemActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
   },
   emptyState: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 64,
   },
   emptyText: {
     fontSize: 16,
-    color: '#9ca3af',
+    color: "#9ca3af",
     marginTop: 12,
+  },
+    vistaToggle: {
+    flexDirection: "row",
+    backgroundColor: COLORES.background,
+    borderRadius: 8,
+    padding: 2,
+  },
+  toggleButton: {
+    padding: 8,
+    borderRadius: 6,
+  },
+  toggleButtonActive: {
+    backgroundColor: COLORES.violeta,
   },
 });
