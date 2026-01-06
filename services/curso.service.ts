@@ -1,5 +1,5 @@
 import api from "@/helper/auth.interceptor";
-import {CursoAlumno, CursoInformacion, nuevoCursoAlquiler, nuevoCursoComision} from "@/model/model";
+import {CursoAlumno, Curso, nuevoCursoAlquiler, nuevoCursoComision} from "@/model/model";
 
 const CURSO = '/curso';
 
@@ -9,7 +9,7 @@ class CursoService {
     return response.data.data;
   };
 
-  getAllCursos = async (): Promise<CursoInformacion[]> => {
+  getAllCursos = async (): Promise<Curso[]> => {
     const response = await api.get(`${CURSO}/activos`);
     return response.data.data;
   };
@@ -22,6 +22,11 @@ class CursoService {
   altaCursoComision = async (nuevoCurso: nuevoCursoComision): Promise<any> => {
     const response = await api.post(`${CURSO}/alta-comision`, nuevoCurso);
     return response.data;
+  }
+
+  getById = async (id: number): Promise<Curso> => {
+    const response = await api.get(`${CURSO}/${id}`);
+    return response.data.data;
   }
 
 }

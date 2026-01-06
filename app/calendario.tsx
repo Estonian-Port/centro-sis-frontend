@@ -3,11 +3,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { COLORES } from '@/util/colores';
 import { TIPOGRAFIA } from '@/util/tipografia';
-import { CursoInformacion } from '@/model/model';
+import { Curso } from '@/model/model';
 
 interface CalendarioProfesorProps {
-  cursos: CursoInformacion[];
-  onCursoPress: (curso: CursoInformacion) => void;
+  cursos: Curso[];
+  onCursoPress: (curso: Curso) => void;
 }
 
 export const CalendarioProfesor: React.FC<CalendarioProfesorProps> = ({ 
@@ -38,7 +38,7 @@ export const CalendarioProfesor: React.FC<CalendarioProfesorProps> = ({
       });
     });
     return acc;
-  }, {} as Record<string, Array<{ curso: CursoInformacion; horario: any }>>);
+  }, {} as Record<string, Array<{ curso: Curso; horario: any }>>);
 
   // Marcar días con cursos en el calendario
   const markedDates = cursos.reduce((acc, curso) => {

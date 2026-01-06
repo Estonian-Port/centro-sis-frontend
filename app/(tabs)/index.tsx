@@ -3,7 +3,7 @@ import { CreateUserModal } from "@/components/modals/CreateUserModal";
 import { useAuth } from "@/context/authContext";
 import {
   CursoAlumno,
-  CursoInformacion,
+  Curso,
   formatEstadoPago,
   NuevoUsuario,
   Rol,
@@ -31,6 +31,10 @@ import { StatRow } from "@/components/cards/stats/StatRow";
 import { usuarioService } from "@/services/usuario.service";
 import { CalendarioProfesor } from "../calendario";
 import Toast from "react-native-toast-message";
+import {
+  estadoCursoToTagVariant,
+  estadoUsuarioToTagVariant,
+} from "@/helper/funciones";
 
 export default function HomeScreen() {
   const { selectedRole, usuario } = useAuth();
@@ -38,13 +42,16 @@ export default function HomeScreen() {
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
   const [curso, setCurso] = useState<CursoAlumno>();
-  const [cursoProfesor, setCursoProfesor] = useState<CursoInformacion[]>([]);
+  const [cursoProfesor, setCursoProfesor] = useState<Curso[]>([]);
   const [estadisticas, setEstadisticas] = useState({
     alumnosActivos: 0,
     cursos: 0,
     profesores: 0,
     ingresosMensuales: 0,
   });
+  const [vistaActual, setVistaActual] = useState<"lista" | "calendario">(
+    "lista"
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -127,7 +134,10 @@ export default function HomeScreen() {
           <Card style={styles.courseCard}>
             <View style={styles.courseHeader}>
               <Text style={styles.courseName}>{curso?.nombre}</Text>
-              <Tag label="ACTIVO" variant="success" />
+              <Tag
+                label={curso?.estado}
+                variant={estadoCursoToTagVariant(curso?.estado)}
+              />
             </View>
             <View style={styles.courseDetails}>
               <View style={styles.detailRow}>
@@ -146,14 +156,6 @@ export default function HomeScreen() {
               </View>
               <View style={styles.detailRow}>
                 <Ionicons name="card-outline" size={16} color="#6b7280" />
-                <Text style={styles.detailText}>${curso?.arancel} / mes</Text>
-              </View>
-            </View>
-            <View style={styles.beneficios}>
-              <Text style={styles.beneficiosTitle}>Beneficios:</Text>
-              <View style={styles.tagContainer}>
-                <Tag label="Pago total" variant="info" />
-                <Tag label="Familiar" variant="default" />
               </View>
             </View>
             <View style={styles.paymentStatus}>
@@ -200,10 +202,6 @@ export default function HomeScreen() {
   );
 
   const renderProfesorView = () => {
-    const [vistaActual, setVistaActual] = useState<"lista" | "calendario">(
-      "lista"
-    );
-
     return (
       <ScrollView style={styles.container}>
         <SafeAreaView>

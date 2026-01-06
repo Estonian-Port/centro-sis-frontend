@@ -1,4 +1,4 @@
-import { EstadoUsuario, Pago, PaymentType, TipoPago } from '@/model/model';
+import { EstadoUsuario, Pago, PaymentType, PagoType } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
@@ -11,6 +11,7 @@ import {
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@/context/authContext';
 
 // Mock payments data for student
 const mockStudentPayments: Pago[] = [
@@ -22,8 +23,8 @@ const mockStudentPayments: Pago[] = [
       dias: ['Lunes', 'Miércoles', 'Viernes'],
       horario: '14:00-16:00',
       arancel: 15000,
-      tipoPago: TipoPago.MENSUAL,
-      estado: EstadoUsuario.ALTA
+      tipoPago: PagoType.MENSUAL,
+      estado: EstadoUsuario.ACTIVO
     },
     alumno: {
       id: 1,
@@ -32,7 +33,7 @@ const mockStudentPayments: Pago[] = [
       apellido: 'Pérez',
       dni: '12345678',
       listaRol: [],
-      estado: EstadoUsuario.ALTA,
+      estado: EstadoUsuario.ACTIVO,
     },
     monto: 13500, // Con descuento
     tipo: PaymentType.EFECTIVO,
@@ -47,8 +48,8 @@ const mockStudentPayments: Pago[] = [
       dias: ['Lunes', 'Miércoles', 'Viernes'],
       horario: '14:00-16:00',
       arancel: 15000,
-      tipoPago: TipoPago.MENSUAL,
-      estado: EstadoUsuario.ALTA,
+      tipoPago: PagoType.MENSUAL,
+      estado: EstadoUsuario.ACTIVO,
     },
     alumno: {
       id: 1,
@@ -57,7 +58,7 @@ const mockStudentPayments: Pago[] = [
       apellido: 'Pérez',
       dni: '12345678',
       listaRol: [],
-      estado: EstadoUsuario.ALTA,
+      estado: EstadoUsuario.ACTIVO,
     },
     monto: 13500,
     tipo: PaymentType.EFECTIVO,
@@ -72,8 +73,8 @@ const mockStudentPayments: Pago[] = [
       dias: ['Lunes', 'Miércoles', 'Viernes'],
       horario: '14:00-16:00',
       arancel: 15000,
-      tipoPago: TipoPago.MENSUAL,
-      estado: EstadoUsuario.ALTA,
+      tipoPago: PagoType.MENSUAL,
+      estado: EstadoUsuario.ACTIVO,
     },
     alumno: {
       id: 1,
@@ -82,7 +83,7 @@ const mockStudentPayments: Pago[] = [
       apellido: 'Pérez',
       dni: '12345678',
       listaRol: [],
-      estado: EstadoUsuario.ALTA,
+      estado: EstadoUsuario.ACTIVO,
     },
     monto: 15750, // Con recargo
     tipo: PaymentType.TARJETA,

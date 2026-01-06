@@ -19,8 +19,8 @@ import {
   nuevoCursoComision,
   DayOfWeek,
   HorarioDto,
-  TipoPagoDto,
   TipoPago,
+  PagoType,
   ProfesorLista,
 } from "@/model/model";
 import { DatePickerWrapper } from "../pickers/DataPicker";
@@ -36,7 +36,7 @@ interface FormValues {
   profesoresId: number[];
   montoAlquiler?: number;
   horarios?: HorarioDto[];
-  tipoPago?: TipoPagoDto[];
+  tipoPago?: TipoPago[];
   recargo?: number | null;
   comisionProfesor?: number | null;
 }
@@ -51,16 +51,16 @@ type Modalidad = "ALQUILER" | "COMISION";
 // Validación personalizada para horarios
 const validarHorarios = (horarios: any[]): boolean => {
   if (!horarios || horarios.length === 0) return false;
-  
-  return horarios.every(horario => {
+
+  return horarios.every((horario) => {
     if (!horario.horaInicio || !horario.horaFin) return false;
-    
-    const [horaIni, minIni] = horario.horaInicio.split(':').map(Number);
-    const [horaFin, minFin] = horario.horaFin.split(':').map(Number);
-    
+
+    const [horaIni, minIni] = horario.horaInicio.split(":").map(Number);
+    const [horaFin, minFin] = horario.horaFin.split(":").map(Number);
+
     const inicioEnMinutos = horaIni * 60 + minIni;
     const finEnMinutos = horaFin * 60 + minFin;
-    
+
     return finEnMinutos > inicioEnMinutos;
   });
 };
@@ -108,7 +108,7 @@ const getValidationSchema = (modalidad: Modalidad): any => {
         .array()
         .of(
           yup.object().shape({
-            diaSemana: yup
+            dia: yup
               .string()
               .oneOf(Object.values(DayOfWeek), "Día inválido")
               .required("El día es requerido"),
@@ -138,7 +138,7 @@ const getValidationSchema = (modalidad: Modalidad): any => {
           yup.object().shape({
             tipo: yup
               .string()
-              .oneOf(Object.values(TipoPago), "Tipo inválido")
+              .oneOf(Object.values(PagoType), "Tipo inválido")
               .required("El tipo es requerido"),
             monto: yup
               .number()
@@ -234,7 +234,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
       // CAMBIO: Agregar un horario por defecto
       horarios: [
         {
-          diaSemana: DayOfWeek.MONDAY,
+          dia: DayOfWeek.MONDAY,
           horaInicio: "",
           horaFin: "",
         },
@@ -254,27 +254,27 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   // Calcular cantidad de meses entre fechas
   const cantidadMeses = useMemo(() => {
     if (!fechaInicio || !fechaFin) return 0;
-    
+
     const inicio = new Date(fechaInicio);
     const fin = new Date(fechaFin);
-    
+
     if (fin <= inicio) return 0;
-    
+
     const meses =
       (fin.getFullYear() - inicio.getFullYear()) * 12 +
       (fin.getMonth() - inicio.getMonth()) +
       (fin.getDate() >= inicio.getDate() ? 1 : 0);
-    
+
     return Math.max(1, meses);
   }, [fechaInicio, fechaFin]);
 
   // Verificar si un tipo de pago está seleccionado
-  const tieneTipoPago = (tipo: TipoPago): boolean => {
+  const tieneTipoPago = (tipo: PagoType): boolean => {
     return tiposPago.some((tp) => tp.tipo === tipo);
   };
 
   // Obtener monto de un tipo de pago
-  const getMontoTipoPago = (tipo: TipoPago): number => {
+  const getMontoTipoPago = (tipo: PagoType): number => {
     const tipoPago = tiposPago.find((tp) => tp.tipo === tipo);
     return tipoPago?.monto || 0;
   };
@@ -291,7 +291,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
     setValue("horarios", [
       ...horarios,
       {
-        diaSemana: DayOfWeek.MONDAY,
+        dia: DayOfWeek.MONDAY,
         horaInicio: "",
         horaFin: "",
       },
@@ -315,9 +315,9 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
     setValue("horarios", newHorarios);
   };
 
-  const toggleTipoPago = (tipo: TipoPago): void => {
+  const toggleTipoPago = (tipo: PagoType): void => {
     const tieneActualmente = tieneTipoPago(tipo);
-    
+
     if (tieneActualmente) {
       // Remover el tipo de pago
       setValue(
@@ -326,14 +326,11 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
       );
     } else {
       // Agregar el tipo de pago
-      setValue("tipoPago", [
-        ...tiposPago,
-        { tipo, monto: 0 },
-      ]);
+      setValue("tipoPago", [...tiposPago, { tipo, monto: 0 }]);
     }
   };
 
-  const updateMontoTipoPago = (tipo: TipoPago, monto: number): void => {
+  const updateMontoTipoPago = (tipo: PagoType, monto: number): void => {
     const newTiposPago = tiposPago.map((tp) =>
       tp.tipo === tipo ? { ...tp, monto } : tp
     );
@@ -361,41 +358,44 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
     setShowDatePicker(null);
   };
 
-    const crearCursoAlquiler = async (nuevoCurso: nuevoCursoAlquiler) => {
-      try {
-        const response = await cursoService.altaCursoAlquiler(nuevoCurso);
-        Toast.show({
-          type: "success",
-          text1: "Curso creado exitosamente",
-          text2: `El curso ha sido creado correctamente.`,
-          position: "bottom",
-        });
-      } catch (error) {
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: "No se pudo crear el curso.",
-          position: "bottom",
-        });
-      }
-    };
-  
-      const crearCursoComision = async (nuevoCurso: nuevoCursoComision) => {
-      try {
-        const response = await cursoService.altaCursoComision(nuevoCurso);
-        Toast.show({
-          type: "success",
-          text1: "Curso creado exitosamente",
-          text2: `El curso ha sido creado correctamente.`,
-        });
-      } catch (error) {
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: "No se pudo crear el curso.",
-        });
-      }
-    };
+  const crearCursoAlquiler = async (nuevoCurso: nuevoCursoAlquiler) => {
+    try {
+      const response = await cursoService.altaCursoAlquiler(nuevoCurso);
+      Toast.show({
+        type: "success",
+        text1: "Curso creado exitosamente",
+        text2: `El curso ha sido creado correctamente.`,
+        position: "bottom",
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "No se pudo crear el curso.",
+        position: "bottom",
+      });
+    }
+  };
+
+  const crearCursoComision = async (nuevoCurso: nuevoCursoComision) => {
+    console.log("Creando curso por comisión:", nuevoCurso);
+    try {
+      const response = await cursoService.altaCursoComision(nuevoCurso);
+      Toast.show({
+        type: "success",
+        text1: "Curso creado exitosamente",
+        text2: `El curso ha sido creado correctamente.`,
+        position: "bottom",
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "No se pudo crear el curso.",
+        position: "bottom",
+      });
+    }
+  };
 
   const onSubmit = async (data: FormValues): Promise<void> => {
     try {
@@ -444,7 +444,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
     if (newModalidad === "ALQUILER") {
       setValue("horarios", [
         {
-          diaSemana: DayOfWeek.MONDAY,
+          dia: DayOfWeek.MONDAY,
           horaInicio: "",
           horaFin: "",
         },
@@ -458,7 +458,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
       // Mantener el horario por defecto cuando se cambia a comisión
       setValue("horarios", [
         {
-          diaSemana: DayOfWeek.MONDAY,
+          dia: DayOfWeek.MONDAY,
           horaInicio: "",
           horaFin: "",
         },
@@ -468,7 +468,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.modal}>
           {/* Header */}
@@ -745,17 +745,14 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                               key={dia}
                               style={[
                                 styles.dayButton,
-                                horario.diaSemana === dia &&
-                                  styles.dayButtonSelected,
+                                horario.dia === dia && styles.dayButtonSelected,
                               ]}
-                              onPress={() =>
-                                updateHorario(index, "diaSemana", dia)
-                              }
+                              onPress={() => updateHorario(index, "dia", dia)}
                             >
                               <Text
                                 style={[
                                   styles.dayButtonText,
-                                  horario.diaSemana === dia &&
+                                  horario.dia === dia &&
                                     styles.dayButtonTextSelected,
                                 ]}
                               >
@@ -846,11 +843,9 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                       )}
                     </View>
                   ))}
-                  {errors.horarios && (
+                  {typeof errors.horarios?.message === "string" && (
                     <Text style={styles.errorText}>
-                      {typeof errors.horarios === 'string' 
-                        ? errors.horarios 
-                        : errors.horarios.message}
+                      {errors.horarios.message}
                     </Text>
                   )}
                 </View>
@@ -866,21 +861,21 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                     <TouchableOpacity
                       style={[
                         styles.tipoPagoCheckbox,
-                        tieneTipoPago(TipoPago.MENSUAL) &&
+                        tieneTipoPago(PagoType.MENSUAL) &&
                           styles.tipoPagoCheckboxSelected,
                       ]}
-                      onPress={() => toggleTipoPago(TipoPago.MENSUAL)}
+                      onPress={() => toggleTipoPago(PagoType.MENSUAL)}
                     >
                       <View style={styles.tipoPagoHeader}>
                         <Ionicons
                           name={
-                            tieneTipoPago(TipoPago.MENSUAL)
+                            tieneTipoPago(PagoType.MENSUAL)
                               ? "checkbox"
                               : "square-outline"
                           }
                           size={24}
                           color={
-                            tieneTipoPago(TipoPago.MENSUAL)
+                            tieneTipoPago(PagoType.MENSUAL)
                               ? "#10b981"
                               : "#9ca3af"
                           }
@@ -897,14 +892,16 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                       </View>
                     </TouchableOpacity>
 
-                    {tieneTipoPago(TipoPago.MENSUAL) && (
+                    {tieneTipoPago(PagoType.MENSUAL) && (
                       <View style={styles.tipoPagoInput}>
                         <Input
                           label={`Monto por cuota ($)`}
-                          value={getMontoTipoPago(TipoPago.MENSUAL)?.toString() || ""}
+                          value={
+                            getMontoTipoPago(PagoType.MENSUAL)?.toString() || ""
+                          }
                           onChangeText={(text) =>
                             updateMontoTipoPago(
-                              TipoPago.MENSUAL,
+                              PagoType.MENSUAL,
                               parseFloat(text) || 0
                             )
                           }
@@ -912,12 +909,11 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                           placeholder="10000"
                         />
                         {cantidadMeses > 0 &&
-                          getMontoTipoPago(TipoPago.MENSUAL) > 0 && (
+                          getMontoTipoPago(PagoType.MENSUAL) > 0 && (
                             <Text style={styles.totalInfo}>
-                              Total:{" "}
-                              $
+                              Total: $
                               {(
-                                getMontoTipoPago(TipoPago.MENSUAL) *
+                                getMontoTipoPago(PagoType.MENSUAL) *
                                 cantidadMeses
                               ).toLocaleString()}
                             </Text>
@@ -931,21 +927,21 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                     <TouchableOpacity
                       style={[
                         styles.tipoPagoCheckbox,
-                        tieneTipoPago(TipoPago.TOTAL) &&
+                        tieneTipoPago(PagoType.TOTAL) &&
                           styles.tipoPagoCheckboxSelected,
                       ]}
-                      onPress={() => toggleTipoPago(TipoPago.TOTAL)}
+                      onPress={() => toggleTipoPago(PagoType.TOTAL)}
                     >
                       <View style={styles.tipoPagoHeader}>
                         <Ionicons
                           name={
-                            tieneTipoPago(TipoPago.TOTAL)
+                            tieneTipoPago(PagoType.TOTAL)
                               ? "checkbox"
                               : "square-outline"
                           }
                           size={24}
                           color={
-                            tieneTipoPago(TipoPago.TOTAL)
+                            tieneTipoPago(PagoType.TOTAL)
                               ? "#10b981"
                               : "#9ca3af"
                           }
@@ -959,14 +955,16 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                       </View>
                     </TouchableOpacity>
 
-                    {tieneTipoPago(TipoPago.TOTAL) && (
+                    {tieneTipoPago(PagoType.TOTAL) && (
                       <View style={styles.tipoPagoInput}>
                         <Input
                           label="Monto total ($)"
-                          value={getMontoTipoPago(TipoPago.TOTAL)?.toString() || ""}
+                          value={
+                            getMontoTipoPago(PagoType.TOTAL)?.toString() || ""
+                          }
                           onChangeText={(text) =>
                             updateMontoTipoPago(
-                              TipoPago.TOTAL,
+                              PagoType.TOTAL,
                               parseFloat(text) || 0
                             )
                           }
@@ -976,12 +974,9 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                       </View>
                     )}
                   </View>
-
-                  {errors.tipoPago && (
+                  {typeof errors.tipoPago?.message === "string" && (
                     <Text style={styles.errorText}>
-                      {typeof errors.tipoPago === 'string'
-                        ? errors.tipoPago
-                        : errors.tipoPago.message}
+                      {errors.tipoPago.message}
                     </Text>
                   )}
                 </View>
@@ -1066,9 +1061,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
         }
         initialDate={
           showDatePicker
-            ? parseDate(
-                showDatePicker === "inicio" ? fechaInicio : fechaFin
-              )
+            ? parseDate(showDatePicker === "inicio" ? fechaInicio : fechaFin)
             : new Date()
         }
         minimumDate={
@@ -1133,7 +1126,8 @@ const styles = StyleSheet.create({
         elevation: 5,
       },
       web: {
-        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+        boxShadow:
+          "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
       },
     }),
   },

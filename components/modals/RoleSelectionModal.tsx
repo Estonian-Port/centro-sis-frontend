@@ -17,7 +17,7 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> =
     };
 
     return (
-      <Modal visible={visible} transparent animationType="slide">
+      <Modal visible={visible} transparent animationType="fade">
         <View style={styles.overlay}>
           <View style={styles.modal}>
             <Text style={styles.title}>Seleccionar Vista</Text>

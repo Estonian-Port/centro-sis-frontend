@@ -31,6 +31,10 @@ const ROLE_CONFIG = {
     variant: 'warning' as const,
     label: 'Administrador',
   },
+  [Rol.OFICINA]: {
+    variant: 'info' as const,
+    label: 'Oficina',
+  },
 } as const;
 
 // Helper para obtener configuración del rol
@@ -84,7 +88,7 @@ export default function ProfileScreen() {
         },
         { label: 'Email', value: usuario?.email },
         { label: 'DNI', value: usuario?.dni },
-        { label: 'Teléfono', value: usuario?.telefono },
+        { label: 'Celular', value: usuario?.celular },
       ],
     },
     {
@@ -118,34 +122,6 @@ export default function ProfileScreen() {
         Alert.alert('Cambiar Contraseña', 'Funcionalidad en desarrollo');
       },
     },
-    {
-      icon: 'time-outline',
-      title: 'Historial de Accesos',
-      subtitle: 'Ver últimos inicios de sesión',
-      onPress: () => {
-        Alert.alert('Historial de Accesos', 'Funcionalidad en desarrollo');
-      },
-    },
-    {
-      icon: 'download-outline',
-      title: 'Descargar Información',
-      subtitle: 'Exportar datos personales',
-      onPress: () => {
-        const userData = {
-          nombre: usuario?.nombre,
-          apellido: usuario?.apellido,
-          dni: usuario?.dni,
-          email: usuario?.email,
-          roles: usuario?.listaRol.map(r => r),
-        };
-
-        Alert.alert(
-          'Descarga de Información',
-          `Datos exportados:\n${JSON.stringify(userData, null, 2)}`,
-          [{ text: 'OK' }]
-        );
-      },
-    },
   ];
 
   return (
@@ -158,14 +134,6 @@ export default function ProfileScreen() {
           {usuario?.nombre} {usuario?.apellido}
         </Text>
         <Text style={styles.userEmail}>{usuario?.email}</Text>
-
-        {usuario?.beneficios && usuario.beneficios.length > 0 && (
-          <View style={styles.beneficiosContainer}>
-            {usuario.beneficios.map((beneficio, index) => (
-              <Tag key={index} label={beneficio} variant="info" />
-            ))}
-          </View>
-        )}
       </View>
 
       <ScrollView style={styles.content}>
@@ -197,7 +165,7 @@ export default function ProfileScreen() {
                     // Tag único (Estado)
                     <Tag
                       label={item.value || ''}
-                      variant={item.value === EstadoUsuario.ALTA ? 'success' : 'error'}
+                      variant={item.value === EstadoUsuario.ACTIVO ? 'success' : 'error'}
                     />
                   )
                 ) : (

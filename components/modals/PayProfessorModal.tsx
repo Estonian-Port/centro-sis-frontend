@@ -144,7 +144,7 @@ export const PayProfessorModal: React.FC<PayProfessorModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <View style={styles.header}>

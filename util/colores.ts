@@ -13,4 +13,7 @@ export const COLORES = {
   textSecondary: "#6b7280",
   resaltado:"#85409D",
   background: "#F5F5F5",
+
+  error: "#FF4D4F",
+  success: "#52C41A",
 };

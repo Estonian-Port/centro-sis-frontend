@@ -13,8 +13,8 @@ export enum EstadoUsuario {
 }
 
 export enum EstadoCurso {
-  ACTIVO = 'ACTIVO',
-  INACTIVO = 'INACTIVO',
+  POR_COMENZAR = 'POR_COMENZAR',
+  EN_CURSO = 'EN_CURSO',
   FINALIZADO = 'FINALIZADO',
   PENDIENTE = 'PENDIENTE',
 }
@@ -49,35 +49,12 @@ export enum PaymentType {
   TARJETA = 'TARJETA'
 }
 
-export enum Beneficio {
-  PAGO_TOTAL = 'PAGO TOTAL',
-  SEMESTRAL = 'SEMESTRAL',
-  FAMILIA = 'FAMILIA'
-}
-
 export interface NuevoUsuario {
   email: string;
   roles: string[];
 }
 
-// Interace inicial, creada por la IA
 export interface Usuario {
-  id: number;
-  email: string;
-  nombre?: string;
-  apellido?: string;
-  dni?: string;
-  telefono?: string;
-  listaRol: Rol[];
-  estado: EstadoUsuario;
-  cursosActivos?: Curso[];
-  cursosDadosDeBaja?: Curso[];
-  beneficios?: string[];
-  primerLogin?: boolean;
-}
-
-// Interface para usar en la lista de usuarios de la vista de administracion
-export interface UsuarioAdministracion {
   id: number;
   nombre: string;
   apellido: string;
@@ -87,6 +64,12 @@ export interface UsuarioAdministracion {
   estado: EstadoUsuario;
   primerLogin: boolean;
   listaRol: Rol[];
+}
+
+export interface UsuarioDetails extends Usuario {
+  cursosInscriptos?: CursoAlumno[];
+  cursosDictados?: Curso[];
+  //pagos?: Pago[];
 }
 
 export interface nuevoCursoAlquiler {
@@ -102,7 +85,7 @@ export interface nuevoCursoComision {
   id: number;
   nombre: string;
   horarios: HorarioDto[];
-  tipoPago: TipoPagoDto[];
+  tipoPago: TipoPago[];
   recargo: number | null;
   comisionProfesor: number | null;
   profesoresId: number[];
@@ -114,25 +97,17 @@ export interface Curso {
   id: number;
   nombre: string;
   horarios: Horario[];
-  arancel: number;
-  tiposPago: TipoPago[];
-  profesores: string[];
-}
-
-export interface CursoAlumno extends Curso {
-  beneficios: Beneficio[];
-  estadoPago: EstadoPago;
-}
-
-export interface CursoInformacion {
-  id: number;
-  nombre: string;
-  horarios: Horario[];
   alumnosInscriptos: number;
   fechaInicio: string;
   fechaFin: string;
   estado: EstadoCurso;
   profesores: string[];
+  tiposPago: TipoPago[];
+}
+
+export interface CursoAlumno extends Curso {
+  estadoPago: EstadoPago;
+  tipoPagoElegido: PagoType;
 }
 
 export interface Horario {
@@ -189,7 +164,7 @@ export enum DayOfWeek {
   SUNDAY = "SUNDAY",
 }
 
-export enum TipoPago {
+export enum PagoType {
   MENSUAL = "MENSUAL",
   TOTAL = "TOTAL",
   // Comentados para uso futuro
@@ -199,13 +174,13 @@ export enum TipoPago {
 }
 
 export interface HorarioDto {
-  diaSemana: DayOfWeek;
+  dia: DayOfWeek;
   horaInicio: string; // formato "HH:mm"
   horaFin: string; // formato "HH:mm"
 }
 
-export interface TipoPagoDto {
-  tipo: TipoPago;
+export interface TipoPago {
+  tipo: PagoType;
   monto: number;
 }
 

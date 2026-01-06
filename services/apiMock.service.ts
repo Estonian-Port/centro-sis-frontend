@@ -4,7 +4,7 @@ import {
   EstadoUsuario,
   PaginatedResponse,
   Rol,
-  TipoPago,
+  PagoType,
   Usuario
 } from '@/model/model';
 
@@ -85,7 +85,7 @@ const mockCourses: Curso[] = [
     dias: ['Lunes', 'Miércoles', 'Viernes'],
     horario: '14:00-16:00',
     arancel: 15000,
-    tipoPago: TipoPago.MENSUAL,
+    tipoPago: PagoType.MENSUAL,
     estado: EstadoUsuario.ALTA,
     profesor: mockUsers[1], // María García
   },
@@ -95,7 +95,7 @@ const mockCourses: Curso[] = [
     dias: ['Martes', 'Jueves'],
     horario: '16:00-18:00',
     arancel: 20000,
-    tipoPago: TipoPago.MENSUAL,
+    tipoPago: PagoType.MENSUAL,
     estado: EstadoUsuario.ALTA,
     profesor: mockUsers[1], // María García
   },
@@ -105,7 +105,7 @@ const mockCourses: Curso[] = [
     dias: ['Lunes', 'Miércoles'],
     horario: '10:00-12:00',
     arancel: 18000,
-    tipoPago: TipoPago.TRIMESTRAL,
+    tipoPago: PagoType.TRIMESTRAL,
     estado: EstadoUsuario.ALTA,
     profesor: mockUsers[3], // Pedro López
   },

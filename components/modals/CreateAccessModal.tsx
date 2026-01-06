@@ -95,7 +95,7 @@ export const CreateAccessModal: React.FC<CreateAccessModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <View style={styles.header}>
