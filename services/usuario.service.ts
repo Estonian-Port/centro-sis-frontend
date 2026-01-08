@@ -1,5 +1,5 @@
 import api from "@/helper/auth.interceptor";
-import {Curso, NuevoUsuario, ProfesorLista, Usuario, UsuarioDetails} from "@/model/model";
+import {Curso, CursoAlumno, NuevoUsuario, ProfesorLista, Usuario, UsuarioDetails} from "@/model/model";
 
 const USER = '/usuario';
 
@@ -10,7 +10,12 @@ class UsuarioService {
     return response.data.data;
   };
 
-  getAllByProfesor = async (id: number): Promise<Curso[]> => {
+  getAllCoursesByAlumno = async (id: number): Promise<CursoAlumno[]> => {
+    const response = await api.get(`${USER}/cursos-alumno/${id}`);
+    return response.data.data;
+  }
+
+  getAllCoursesByProfesor = async (id: number): Promise<Curso[]> => {
     const response = await api.get(`${USER}/cursos-profesor/${id}`);
     return response.data.data;
   }
@@ -32,6 +37,16 @@ class UsuarioService {
 
   toggleEstadoUsuario = async (id: number): Promise<void> => {
     const response = await api.patch(`${USER}/toggle-estado/${id}`);
+    return response.data.data;
+  }
+
+  changePassword = async (id: number, newPassword: string): Promise<void> => {
+    const response = await api.patch(`${USER}/change-password/${id}`, { newPassword });
+    return response.data.data;
+  }
+
+  updateProfile = async (id: number, usuario: Partial<UsuarioDetails>): Promise<void> => {
+    const response = await api.put(`${USER}/update-perfil/${id}`, usuario);
     return response.data.data;
   }
 

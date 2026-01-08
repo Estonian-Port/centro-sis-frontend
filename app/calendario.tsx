@@ -1,90 +1,113 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORES } from '@/util/colores';
-import { TIPOGRAFIA } from '@/util/tipografia';
-import { Curso } from '@/model/model';
+import React, { useMemo } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Platform,
+  useWindowDimensions,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Curso } from "@/model/model";
+import { COLORES } from "@/util/colores";
 
-interface CalendarioProfesorProps {
+interface CalendarioSemanalProps {
   cursos: Curso[];
-  onCursoPress: (curso: Curso) => void;
+  onCursoPress?: (curso: Curso) => void;
 }
 
-export const CalendarioProfesor: React.FC<CalendarioProfesorProps> = ({ 
-  cursos, 
-  onCursoPress 
+const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
+  cursos,
+  onCursoPress,
 }) => {
-  const [selectedDate, setSelectedDate] = useState('');
+  const { width } = useWindowDimensions();
 
-  // Mapear días a números (0 = Domingo, 1 = Lunes, etc.)
-  const diaToNumber: Record<string, number> = {
-    'Lunes': 1,
-    'Martes': 2,
-    'Miércoles': 3,
-    'Jueves': 4,
-    'Viernes': 5,
-    'Sábado': 6,
+  // Calcular columnas según el ancho
+  const getColumns = () => {
+    if (Platform.OS === "web") {
+      if (width >= 1024) return 6; // 1024px+ = 6 columnas
+      if (width >= 768) return 3; // Tablet: 3 columnas
+      return 2; // Mobile: 2 columnas
+    }
+    return 2; // iOS/Android: siempre 2 columnas
   };
 
-  // Agrupar cursos por día de la semana
-  const cursosPorDia = cursos.reduce((acc, curso) => {
-    curso.horarios.forEach(horario => {
-      if (!acc[horario.dia]) {
-        acc[horario.dia] = [];
-      }
-      acc[horario.dia].push({
-        curso,
-        horario
-      });
-    });
-    return acc;
-  }, {} as Record<string, Array<{ curso: Curso; horario: any }>>);
+  const columns = getColumns();
 
-  // Marcar días con cursos en el calendario
-  const markedDates = cursos.reduce((acc, curso) => {
-    // Aquí marcarías los días específicos si tienes fechas concretas
-    return acc;
-  }, {} as any);
+  // Agrupar cursos por día de la semana
+  const cursosPorDia = useMemo(() => {
+    return cursos.reduce((acc, curso) => {
+      curso.horarios.forEach((horario) => {
+        let dia = horario.dia.toUpperCase();
+
+        // Mapear posibles variaciones
+        const diaMapping: Record<string, string> = {
+          LUNES: "MONDAY",
+          MARTES: "TUESDAY",
+          MIERCOLES: "WEDNESDAY",
+          MIÉRCOLES: "WEDNESDAY",
+          JUEVES: "THURSDAY",
+          VIERNES: "FRIDAY",
+          SABADO: "SATURDAY",
+          SÁBADO: "SATURDAY",
+          DOMINGO: "SUNDAY",
+        };
+
+        if (diaMapping[dia]) {
+          dia = diaMapping[dia];
+        }
+
+        if (!acc[dia]) {
+          acc[dia] = [];
+        }
+        acc[dia].push({
+          curso,
+          horario,
+        });
+      });
+      return acc;
+    }, {} as Record<string, Array<{ curso: Curso; horario: any }>>);
+  }, [cursos]);
 
   const renderDaySchedule = (dia: string) => {
     const cursosDelDia = cursosPorDia[dia] || [];
-    
+
     if (cursosDelDia.length === 0) {
       return (
         <View style={styles.emptyDay}>
+          <Ionicons name="calendar-outline" size={32} color="#d1d5db" />
           <Text style={styles.emptyDayText}>Sin clases</Text>
         </View>
       );
     }
 
     // Ordenar por hora de inicio
-    const cursosOrdenados = cursosDelDia.sort((a, b) => 
+    const cursosOrdenados = cursosDelDia.sort((a, b) =>
       a.horario.horaInicio.localeCompare(b.horario.horaInicio)
     );
 
     return cursosOrdenados.map(({ curso, horario }, index) => (
       <TouchableOpacity
-        key={`${curso.id}-${index}`}
-        style={[
-          styles.cursoItem,
-          { borderLeftColor: getCursoColor(index) }
-        ]}
-        onPress={() => onCursoPress(curso)}
+        key={`${curso.id}-${horario.horaInicio}-${index}`}
+        style={[styles.cursoItem, { borderLeftColor: getCursoColor(index) }]}
+        onPress={() => onCursoPress && onCursoPress(curso)}
         activeOpacity={0.7}
       >
         <View style={styles.cursoHora}>
-          <Ionicons name="time" size={14} color={COLORES.textSecondary} />
+          <Ionicons name="time-outline" size={14} color="#6b7280" />
           <Text style={styles.horaText}>
             {horario.horaInicio} - {horario.horaFin}
           </Text>
         </View>
-        <Text style={styles.cursoNombre} numberOfLines={1}>
+        <Text style={styles.cursoNombre} numberOfLines={2}>
           {curso.nombre}
         </Text>
         <View style={styles.cursoFooter}>
-          <Ionicons name="people" size={12} color={COLORES.textSecondary} />
+          <Ionicons name="people-outline" size={12} color="#6b7280" />
           <Text style={styles.alumnosText}>
-            {curso.alumnosInscriptos} alumnos
+            {curso.alumnosInscriptos.length}{" "}
+            {curso.alumnosInscriptos.length === 1 ? "alumno" : "alumnos"}
           </Text>
         </View>
       </TouchableOpacity>
@@ -92,35 +115,87 @@ export const CalendarioProfesor: React.FC<CalendarioProfesorProps> = ({
   };
 
   const getCursoColor = (index: number) => {
-    const colores = [COLORES.violeta, COLORES.rosa, COLORES.verde, COLORES.dorado];
+    const colores = [
+      "#3b82f6",
+      "#10b981",
+      "#f59e0b",
+      "#8b5cf6",
+      "#ef4444",
+      "#06b6d4",
+    ];
     return colores[index % colores.length];
   };
 
-  // Días laborables sin domingo
-  const diasLaborables = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  // Mapeo de nombres de días del enum a español
+  const diaMap: Record<string, string> = {
+    MONDAY: "Lunes",
+    TUESDAY: "Martes",
+    WEDNESDAY: "Miércoles",
+    THURSDAY: "Jueves",
+    FRIDAY: "Viernes",
+    SATURDAY: "Sábado",
+    SUNDAY: "Domingo",
+  };
+
+  // Días de la semana en orden
+  const diasSemana = [
+    "MONDAY",
+    "TUESDAY",
+    "WEDNESDAY",
+    "THURSDAY",
+    "FRIDAY",
+    "SATURDAY",
+  ];
+
+  // Calcular ancho de columna dinámicamente
+  const getColumnStyle = () => {
+    if (Platform.OS === "web") {
+      const gapTotal = (columns - 1) * 12;
+      const padding = 24;
+      const availableWidth = width - padding - gapTotal;
+      const columnWidth = availableWidth / columns;
+
+      return {
+        width: Math.floor(columnWidth),
+        minWidth: 180,
+      };
+    }
+    return {
+      width: width / columns - 24,
+    };
+  };
 
   return (
     <View style={styles.container}>
-      {/* Vista Semanal */}
-      <View style={styles.weekView}>
-        <Text style={styles.sectionTitle}>Horarios de la Semana</Text>
-        
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {diasLaborables.map(dia => (
-            <View key={dia} style={styles.diaColumn}>
-              <View style={styles.diaHeader}>
-                <Text style={styles.diaText}>{dia}</Text>
-                <Text style={styles.cantidadCursos}>
-                  {cursosPorDia[dia]?.length || 0}
-                </Text>
+      {/* Header opcional */}
+        <View style={styles.header}>
+          <Text style={styles.sectionTitle}>Calendario Semanal</Text>
+        </View>
+
+      {/* Grid de días */}
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.gridContainer}>
+          {diasSemana.map((diaKey) => {
+            const dia = diaMap[diaKey];
+            const cantidadCursos = cursosPorDia[diaKey]?.length || 0;
+
+            return (
+              <View key={diaKey} style={[styles.diaColumn, getColumnStyle()]}>
+                <View style={styles.diaHeader}>
+                  <Text style={styles.diaText}>{dia}</Text>
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{cantidadCursos}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.diaContent}>
+                  {renderDaySchedule(diaKey)}
+                </View>
               </View>
-              <ScrollView style={styles.diaContent}>
-                {renderDaySchedule(dia)}
-              </ScrollView>
-            </View>
-          ))}
-        </ScrollView>
-      </View>
+            );
+          })}
+        </View>
+      </ScrollView>
     </View>
   );
 };
@@ -128,90 +203,121 @@ export const CalendarioProfesor: React.FC<CalendarioProfesorProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f9fafb",
+  },
+  header: {
+    flexDirection: "row",
+    paddingHorizontal: 20,
   },
   sectionTitle: {
-    ...TIPOGRAFIA.titleM,
-    color: COLORES.textPrimary,
-    marginBottom: 16,
-    paddingHorizontal: 16,
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#111827",
+    marginTop: 16,
   },
-  weekView: {
-    flex: 1,
+  gridContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    padding: 12,
+    gap: 12,
   },
   diaColumn: {
-    width: 200,
-    marginRight: 12,
-    backgroundColor: COLORES.blanco,
+    backgroundColor: "#ffffff",
     borderRadius: 12,
-    overflow: 'hidden',
-    marginLeft: 16,
-    marginBottom: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    minHeight: 200,
+    ...Platform.select({
+      web: {
+        boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
+      },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+      },
+    }),
   },
   diaHeader: {
-    backgroundColor: COLORES.violeta,
+    backgroundColor: COLORES.cobre,
     padding: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   diaText: {
-    ...TIPOGRAFIA.subtitle,
-    color: COLORES.blanco,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#ffffff",
   },
-  cantidadCursos: {
-    ...TIPOGRAFIA.body,
-    color: COLORES.blanco,
-    backgroundColor: `${COLORES.blanco}30`,
+  badge: {
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    minWidth: 24,
+    alignItems: "center",
+  },
+  badgeText: {
     fontSize: 12,
+    fontWeight: "600",
+    color: "#ffffff",
   },
   diaContent: {
-    padding: 8,
-    maxHeight: 500,
+    padding: 12,
+    minHeight: 150,
   },
   emptyDay: {
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 32,
+    gap: 8,
   },
   emptyDayText: {
-    ...TIPOGRAFIA.body,
-    color: COLORES.textSecondary,
-    fontStyle: 'italic',
+    fontSize: 13,
+    color: "#9ca3af",
+    fontStyle: "italic",
   },
   cursoItem: {
-    backgroundColor: COLORES.background,
+    backgroundColor: "#f9fafb",
     padding: 12,
     borderRadius: 8,
-    marginBottom: 8,
+    marginBottom: 10,
     borderLeftWidth: 4,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   cursoHora: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 6,
     gap: 4,
   },
   horaText: {
-    ...TIPOGRAFIA.caption,
-    color: COLORES.textSecondary,
-    fontWeight: '600',
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "600",
   },
   cursoNombre: {
-    ...TIPOGRAFIA.subtitle,
-    color: COLORES.textPrimary,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111827",
     marginBottom: 6,
+    lineHeight: 18,
   },
   cursoFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
   },
   alumnosText: {
-    ...TIPOGRAFIA.caption,
-    color: COLORES.textSecondary,
+    fontSize: 11,
+    color: "#6b7280",
   },
 });
+
+export default CalendarioSemanal;

@@ -13,7 +13,7 @@ export default function LoginScreen() {
 
   return (
     <LinearGradient
-      colors={[COLORES.gris_alt, COLORES.gris_alt, COLORES.violeta]}
+      colors={[COLORES.violeta, COLORES.cobre]}
       style={styles.container}
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 1 }}
@@ -21,7 +21,7 @@ export default function LoginScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.content}>
           <View style={styles.header}>
-            <Logo size={200} color={COLORES.violeta} />
+            <Logo size={200} color={COLORES.dorado} />
             <Text style={styles.title}>CENTRO SIS</Text>
             <Text style={styles.subtitle}>Sistema de Gestión Educativa</Text>
           </View>
@@ -52,19 +52,13 @@ const styles = StyleSheet.create({
   },
   title: {
     ...TIPOGRAFIA.titleXL,
-    color: COLORES.violeta,
+    color: COLORES.dorado,
     textAlign: "center",
   },
   subtitle: {
     ...TIPOGRAFIA.subtitle,
-    color: COLORES.violeta,
+    color: COLORES.dorado,
     textAlign: "center",
-  },
-  cardTitle: {
-    ...TIPOGRAFIA.titleL,
-    color: COLORES.textPrimary,
-    textAlign: "center",
-    marginBottom: 24,
   },
   loginCard: {
     marginBottom: 20,

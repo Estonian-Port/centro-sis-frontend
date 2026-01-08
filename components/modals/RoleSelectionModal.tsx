@@ -14,15 +14,16 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> =
       [Rol.ALUMNO]: 'Alumno',
       [Rol.PROFESOR]: 'Profesor',
       [Rol.ADMINISTRADOR]: 'Administrador',
+      [Rol.OFICINA]: 'Oficina',
     };
 
     return (
       <Modal visible={visible} transparent animationType="fade">
         <View style={styles.overlay}>
           <View style={styles.modal}>
-            <Text style={styles.title}>Seleccionar Vista</Text>
+            <Text style={styles.title}>Seleccionar Rol</Text>
             <Text style={styles.subtitle}>
-              ¿Desde qué perspectiva deseas acceder?
+              ¿Con qué rol deseas acceder?
             </Text>
 
             <View style={styles.options}>
@@ -33,7 +34,7 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> =
                   onPress={() => onSelectRole(role)}
                 >
                   <Text style={styles.optionText}>
-                    Ver vista como {roleLabels[role]}
+                    Ingresar como {roleLabels[role]}
                   </Text>
                 </TouchableOpacity>
               ))}

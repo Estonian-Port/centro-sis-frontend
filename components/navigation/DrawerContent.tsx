@@ -1,22 +1,20 @@
-import { ModalLogout } from '@/components/modals/ModalLogout';
-import { useAuth } from '@/context/authContext';
-import { Rol } from '@/model/model';
-import { Ionicons } from '@expo/vector-icons';
-import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ModalLogout } from "@/components/modals/ModalLogout";
+import { useAuth } from "@/context/authContext";
+import { Rol } from "@/model/model";
+import { COLORES } from "@/util/colores";
+import { Ionicons } from "@expo/vector-icons";
+import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
+import { router } from "expo-router";
+import React, { useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Logo } from "../ui/Logo";
 
 // Configuración de labels de roles
 const ROLE_LABELS = {
-  [Rol.ALUMNO]: 'Alumno',
-  [Rol.PROFESOR]: 'Profesor',
-  [Rol.ADMINISTRADOR]: 'Administrador',
+  [Rol.ALUMNO]: "Alumno",
+  [Rol.PROFESOR]: "Profesor",
+  [Rol.ADMINISTRADOR]: "Administrador",
+  [Rol.OFICINA]: "Oficina",
 } as const;
 
 export const DrawerContent = (props: any) => {
@@ -25,43 +23,43 @@ export const DrawerContent = (props: any) => {
 
   const menuItems = [
     {
-      label: 'Dashboard',
-      icon: 'home-outline',
-      onPress: () => props.navigation.navigate('Dashboard'),
+      label: "Dashboard",
+      icon: "home-outline",
+      onPress: () => props.navigation.navigate("Dashboard"),
     },
     {
-      label: 'Administración',
-      icon: 'settings-outline',
-      onPress: () => props.navigation.navigate('Admin'),
+      label: "Administración",
+      icon: "settings-outline",
+      onPress: () => props.navigation.navigate("Admin"),
       roles: [Rol.ADMINISTRADOR],
     },
     {
-      label: 'Pagos',
-      icon: 'card-outline',
-      onPress: () => props.navigation.navigate('Payments'),
+      label: "Pagos",
+      icon: "card-outline",
+      onPress: () => props.navigation.navigate("Payments"),
       roles: [Rol.ADMINISTRADOR],
     },
     {
-      label: 'Mis Pagos',
-      icon: 'card-outline',
-      onPress: () => props.navigation.navigate('StudentPayments'),
+      label: "Mis Pagos",
+      icon: "card-outline",
+      onPress: () => props.navigation.navigate("StudentPayments"),
       roles: [Rol.ALUMNO],
     },
     {
-      label: 'Mis Cobros',
-      icon: 'wallet-outline',
-      onPress: () => props.navigation.navigate('ProfessorEarnings'),
+      label: "Mis Cobros",
+      icon: "wallet-outline",
+      onPress: () => props.navigation.navigate("ProfessorEarnings"),
       roles: [Rol.PROFESOR],
     },
     {
-      label: 'Accesos',
-      icon: 'time-outline',
-      onPress: () => props.navigation.navigate('Accesses'),
+      label: "Accesos",
+      icon: "time-outline",
+      onPress: () => props.navigation.navigate("Accesses"),
     },
     {
-      label: 'Perfil',
-      icon: 'person-outline',
-      onPress: () => props.navigation.navigate('Profile'),
+      label: "Perfil",
+      icon: "person-outline",
+      onPress: () => props.navigation.navigate("Profile"),
     },
   ];
 
@@ -79,9 +77,9 @@ export const DrawerContent = (props: any) => {
     try {
       await logout();
       // Redirigir a login después de logout
-      router.replace('/login');
+      router.replace("/login");
     } catch (error) {
-      console.error('Error al cerrar sesión:', error);
+      console.error("Error al cerrar sesión:", error);
     }
   };
 
@@ -93,14 +91,12 @@ export const DrawerContent = (props: any) => {
     <>
       <DrawerContentScrollView {...props}>
         <View style={styles.header}>
-          <View style={styles.profileIcon}>
-            <Ionicons name="person" size={24} color="#ffffff" />
-          </View>
+          <Logo size={100} color={COLORES.dorado} />
           <Text style={styles.userName}>
             {usuario?.nombre} {usuario?.apellido}
           </Text>
           <Text style={styles.userRole}>
-            {selectedRole ? ROLE_LABELS[selectedRole] : 'Sin rol'}
+            {selectedRole ? ROLE_LABELS[selectedRole] : "Sin rol"}
           </Text>
         </View>
         <View style={styles.menu}>
@@ -135,27 +131,18 @@ export const DrawerContent = (props: any) => {
 const styles = StyleSheet.create({
   header: {
     padding: 20,
-    backgroundColor: '#3b82f6',
-    alignItems: 'center',
-  },
-  profileIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#1d4ed8',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
+    backgroundColor: COLORES.violeta,
+    alignItems: "center",
   },
   userName: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 4,
+    fontWeight: "600",
+    color: "#ffffff",
+    margin: 4,
   },
   userRole: {
     fontSize: 14,
-    color: '#dbeafe',
+    color: "#dbeafe",
   },
   menu: {
     flex: 1,
@@ -164,17 +151,17 @@ const styles = StyleSheet.create({
   footer: {
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: "#e5e7eb",
   },
   logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 10,
   },
   logoutText: {
     marginLeft: 10,
     fontSize: 16,
-    color: '#ef4444',
-    fontWeight: '500',
+    color: "#ef4444",
+    fontWeight: "500",
   },
 });

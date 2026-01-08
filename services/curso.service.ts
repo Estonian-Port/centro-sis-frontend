@@ -4,10 +4,6 @@ import {CursoAlumno, Curso, nuevoCursoAlquiler, nuevoCursoComision} from "@/mode
 const CURSO = '/curso';
 
 class CursoService {
-    getAllByAlumno = async (id: number): Promise<CursoAlumno[]> => {
-    const response = await api.get(`${CURSO}/getAllByAlumnoId/${id}`);
-    return response.data.data;
-  };
 
   getAllCursos = async (): Promise<Curso[]> => {
     const response = await api.get(`${CURSO}/activos`);

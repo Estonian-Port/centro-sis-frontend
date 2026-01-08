@@ -17,7 +17,12 @@ export type TagVariant =
   // Pagos
   | 'alDia'
   | 'atrasado'
-  | 'moroso';
+  | 'moroso'
+  // Otros
+  | 'success'
+  | 'error'
+  | 'warning'
+  | 'info';
 
 interface TagProps {
   label: string;
@@ -66,8 +71,8 @@ const styles = StyleSheet.create({
   rolProfesor: { backgroundColor: '#8BE378' }, // Verde
   rolProfesorText: { color: '#065f46' },
 
-  rolAdmin: { backgroundColor: '#fee2e2' }, // Rojo
-  rolAdminText: { color: '#991b1b' },
+  rolAdmin: { backgroundColor: '#EB4242' }, // Rojo
+  rolAdminText: { color: '#000' },
 
   rolOficina: { backgroundColor: '#fef3c7' }, // Amarillo/Naranja
   rolOficinaText: { color: '#92400e' },
@@ -101,4 +106,16 @@ const styles = StyleSheet.create({
 
   moroso: { backgroundColor: '#fecaca' },
   morosoText: { color: '#7f1d1d' },
+
+  success: { backgroundColor: '#d1fae5' },
+  successText: { color: '#065f46' },
+
+  error: { backgroundColor: '#fecaca' },
+  errorText: { color: '#7f1d1d' },
+
+  warning: { backgroundColor: '#ffedd5' },
+  warningText: { color: '#9a3412' },
+
+  info: { backgroundColor: '#dbeafe' },
+  infoText: { color: '#1e40af' },
 });

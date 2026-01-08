@@ -44,8 +44,8 @@ const CourseItem = ({
           {course.profesores.length > 0 ? course.profesores[0] : "Sin profesor"}
         </Text>
         <Text style={styles.alumnosCount}>
-          {course.alumnosInscriptos}{" "}
-          {course.alumnosInscriptos === 1 ? "alumno" : "alumnos"}
+          {course.alumnosInscriptos.length}{" "}
+          {course.alumnosInscriptos.length === 1 ? "alumno" : "alumnos"}
         </Text>
       </View>
     </TouchableOpacity>
@@ -105,11 +105,5 @@ const styles = StyleSheet.create({
   alumnosCount: {
     fontSize: 12,
     color: "#9ca3af",
-  },
-  emptyText: {
-    textAlign: "center",
-    fontSize: 14,
-    color: "#9ca3af",
-    marginTop: 40,
   },
 });

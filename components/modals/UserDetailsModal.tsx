@@ -39,6 +39,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
     setLoading(true);
     try {
       const response = await usuarioService.getUserDetail(idUsuario);
+      console.log(response);
       setUsuario(response);
     } catch (error) {
       Toast.show({
@@ -143,7 +144,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                 
                 <Card style={styles.alumnoCard}>
                   <Text style={styles.subsectionTitle}>
-                    Cursos Inscritos ({usuario.cursosInscriptos?.length || 0})
+                    Cursos Inscriptos ({usuario.cursosInscriptos?.length || 0})
                   </Text>
                   
                   {usuario.cursosInscriptos &&
@@ -165,14 +166,14 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                           {/* Horarios */}
                           {curso.horarios && curso.horarios.length > 0 && (
                             <View style={styles.horariosChips}>
-                              {curso.horarios.slice(0, 2).map((horario, index) => (
+                              {curso.horarios.slice(0, 3).map((horario, index) => (
                                 <Text key={index} style={styles.horarioChip}>
-                                  {horario.dia.substring(0, 3)} {horario.horaInicio}
+                                  {horario.dia.substring(0, 2)} {horario.horaInicio}
                                 </Text>
                               ))}
-                              {curso.horarios.length > 2 && (
+                              {curso.horarios.length > 3 && (
                                 <Text style={styles.horarioChip}>
-                                  +{curso.horarios.length - 2}
+                                  +{curso.horarios.length - 3}
                                 </Text>
                               )}
                             </View>
@@ -187,7 +188,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                               color="#10b981"
                             />
                             <Text style={styles.pagoText}>
-                              {curso.tipoPagoElegido}
+                              Pago elegido: {curso.tipoPagoElegido}
                             </Text>
                           </View>
                           

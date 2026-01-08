@@ -1,29 +1,29 @@
 export enum Rol {
-  ALUMNO = 'ALUMNO',
-  PROFESOR = 'PROFESOR',
-  ADMINISTRADOR = 'ADMINISTRADOR',
-  OFICINA = 'OFICINA'
+  ALUMNO = "ALUMNO",
+  PROFESOR = "PROFESOR",
+  ADMINISTRADOR = "ADMINISTRADOR",
+  OFICINA = "OFICINA",
 }
 
 export enum EstadoUsuario {
-  ACTIVO = 'ACTIVO',
-  INACTIVO = 'INACTIVO',
-  PENDIENTE = 'PENDIENTE',
-  BAJA = 'BAJA',
+  ACTIVO = "ACTIVO",
+  INACTIVO = "INACTIVO",
+  PENDIENTE = "PENDIENTE",
+  BAJA = "BAJA",
 }
 
 export enum EstadoCurso {
-  POR_COMENZAR = 'POR_COMENZAR',
-  EN_CURSO = 'EN_CURSO',
-  FINALIZADO = 'FINALIZADO',
-  PENDIENTE = 'PENDIENTE',
+  POR_COMENZAR = "POR_COMENZAR",
+  EN_CURSO = "EN_CURSO",
+  FINALIZADO = "FINALIZADO",
+  PENDIENTE = "PENDIENTE",
 }
 
 export enum EstadoPago {
-  PENDIENTE = 'PENDIENTE',
-  AL_DIA = 'AL DIA',
-  ATRASADO = 'ATRASADO',
-  MOROSO = 'MOROSO'
+  PENDIENTE = "PENDIENTE",
+  AL_DIA = "AL DIA",
+  ATRASADO = "ATRASADO",
+  MOROSO = "MOROSO",
 }
 
 export const formatEstadoPago = (estado?: string) => {
@@ -35,18 +35,21 @@ export const formatEstadoPago = (estado?: string) => {
     MOROSO: "MOROSO",
   };
   if (map[estado]) return map[estado];
-  return estado.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  return estado
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
 export enum TipoAcceso {
-  ENTRADA = 'ENTRADA',
-  SALIDA = 'SALIDA'
+  ENTRADA = "ENTRADA",
+  SALIDA = "SALIDA",
 }
 
 export enum PaymentType {
-  EFECTIVO = 'EFECTIVO',
-  TRANSFERENCIA = 'TRANSFERENCIA',
-  TARJETA = 'TARJETA'
+  EFECTIVO = "EFECTIVO",
+  TRANSFERENCIA = "TRANSFERENCIA",
+  TARJETA = "TARJETA",
 }
 
 export interface NuevoUsuario {
@@ -64,12 +67,27 @@ export interface Usuario {
   estado: EstadoUsuario;
   primerLogin: boolean;
   listaRol: Rol[];
+  ultimoIngreso?: string;
 }
 
 export interface UsuarioDetails extends Usuario {
   cursosInscriptos?: CursoAlumno[];
   cursosDictados?: Curso[];
   //pagos?: Pago[];
+}
+
+export interface Alumno {
+  id: number;
+  nombre: string;
+  apellido: string;
+  dni: string;
+  email: string;
+  celular: string;
+  estadoPago: EstadoPago;
+  tipoPagoElegido: PagoType;
+  asistencias: number;
+  beneficio?: number;
+  puntos: number;
 }
 
 export interface nuevoCursoAlquiler {
@@ -97,7 +115,7 @@ export interface Curso {
   id: number;
   nombre: string;
   horarios: Horario[];
-  alumnosInscriptos: number;
+  alumnosInscriptos: Alumno[];
   fechaInicio: string;
   fechaFin: string;
   estado: EstadoCurso;

@@ -1,19 +1,19 @@
-import { useAuth } from '@/context/authContext';
-import { Rol } from '@/model/model';
-import { Ionicons } from '@expo/vector-icons';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { Tabs } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
-import { RoleSelectionModal } from '../../components/modals/RoleSelectionModal';
-import { DrawerContent } from '../../components/navigation/DrawerContent';
-import AccessesScreen from './accesses';
-import AdminScreen from './admin';
-import HomeScreen from './index';
-import PaymentsScreen from './payments';
-import ProfessorEarningsScreen from './professor-earnings';
-import ProfileScreen from './profile';
-import StudentPaymentsScreen from './student-payments';
+import { useAuth } from "@/context/authContext";
+import { Rol } from "@/model/model";
+import { Ionicons } from "@expo/vector-icons";
+import { createDrawerNavigator } from "@react-navigation/drawer";
+import { Tabs } from "expo-router";
+import { useEffect, useState } from "react";
+import { Platform } from "react-native";
+import { RoleSelectionModal } from "../../components/modals/RoleSelectionModal";
+import { DrawerContent } from "../../components/navigation/DrawerContent";
+import AccessesScreen from "./accesses";
+import AdminScreen from "./admin";
+import HomeScreen from "./index";
+import PaymentsScreen from "./payments";
+import ProfessorEarningsScreen from "./professor-earnings";
+import ProfileScreen from "./profile";
+import StudentPaymentsScreen from "./student-payments";
 
 const Drawer = createDrawerNavigator();
 
@@ -21,73 +21,87 @@ function DrawerNavigator() {
   const { selectedRole } = useAuth();
 
   return (
-    <Drawer.Navigator 
+    <Drawer.Navigator
       drawerContent={(props: any) => <DrawerContent {...props} />}
-      screenOptions={{ 
+      screenOptions={{
         headerShown: true,
         drawerStyle: {
           width: 280,
         },
       }}
     >
-      <Drawer.Screen 
-        name="Dashboard" 
+      <Drawer.Screen
+        name="Dashboard"
         component={HomeScreen}
         options={{
-          title: 'Dashboard',
+          title: "Dashboard",
         }}
       />
-      
-      {selectedRole === 'ADMINISTRADOR' && (
+
+      {selectedRole === "ADMINISTRADOR" && (
         <>
-          <Drawer.Screen name="Admin" component={AdminScreen} />
-          <Drawer.Screen name="Payments" component={PaymentsScreen} />
+          <Drawer.Screen
+            name="Admin"
+            component={AdminScreen}
+            options={{
+              title: "Administración",
+            }}
+          />
+          <Drawer.Screen
+            name="Payments"
+            component={PaymentsScreen}
+            options={{
+              title: "Pagos",
+            }}
+          />
         </>
       )}
-      {selectedRole === 'ALUMNO' && (
-        <Drawer.Screen 
-          name="StudentPayments" 
-          component={StudentPaymentsScreen} 
-          options={{ title: 'Mis Pagos' }} />
+      {selectedRole === "ALUMNO" && (
+        <Drawer.Screen
+          name="StudentPayments"
+          component={StudentPaymentsScreen}
+          options={{ title: "Mis Pagos" }}
+        />
       )}
-      {selectedRole === 'PROFESOR' && (
-        <Drawer.Screen 
-          name="ProfessorEarnings" 
-          component={ProfessorEarningsScreen} 
-          options={{ title: 'Mis Cobros' }} />
+      {selectedRole === "PROFESOR" && (
+        <Drawer.Screen
+          name="ProfessorEarnings"
+          component={ProfessorEarningsScreen}
+          options={{ title: "Mis Cobros" }}
+        />
       )}
 
-      <Drawer.Screen 
-        name="Accesses" 
+      <Drawer.Screen
+        name="Accesses"
         component={AccessesScreen}
         options={{
-          title: 'Accesos',
+          title: "Accesos",
         }}
       />
-      
-      <Drawer.Screen 
-        name="Profile" 
+
+      <Drawer.Screen
+        name="Profile"
         component={ProfileScreen}
         options={{
-          title: 'Perfil',
+          title: "Perfil",
         }}
       />
     </Drawer.Navigator>
   );
 }
 
- export default function TabLayout() {
-  const { usuario, selectedRole, setSelectedRole, hasMultipleRoles } = useAuth();
+export default function TabLayout() {
+  const { usuario, selectedRole, setSelectedRole, hasMultipleRoles } =
+    useAuth();
   const [showRoleModal, setShowRoleModal] = useState(false);
 
   useEffect(() => {
     if (hasMultipleRoles() && !selectedRole) {
       setShowRoleModal(true);
-    }
-    else {
-        if(usuario?.listaRol[0] != null){
-            setSelectedRole(usuario?.listaRol[0]);
-        }
+    } else {
+      if (usuario?.listaRol[0] != null) {
+        setSelectedRole(usuario?.listaRol[0]);
+      }
     }
   }, [hasMultipleRoles, selectedRole]);
 
@@ -97,7 +111,7 @@ function DrawerNavigator() {
   };
 
   // Para web, usa el Drawer
-  if (Platform.OS === 'web') {
+  if (Platform.OS === "web") {
     return (
       <>
         <DrawerNavigator />
@@ -116,45 +130,45 @@ function DrawerNavigator() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#3b82f6',
+          tabBarActiveTintColor: "#3b82f6",
         }}
       >
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Inicio',
+            title: "Inicio",
             tabBarIcon: ({ size, color }) => (
               <Ionicons name="home-outline" size={size} color={color} />
             ),
           }}
         />
-        
+
         {selectedRole === Rol.ADMINISTRADOR && (
           <Tabs.Screen
             name="admin"
             options={{
-              title: 'Admin',
+              title: "Admin",
               tabBarIcon: ({ size, color }) => (
                 <Ionicons name="settings-outline" size={size} color={color} />
               ),
             }}
           />
         )}
-        
+
         <Tabs.Screen
           name="payments"
           options={{
-            title: 'Pagos',
+            title: "Pagos",
             tabBarIcon: ({ size, color }) => (
               <Ionicons name="card-outline" size={size} color={color} />
             ),
           }}
         />
-        
+
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'Perfil',
+            title: "Perfil",
             tabBarIcon: ({ size, color }) => (
               <Ionicons name="person-outline" size={size} color={color} />
             ),

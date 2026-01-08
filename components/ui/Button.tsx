@@ -1,3 +1,4 @@
+import { COLORES } from '@/util/colores';
 import React from 'react';
 import {
   TouchableOpacity,
@@ -69,7 +70,7 @@ const styles = StyleSheet.create({
   },
   // Variants
   primary: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: COLORES.violeta,
   },
   primaryText: {
     color: '#ffffff',

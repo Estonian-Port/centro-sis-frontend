@@ -9,7 +9,6 @@ import {
   View,
 } from "react-native";
 import { Card } from "../ui/Card";
-import { Tag } from "../ui/Tag";
 import { Curso } from "@/model/model";
 import { cursoService } from "@/services/curso.service";
 import Toast from "react-native-toast-message";
@@ -19,12 +18,14 @@ interface CourseDetailModalProps {
   visible: boolean;
   onClose: () => void;
   cursoId: number;
+  onNavigateToCourse?: (cursoId: number) => void;
 }
 
 export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
   visible,
   onClose,
   cursoId,
+  onNavigateToCourse,
 }) => {
   const [curso, setCurso] = useState<Curso | null>(null);
   const [loading, setLoading] = useState(false);
@@ -57,6 +58,13 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
     onClose();
   };
 
+  const handleCourseClick = (cursoId: string) => {
+    onClose();
+    if (onNavigateToCourse) {
+      onNavigateToCourse(Number(cursoId));
+    }
+  };
+
   if (!curso) {
     return null;
   }
@@ -83,8 +91,8 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                 <InfoRow label="Fecha Fin" value={curso.fechaFin} />
                 <InfoRow
                   label="Alumnos Inscriptos"
-                  value={`${curso.alumnosInscriptos} ${
-                    curso.alumnosInscriptos === 1 ? "alumno" : "alumnos"
+                  value={`${curso.alumnosInscriptos.length} ${
+                    curso.alumnosInscriptos.length === 1 ? "alumno" : "alumnos"
                   }`}
                 />
               </Card>
@@ -126,11 +134,7 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                       <Text style={styles.horarioDiaText}>{horario.dia}</Text>
                     </View>
                     <View style={styles.horarioHoras}>
-                      <Ionicons
-                        name="time-outline"
-                        size={18}
-                        color="#6b7280"
-                      />
+                      <Ionicons name="time-outline" size={18} color="#6b7280" />
                       <Text style={styles.horarioHorasText}>
                         {horario.horaInicio} - {horario.horaFin}
                       </Text>
@@ -155,9 +159,7 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                           size={18}
                           color="#f59e0b"
                         />
-                        <Text style={styles.tipoPagoTipo}>
-                          {tipoPago.tipo}
-                        </Text>
+                        <Text style={styles.tipoPagoTipo}>{tipoPago.tipo}</Text>
                       </View>
                       <Text style={styles.tipoPagoMonto}>
                         ${tipoPago.monto.toLocaleString()}
@@ -172,11 +174,10 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
           {/* Footer */}
           <View style={styles.footer}>
             <Button
-              title="Gestionar Alumnos"
+              title="Ir al curso"
               variant="primary"
               onPress={() => {
-                // TODO: Abrir modal de gestión de alumnos
-                handleClose();
+                handleCourseClick(curso.id.toString());
               }}
               style={styles.footerButton}
             />

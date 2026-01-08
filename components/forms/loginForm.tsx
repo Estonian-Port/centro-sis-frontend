@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     marginTop: 8,
-    backgroundColor: COLORES.rosa,
+    backgroundColor: COLORES.violeta,
   },
   textInput: {
     ...TIPOGRAFIA.body,
