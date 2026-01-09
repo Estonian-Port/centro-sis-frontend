@@ -6,6 +6,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { Curso } from "@/model/model";
+import { useAuth } from "@/context/authContext";
 
 const CourseItem = ({
   course,
@@ -14,6 +15,8 @@ const CourseItem = ({
   course: Curso;
   handleCourseDetails: (course: any) => void;
 }) => {
+  const {selectedRole} = useAuth();
+
   return (
     <TouchableOpacity
       key={course.id}
@@ -43,10 +46,12 @@ const CourseItem = ({
         <Text style={styles.profesorName}>
           {course.profesores.length > 0 ? course.profesores[0] : "Sin profesor"}
         </Text>
-        <Text style={styles.alumnosCount}>
-          {course.alumnosInscriptos.length}{" "}
-          {course.alumnosInscriptos.length === 1 ? "alumno" : "alumnos"}
-        </Text>
+        {selectedRole != "ALUMNO" && (
+          <Text style={styles.alumnosCount}>
+            {course.alumnosInscriptos.length}{" "}
+            {course.alumnosInscriptos.length === 1 ? "alumno" : "alumnos"}
+          </Text>
+        )}
       </View>
     </TouchableOpacity>
   );

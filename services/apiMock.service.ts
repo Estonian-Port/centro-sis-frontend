@@ -1,11 +1,11 @@
 import {
-  AuthResponse,
-  Curso,
-  EstadoUsuario,
-  PaginatedResponse,
-  Rol,
-  PagoType,
-  Usuario
+    AuthResponse,
+    Curso,
+    Estado,
+    PaginatedResponse,
+    Rol,
+    PagoType,
+    Usuario
 } from '@/model/model';
 
 const mockUsers: Usuario[] = [
@@ -17,7 +17,7 @@ const mockUsers: Usuario[] = [
     dni: '12345678',
     telefono: '1234567890',
     listaRol: [ Rol.ALUMNO ],
-    estado: EstadoUsuario.ALTA,
+    estado: Estado.ALTA,
     beneficios: ['Pago total', 'Familiar'],
     primerLogin: true,
     cursosActivos: [],
@@ -31,7 +31,7 @@ const mockUsers: Usuario[] = [
     dni: '87654321',
     telefono: '0987654321',
     listaRol: [ Rol.PROFESOR ],
-    estado: EstadoUsuario.ALTA,
+    estado: Estado.ALTA,
     primerLogin: false,
     cursosActivos: [],
     cursosDadosDeBaja: [],
@@ -44,7 +44,7 @@ const mockUsers: Usuario[] = [
     dni: '11111111',
     telefono: '1111111111',
     listaRol: [ Rol.ADMINISTRADOR ],
-    estado: EstadoUsuario.ALTA,
+    estado: Estado.ALTA,
     primerLogin: false,
     cursosActivos: [],
     cursosDadosDeBaja: [],
@@ -57,7 +57,7 @@ const mockUsers: Usuario[] = [
     dni: '22222222',
     telefono: '2222222222',
     listaRol: [Rol.ALUMNO, Rol.PROFESOR],
-    estado: EstadoUsuario.ALTA,
+    estado: Estado.ALTA,
     primerLogin: false,
     cursosActivos: [],
     cursosDadosDeBaja: [],
@@ -70,7 +70,7 @@ const mockUsers: Usuario[] = [
     dni: '33333333',
     telefono: '3333333333',
     listaRol: [ Rol.ALUMNO, Rol.PROFESOR, Rol.ADMINISTRADOR ],
-    estado: EstadoUsuario.ALTA,
+    estado: Estado.ALTA,
     beneficios: ['Hermano'],
     primerLogin: true,
     cursosActivos: [],
@@ -86,7 +86,7 @@ const mockCourses: Curso[] = [
     horario: '14:00-16:00',
     arancel: 15000,
     tipoPago: PagoType.MENSUAL,
-    estado: EstadoUsuario.ALTA,
+    estado: Estado.ALTA,
     profesor: mockUsers[1], // María García
   },
   {
@@ -96,7 +96,7 @@ const mockCourses: Curso[] = [
     horario: '16:00-18:00',
     arancel: 20000,
     tipoPago: PagoType.MENSUAL,
-    estado: EstadoUsuario.ALTA,
+    estado: Estado.ALTA,
     profesor: mockUsers[1], // María García
   },
   {
@@ -106,7 +106,7 @@ const mockCourses: Curso[] = [
     horario: '10:00-12:00',
     arancel: 18000,
     tipoPago: PagoType.TRIMESTRAL,
-    estado: EstadoUsuario.ALTA,
+    estado: Estado.ALTA,
     profesor: mockUsers[3], // Pedro López
   },
 ];

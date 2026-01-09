@@ -5,7 +5,7 @@ export enum Rol {
   OFICINA = "OFICINA",
 }
 
-export enum EstadoUsuario {
+export enum Estado {
   ACTIVO = "ACTIVO",
   INACTIVO = "INACTIVO",
   PENDIENTE = "PENDIENTE",
@@ -64,7 +64,7 @@ export interface Usuario {
   dni: string;
   email: string;
   celular: string;
-  estado: EstadoUsuario;
+  estado: Estado;
   primerLogin: boolean;
   listaRol: Rol[];
   ultimoIngreso?: string;
@@ -83,11 +83,6 @@ export interface Alumno {
   dni: string;
   email: string;
   celular: string;
-  estadoPago: EstadoPago;
-  tipoPagoElegido: PagoType;
-  asistencias: number;
-  beneficio?: number;
-  puntos: number;
 }
 
 export interface nuevoCursoAlquiler {
@@ -121,11 +116,39 @@ export interface Curso {
   estado: EstadoCurso;
   profesores: string[];
   tiposPago: TipoPago[];
+  inscripciones: Inscripcion[];
 }
 
 export interface CursoAlumno extends Curso {
   estadoPago: EstadoPago;
   tipoPagoElegido: PagoType;
+}
+
+export interface Inscripcion {
+  id: number;
+  alumno: Alumno;
+  tipoPagoElegido: TipoPago;
+  fechaInscripcion: string;
+  pagosRealizados: Pago[];
+  estadoPago: EstadoPago;
+  beneficio: number;
+  puntos: number;
+  porcentajeAsistencia: number;
+  estado : Estado;
+}
+
+export interface UpdatePerfilUsuario {
+  nombre: string;
+  apellido: string;
+  dni: string;
+  celular: string;
+  email: string;
+}
+
+export interface UsuarioUpdatePassword {
+  passwordActual: string;
+  nuevoPassword: string;
+  confirmacionPassword: string;
 }
 
 export interface Horario {
@@ -136,13 +159,11 @@ export interface Horario {
 
 export interface Pago {
   id: number;
-  curso: Curso;
-  alumno: Usuario;
   monto: number;
-  tipo: PaymentType;
+  tipoPagoElegido: TipoPago;
   fecha: string;
   recargo?: number;
-  beneficios?: string[];
+  beneficio?: number;
 }
 
 export interface Access {
@@ -206,4 +227,9 @@ export interface ProfesorLista {
   id: number;
   nombre: string;
   apellido: string;
+}
+
+export interface NuevaInscripcion {
+  tipoPagoSeleccionado: string;
+  beneficio: number;
 }

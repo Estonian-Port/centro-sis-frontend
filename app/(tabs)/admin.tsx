@@ -12,14 +12,13 @@ import { ViewToggle, ViewMode } from "@/components/ui/ViewToggle";
 import CourseItem from "@/components/cards/CourseItem";
 import { Button } from "@/components/ui/Button";
 import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
-import { SearchBar } from "@/components/ui/SearchBarCourse";
+import { SearchBar } from "@/components/ui/SearchBar";
 import CalendarioSemanal from "../calendario";
 import Toast from "react-native-toast-message";
 import { usuarioService } from "@/services/usuario.service";
 import { useAuth } from "@/context/authContext";
 import { cursoService } from "@/services/curso.service";
 import UserItem from "@/components/cards/UserItem";
-import { CourseDetailModal } from "@/components/modals/CourseDetailsModal";
 import { UserDetailModal } from "@/components/modals/UserDetailsModal";
 import { CreateUserModal } from "@/components/modals/CreateUserModal";
 import { CreateCourseModal } from "@/components/modals/CreateCourseModal";
@@ -104,7 +103,7 @@ export default function AdminScreen() {
   };
 
   const handleViewCourseDetails = (course: Curso) => {
-    router.push(`/${course.id}`);
+    router.push(`/curso/${course.id}/alumnos`);
   };
 
   const altaUsuario = async (nuevoUsuario: NuevoUsuario) => {

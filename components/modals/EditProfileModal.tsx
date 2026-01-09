@@ -15,6 +15,7 @@ import * as yup from "yup";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import Toast from "react-native-toast-message";
+import { UpdatePerfilUsuario } from "@/model/model";
 
 // Esquema de validación
 const schema = yup.object().shape({
@@ -26,10 +27,7 @@ const schema = yup.object().shape({
     .string()
     .required("El apellido es requerido")
     .min(2, "El apellido debe tener al menos 2 caracteres"),
-  email: yup
-    .string()
-    .required("El email es requerido")
-    .email("Email inválido"),
+  email: yup.string().required("El email es requerido").email("Email inválido"),
   dni: yup
     .string()
     .required("El DNI es requerido")
@@ -43,19 +41,11 @@ const schema = yup.object().shape({
     .min(10, "El celular debe tener al menos 10 dígitos"),
 });
 
-interface EditProfileData {
-  nombre: string;
-  apellido: string;
-  email: string;
-  dni: string;
-  celular: string;
-}
-
 interface EditProfileModalProps {
   visible: boolean;
   onClose: () => void;
-  onSuccess: (data: EditProfileData) => Promise<void>;
-  initialData: EditProfileData;
+  onSuccess: (data: UpdatePerfilUsuario) => Promise<void>;
+  initialData: UpdatePerfilUsuario;
 }
 
 export const EditProfileModal: React.FC<EditProfileModalProps> = ({
@@ -69,8 +59,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-  } = useForm<EditProfileData>({
-    resolver: yupResolver(schema),
+  } = useForm<UpdatePerfilUsuario>({
+    resolver: yupResolver(schema) as any,
     defaultValues: initialData,
   });
 
@@ -81,24 +71,9 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     }
   }, [visible, initialData, reset]);
 
-  const onSubmit = async (data: EditProfileData) => {
-    try {
-      await onSuccess(data);
-      Toast.show({
-        type: "success",
-        text1: "Perfil actualizado",
-        text2: "Tu información ha sido actualizada correctamente",
-        position: "bottom",
-      });
-      onClose();
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "No se pudo actualizar el perfil",
-        position: "bottom",
-      });
-    }
+  const onSubmit = async (data: UpdatePerfilUsuario) => {
+    await onSuccess(data);
+    onClose();
   };
 
   const handleClose = () => {
@@ -113,7 +88,11 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerContent}>
-              <Ionicons name="person-circle-outline" size={24} color="#3b82f6" />
+              <Ionicons
+                name="person-circle-outline"
+                size={24}
+                color="#3b82f6"
+              />
               <Text style={styles.title}>Editar Perfil</Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
@@ -263,7 +242,8 @@ const styles = StyleSheet.create({
     maxHeight: "90%",
     ...Platform.select({
       web: {
-        boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+        boxShadow:
+          "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
       },
       default: {
         shadowColor: "#000",

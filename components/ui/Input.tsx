@@ -110,10 +110,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 14,
     color: "#1f2937",
-    ...(Platform.OS === "web" && {
-      // @ts-ignore - Web-only CSS property
-      outline: "none",
-    }),
   },
   inputWithLeftIcon: {
     paddingLeft: 8,

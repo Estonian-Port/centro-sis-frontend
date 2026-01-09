@@ -1,9 +1,9 @@
 import { ModalLogout } from "@/components/modals/ModalLogout";
 import { useAuth } from "@/context/authContext";
-import { EstadoUsuario, Rol } from "@/model/model";
+import { Rol, UpdatePerfilUsuario, UsuarioUpdatePassword } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -14,14 +14,12 @@ import {
   useWindowDimensions,
   Platform,
 } from "react-native";
-import { Button } from "../../components/ui/Button";
 import { Tag } from "../../components/ui/Tag";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { usuarioService } from "@/services/usuario.service";
 import { ChangePasswordModal } from "@/components/modals/ChangePasswordModal";
 import { EditProfileModal } from "@/components/modals/EditProfileModal";
 import { COLORES } from "@/util/colores";
-import { RoleSelectionModal } from "@/components/modals/RoleSelectionModal";
 import Toast from "react-native-toast-message";
 
 // Configuración de roles
@@ -50,12 +48,11 @@ const getRoleConfig = (roleName: Rol) => {
 };
 
 export default function ProfileScreen() {
-  const { usuario, logout, setSelectedRole, selectedRole } = useAuth();
+  const { usuario, logout, setUsuario} = useAuth();
   const { width } = useWindowDimensions();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showRoleModal, setShowRoleModal] = useState(false);
 
   // Verificar si el usuario tiene múltiples roles
   const hasMultipleRoles = (usuario?.listaRol.length || 0) > 1;
@@ -64,7 +61,7 @@ export default function ProfileScreen() {
   const isWideScreen = width >= 768;
 
   // Datos iniciales para el modal de editar
-  const editProfileData = {
+  const editProfileData : UpdatePerfilUsuario = {
     nombre: usuario?.nombre || "",
     apellido: usuario?.apellido || "",
     email: usuario?.email || "",
@@ -73,46 +70,40 @@ export default function ProfileScreen() {
   };
 
   // Handler para editar perfil
-  const handleEditProfile = async (data: {
-    nombre: string;
-    apellido: string;
-    email: string;
-    dni: string;
-    celular: string;
-  }) => {
+  const handleEditProfile = async (userUpdate: UpdatePerfilUsuario) => {
     try {
-      await usuarioService.updateProfile(usuario!.id, data);
-      console.log("Perfil actualizado:", data);
+      const response = await usuarioService.updateProfile(usuario!.id, userUpdate);
+      setUsuario(response);
+      Toast.show({
+        type: "success",
+        text1: "Perfil actualizado",
+        position: "bottom",
+      });
     } catch (error) {
-      console.error("Error al actualizar perfil:", error);
-      throw error;
+      Toast.show({
+        type: "error",
+        text1: "Error al actualizar el perfil",
+        position: "bottom",
+      });
     }
   };
 
   // Handler para cambiar contraseña
-  const handleChangePassword = async (
-    currentPassword: string,
-    newPassword: string
-  ) => {
+  const handleChangePassword = async (userUpdate : UsuarioUpdatePassword) => {
     try {
-      await usuarioService.changePassword(usuario!.id, newPassword);
-      console.log("Contraseña cambiada exitosamente");
+      await usuarioService.changePassword(userUpdate, usuario!.id);
+      Toast.show({
+        type: "success",
+        text1: "Contraseña actualizada",
+        position: "bottom",
+      });
     } catch (error) {
-      console.error("Error al cambiar contraseña:", error);
-      throw error;
+      Toast.show({
+        type: "error",
+        text1: "Error al actualizar la contraseña",
+        position: "bottom",
+      });
     }
-  };
-
-  // Handler para cambiar rol - DIRECTO sin modal
-  const handleChangeRole = async (role : Rol) => {
-    if (!hasMultipleRoles) return;
-    setShowRoleModal(false);
-
-    Toast.show({
-      type: 'info',
-      text1: 'Funcionalidad en desarrollo',
-      position: 'bottom',
-    });
   };
 
   const handleLogout = () => {
@@ -148,16 +139,7 @@ export default function ProfileScreen() {
       subtitle: "Actualizar credenciales de acceso",
       onPress: () => setShowChangePasswordModal(true),
       disabled: false,
-    },
-    {
-      icon: "swap-horizontal-outline",
-      title: "Cambiar Rol",
-      subtitle: hasMultipleRoles
-        ? "Cambiar entre tus roles disponibles"
-        : "No tienes roles adicionales",
-      onPress: () => setShowRoleModal(true),
-      disabled: !hasMultipleRoles,
-    },
+    }
   ];
 
   return (
@@ -238,18 +220,6 @@ export default function ProfileScreen() {
                     : "05/01/2025 14:30"
                 }
               />
-
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Estado</Text>
-                <Tag
-                  label={usuario?.estado || ""}
-                  variant={
-                    usuario?.estado === EstadoUsuario.ACTIVO
-                      ? "success"
-                      : "error"
-                  }
-                />
-              </View>
             </View>
           </View>
 
@@ -359,12 +329,6 @@ export default function ProfileScreen() {
         message="¿Estás seguro de que quieres cerrar sesión?"
         onClose={cancelLogout}
         onCerrarSesion={confirmLogout}
-      />
-
-      <RoleSelectionModal
-        visible={showRoleModal}
-        roles={usuario?.listaRol || []}
-        onSelectRole={handleChangeRole}
       />
     </SafeAreaView>
   );

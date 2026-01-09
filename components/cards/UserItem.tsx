@@ -1,11 +1,11 @@
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    Platform,
 } from "react-native";
-import { EstadoUsuario, Usuario } from "@/model/model";
+import { Estado, Usuario } from "@/model/model";
 import { estadoUsuarioToTagVariant, rolToTagVariant } from "@/helper/funciones";
 import { COLORES } from "@/util/colores";
 import { Ionicons } from "@expo/vector-icons";
@@ -48,13 +48,13 @@ const UserItem = ({
 
         <Ionicons
           name={
-            user.estado === EstadoUsuario.ACTIVO
+            user.estado === Estado.ACTIVO
               ? "trash-outline"
               : "checkmark-circle-outline"
           }
           size={20}
           color={
-            user.estado === EstadoUsuario.ACTIVO
+            user.estado === Estado.ACTIVO
               ? COLORES.error
               : COLORES.success
           }

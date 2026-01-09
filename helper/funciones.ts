@@ -1,5 +1,5 @@
 import { TagVariant } from "@/components/ui/Tag";
-import { EstadoCurso, EstadoPago, EstadoUsuario, Rol } from "@/model/model";
+import { EstadoCurso, EstadoPago, Estado, Rol } from "@/model/model";
 
 export const rolToTagVariant = (rol: Rol): TagVariant => {
   switch (rol) {
@@ -34,16 +34,16 @@ export const estadoPagoToTagVariant = (
 };
 
 export const estadoUsuarioToTagVariant = (
-  estado: EstadoUsuario
+  estado: Estado
 ): TagVariant => {
   switch (estado) {
-    case EstadoUsuario.ACTIVO:
+    case Estado.ACTIVO:
       return 'activo';
-    case EstadoUsuario.INACTIVO:
+    case Estado.INACTIVO:
       return 'inactivo';
-    case EstadoUsuario.PENDIENTE:
+    case Estado.PENDIENTE:
       return 'pendiente';
-    case EstadoUsuario.BAJA:
+    case Estado.BAJA:
       return 'baja';
     default:
       return 'default';

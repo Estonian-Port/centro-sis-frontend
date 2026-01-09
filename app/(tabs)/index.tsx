@@ -13,9 +13,9 @@ import {
 } from "react-native";
 import { administracionService } from "@/services/administracion.service";
 import { usuarioService } from "@/services/usuario.service";
-import { DashboardProfesor } from "@/screens/dashboard/DashboardProfesor";
-import { DashboardAlumno } from "@/screens/dashboard/DashboardAlumno";
-import DashboardAdmin from "@/screens/dashboard/DashboardAdmin";
+import { DashboardProfesor } from "@/components/dashboard/DashboardProfesor";
+import { DashboardAlumno } from "@/components/dashboard/DashboardAlumno";
+import DashboardAdmin from "@/components/dashboard/DashboardAdmin";
 
 export default function HomeScreen() {
   const { selectedRole, usuario } = useAuth();

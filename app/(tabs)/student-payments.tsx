@@ -1,12 +1,12 @@
-import { EstadoUsuario, Pago, PaymentType, PagoType } from '@/model/model';
+import { Estado, Pago, PaymentType, PagoType } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
@@ -24,7 +24,7 @@ const mockStudentPayments: Pago[] = [
       horario: '14:00-16:00',
       arancel: 15000,
       tipoPago: PagoType.MENSUAL,
-      estado: EstadoUsuario.ACTIVO
+      estado: Estado.ACTIVO
     },
     alumno: {
       id: 1,
@@ -33,7 +33,7 @@ const mockStudentPayments: Pago[] = [
       apellido: 'Pérez',
       dni: '12345678',
       listaRol: [],
-      estado: EstadoUsuario.ACTIVO,
+      estado: Estado.ACTIVO,
     },
     monto: 13500, // Con descuento
     tipo: PaymentType.EFECTIVO,
@@ -49,7 +49,7 @@ const mockStudentPayments: Pago[] = [
       horario: '14:00-16:00',
       arancel: 15000,
       tipoPago: PagoType.MENSUAL,
-      estado: EstadoUsuario.ACTIVO,
+      estado: Estado.ACTIVO,
     },
     alumno: {
       id: 1,
@@ -58,7 +58,7 @@ const mockStudentPayments: Pago[] = [
       apellido: 'Pérez',
       dni: '12345678',
       listaRol: [],
-      estado: EstadoUsuario.ACTIVO,
+      estado: Estado.ACTIVO,
     },
     monto: 13500,
     tipo: PaymentType.EFECTIVO,
@@ -74,7 +74,7 @@ const mockStudentPayments: Pago[] = [
       horario: '14:00-16:00',
       arancel: 15000,
       tipoPago: PagoType.MENSUAL,
-      estado: EstadoUsuario.ACTIVO,
+      estado: Estado.ACTIVO,
     },
     alumno: {
       id: 1,
@@ -83,7 +83,7 @@ const mockStudentPayments: Pago[] = [
       apellido: 'Pérez',
       dni: '12345678',
       listaRol: [],
-      estado: EstadoUsuario.ACTIVO,
+      estado: Estado.ACTIVO,
     },
     monto: 15750, // Con recargo
     tipo: PaymentType.TARJETA,

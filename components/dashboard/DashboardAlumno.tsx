@@ -5,7 +5,7 @@ import { Curso, CursoAlumno, EstadoCurso } from "@/model/model";
 import CourseItem from "@/components/cards/CourseItem";
 import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
 import { ViewMode, ViewToggle } from "@/components/ui/ViewToggle";
-import { SearchBar } from "@/components/ui/SearchBarCourse";
+import { SearchBar } from "@/components/ui/SearchBar";
 import { CourseDetailModal } from "@/components/modals/CourseDetailsModal";
 import CalendarioSemanal from "@/app/calendario";
 

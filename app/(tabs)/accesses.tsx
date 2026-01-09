@@ -2,16 +2,16 @@ import { CreateAccessModal } from '@/components/modals/CreateAccessModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/context/authContext';
-import { Access, EstadoUsuario } from '@/model/model';
+import { Access, Estado } from '@/model/model';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -19,57 +19,57 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const mockAccesses: Access[] = [
   {
     id: 1,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: Estado.ALTA },
     fecha: '2024-03-15T08:30:00Z',
   },
   {
     id: 2,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: Estado.ALTA },
     fecha: '2024-03-15T12:45:00Z',
   },
   {
     id: 3,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: Estado.ALTA },
     fecha: '2024-03-14T09:15:00Z',
   },
   {
     id: 4,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: Estado.ALTA },
     fecha: '2024-03-14T13:20:00Z',
   },
   {
     id: 5,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: Estado.ALTA },
     fecha: '2024-03-13T08:45:00Z',
   },
   {
     id: 6,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: Estado.ALTA },
     fecha: '2024-03-13T12:30:00Z',
   },
   {
     id: 7,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: Estado.ALTA },
     fecha: '2024-03-12T09:00:00Z',
   },
   {
     id: 8,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: Estado.ALTA },
     fecha: '2024-03-12T13:15:00Z',
   },
   {
     id: 9,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: Estado.ALTA },
     fecha: '2024-03-11T08:20:00Z',
   },
   {
     id: 10,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: Estado.ALTA },
     fecha: '2024-03-11T12:50:00Z',
   },
   {
     id: 11,
-    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: EstadoUsuario.ALTA },
+    usuario: { id: 1, email: 'alumno@test.com', nombre: 'Juan', apellido: 'Pérez', dni: '12345678', listaRol: [], estado: Estado.ALTA },
     fecha: '2024-03-11T12:50:00Z',
   },
 ];

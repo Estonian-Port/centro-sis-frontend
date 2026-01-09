@@ -15,13 +15,15 @@ import * as yup from "yup";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import Toast from "react-native-toast-message";
+import { UsuarioUpdatePassword } from "@/model/model";
+import { useAuth } from "@/context/authContext";
 
 // Esquema de validación
 const schema = yup.object().shape({
-  currentPassword: yup
+  passwordActual: yup
     .string()
     .required("La contraseña actual es requerida"),
-  newPassword: yup
+  nuevoPassword: yup
     .string()
     .required("La nueva contraseña es requerida")
     .min(8, "La contraseña debe tener al menos 8 caracteres")
@@ -29,22 +31,16 @@ const schema = yup.object().shape({
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
       "Debe contener al menos una mayúscula, una minúscula y un número"
     ),
-  confirmPassword: yup
+  confirmacionPassword: yup
     .string()
     .required("Debes confirmar la nueva contraseña")
-    .oneOf([yup.ref("newPassword")], "Las contraseñas no coinciden"),
+    .oneOf([yup.ref("nuevoPassword")], "Las contraseñas no coinciden"),
 });
-
-interface ChangePasswordData {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
 
 interface ChangePasswordModalProps {
   visible: boolean;
   onClose: () => void;
-  onSuccess: (currentPassword: string, newPassword: string) => Promise<void>;
+  onSuccess: (usuario : UsuarioUpdatePassword) => Promise<void>;
 }
 
 export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
@@ -52,6 +48,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { usuario } = useAuth();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -62,35 +59,20 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     formState: { errors, isSubmitting },
     reset,
     watch,
-  } = useForm<ChangePasswordData>({
+  } = useForm<UsuarioUpdatePassword>({
     resolver: yupResolver(schema),
     defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
+      passwordActual: "",
+      nuevoPassword: "",
+      confirmacionPassword: "",
     },
   });
 
-  const newPassword = watch("newPassword");
+  const newPassword = watch("nuevoPassword");
 
-  const onSubmit = async (data: ChangePasswordData) => {
-    try {
-      await onSuccess(data.currentPassword, data.newPassword);
-      Toast.show({
-        type: "success",
-        text1: "Contraseña actualizada",
-        text2: "Tu contraseña ha sido cambiada correctamente",
-        position: "bottom",
-      });
-      handleClose();
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "No se pudo cambiar la contraseña. Verifica tu contraseña actual.",
-        position: "bottom",
-      });
-    }
+  const onSubmit = async (data: UsuarioUpdatePassword) => {
+    await onSuccess(data);
+    onClose();
   };
 
   const handleClose = () => {
@@ -145,13 +127,13 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               <Text style={styles.label}>Contraseña Actual</Text>
               <Controller
                 control={control}
-                name="currentPassword"
+                name="passwordActual"
                 render={({ field: { onChange, value } }) => (
                   <Input
                     placeholder="Ingresa tu contraseña actual"
                     value={value}
                     onChangeText={onChange}
-                    error={errors.currentPassword?.message}
+                    error={errors.passwordActual?.message}
                     secureTextEntry={!showCurrentPassword}
                     leftIcon="lock-closed-outline"
                     rightIcon={showCurrentPassword ? "eye-off-outline" : "eye-outline"}
@@ -166,14 +148,14 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               <Text style={styles.label}>Nueva Contraseña</Text>
               <Controller
                 control={control}
-                name="newPassword"
+                name="nuevoPassword"
                 render={({ field: { onChange, value } }) => (
                   <>
                     <Input
                       placeholder="Ingresa tu nueva contraseña"
                       value={value}
                       onChangeText={onChange}
-                      error={errors.newPassword?.message}
+                      error={errors.nuevoPassword?.message}
                       secureTextEntry={!showNewPassword}
                       leftIcon="lock-closed-outline"
                       rightIcon={showNewPassword ? "eye-off-outline" : "eye-outline"}
@@ -218,13 +200,13 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               <Text style={styles.label}>Confirmar Nueva Contraseña</Text>
               <Controller
                 control={control}
-                name="confirmPassword"
+                name="confirmacionPassword"
                 render={({ field: { onChange, value } }) => (
                   <Input
                     placeholder="Confirma tu nueva contraseña"
                     value={value}
                     onChangeText={onChange}
-                    error={errors.confirmPassword?.message}
+                    error={errors.confirmacionPassword?.message}
                     secureTextEntry={!showConfirmPassword}
                     leftIcon="lock-closed-outline"
                     rightIcon={showConfirmPassword ? "eye-off-outline" : "eye-outline"}

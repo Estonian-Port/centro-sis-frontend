@@ -1,6 +1,6 @@
 import { apiMock } from '@/services/apiMock.service';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -13,7 +13,7 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Tag } from '../../components/ui/Tag';
-import { Curso, EstadoUsuario, Rol, Usuario } from '../../model/model';
+import { Curso, Estado, Rol, Usuario } from '../../model/model';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PaymentsScreen() {
@@ -51,7 +51,7 @@ export default function PaymentsScreen() {
     setLoading(true);
     try {
       const response = await apiMock.getCourses({
-        estado: EstadoUsuario.ALTA, // Solo cursos activos
+        estado: Estado.ALTA, // Solo cursos activos
       });
       
       const mappedCourses = response.content.map((course: any) => ({
@@ -61,7 +61,7 @@ export default function PaymentsScreen() {
               ...course.profesor,
               email: course.profesor.email ?? '',
               roles: (course.profesor.roles as Rol[]) ?? [],
-              estado: course.profesor.estado ?? EstadoUsuario.ALTA,
+              estado: course.profesor.estado ?? Estado.ALTA,
             }
           : undefined,
       }));
@@ -79,7 +79,7 @@ export default function PaymentsScreen() {
     try {
       const response = await apiMock.getUsers({
         role: Rol.ALUMNO, // Solo alumnos
-        estado: EstadoUsuario.ALTA, // Solo usuarios activos
+        estado: Estado.ALTA, // Solo usuarios activos
       });
 
       const mappedStudents: Usuario[] = response.content.map((user: any) => ({

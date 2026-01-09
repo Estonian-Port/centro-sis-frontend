@@ -11,6 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Curso } from "@/model/model";
 import { COLORES } from "@/util/colores";
+import { useAuth } from "@/context/authContext";
 
 interface CalendarioSemanalProps {
   cursos: Curso[];
@@ -21,6 +22,7 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
   cursos,
   onCursoPress,
 }) => {
+  const { selectedRole } = useAuth();
   const { width } = useWindowDimensions();
 
   // Calcular columnas según el ancho
@@ -103,13 +105,15 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
         <Text style={styles.cursoNombre} numberOfLines={2}>
           {curso.nombre}
         </Text>
-        <View style={styles.cursoFooter}>
-          <Ionicons name="people-outline" size={12} color="#6b7280" />
-          <Text style={styles.alumnosText}>
-            {curso.alumnosInscriptos.length}{" "}
-            {curso.alumnosInscriptos.length === 1 ? "alumno" : "alumnos"}
-          </Text>
-        </View>
+        {selectedRole != "ALUMNO" && (
+          <View style={styles.cursoFooter}>
+            <Ionicons name="people-outline" size={12} color="#6b7280" />
+            <Text style={styles.alumnosText}>
+              {curso.alumnosInscriptos.length}{" "}
+              {curso.alumnosInscriptos.length === 1 ? "alumno" : "alumnos"}
+            </Text>
+          </View>
+        )}
       </TouchableOpacity>
     ));
   };
@@ -168,9 +172,9 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
   return (
     <View style={styles.container}>
       {/* Header opcional */}
-        <View style={styles.header}>
-          <Text style={styles.sectionTitle}>Calendario Semanal</Text>
-        </View>
+      <View style={styles.header}>
+        <Text style={styles.sectionTitle}>Calendario Semanal</Text>
+      </View>
 
       {/* Grid de días */}
       <ScrollView showsVerticalScrollIndicator={false}>

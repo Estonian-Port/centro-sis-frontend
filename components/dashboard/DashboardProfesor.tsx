@@ -5,7 +5,7 @@ import { Curso, EstadoCurso } from "@/model/model";
 import CourseItem from "@/components/cards/CourseItem";
 import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
 import { ViewMode, ViewToggle } from "@/components/ui/ViewToggle";
-import { SearchBar } from "@/components/ui/SearchBarCourse";
+import { SearchBar } from "@/components/ui/SearchBar";
 import { Card } from "@/components/ui/Card";
 import { StatRow } from "@/components/cards/stats/StatRow";
 import { TIPOGRAFIA } from "@/util/tipografia";
@@ -61,7 +61,7 @@ export const DashboardProfesor = ({ cursos }: { cursos: Curso[] }) => {
   }, [cursos, searchQuery, filtrosEstado]);
 
   const handleViewCourseDetails = (course: Curso) => {
-    router.push(`/${course.id}`);
+    router.push(`/curso/${course.id}/alumnos`);
   };
 
   return (

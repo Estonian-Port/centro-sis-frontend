@@ -1,11 +1,19 @@
 import api from "@/helper/auth.interceptor";
-import {Curso, CursoAlumno, NuevoUsuario, ProfesorLista, Usuario, UsuarioDetails} from "@/model/model";
+import {
+  Curso,
+  CursoAlumno,
+  NuevoUsuario,
+  ProfesorLista,
+  UpdatePerfilUsuario,
+  Usuario,
+  UsuarioDetails,
+  UsuarioUpdatePassword,
+} from "@/model/model";
 
-const USER = '/usuario';
+const USER = "/usuario";
 
 class UsuarioService {
-
-  getAllUsuarios = async (id : number): Promise<Usuario[]> => {
+  getAllUsuarios = async (id: number): Promise<Usuario[]> => {
     const response = await api.get(`${USER}/all/${id}`);
     return response.data.data;
   };
@@ -13,12 +21,12 @@ class UsuarioService {
   getAllCoursesByAlumno = async (id: number): Promise<CursoAlumno[]> => {
     const response = await api.get(`${USER}/cursos-alumno/${id}`);
     return response.data.data;
-  }
+  };
 
   getAllCoursesByProfesor = async (id: number): Promise<Curso[]> => {
     const response = await api.get(`${USER}/cursos-profesor/${id}`);
     return response.data.data;
-  }
+  };
 
   altaUsuario = async (usuario: NuevoUsuario): Promise<void> => {
     const response = await api.post(`${USER}/altaUsuario`, usuario);
@@ -28,28 +36,53 @@ class UsuarioService {
   getNombresProfesores = async (): Promise<ProfesorLista[]> => {
     const response = await api.get(`${USER}/profesores`);
     return response.data.data;
-  }
+  };
 
   getUserDetail = async (id: number): Promise<UsuarioDetails> => {
     const response = await api.get(`${USER}/detalle/${id}`);
     return response.data.data;
-  }
+  };
 
   toggleEstadoUsuario = async (id: number): Promise<void> => {
     const response = await api.patch(`${USER}/toggle-estado/${id}`);
     return response.data.data;
-  }
+  };
 
-  changePassword = async (id: number, newPassword: string): Promise<void> => {
-    const response = await api.patch(`${USER}/change-password/${id}`, { newPassword });
+  changePassword = async (
+    usuario: UsuarioUpdatePassword,
+    id: number
+  ): Promise<void> => {
+    const response = await api.post(`${USER}/update-password/${id}`, usuario);
     return response.data.data;
-  }
+  };
 
-  updateProfile = async (id: number, usuario: Partial<UsuarioDetails>): Promise<void> => {
+  updateProfile = async (
+    id: number,
+    usuario: UpdatePerfilUsuario
+  ): Promise<Usuario> => {
     const response = await api.put(`${USER}/update-perfil/${id}`, usuario);
     return response.data.data;
-  }
+  };
 
+  searchAlumnos = async (
+    query: string,
+    cursoId: number
+  ): Promise<Usuario[]> => {
+    try {
+      if (query.length < 2) {
+        return [];
+      }
+
+      const response = await api.get(`${USER}/alumnos/search`, {
+        params: { q: query, cursoId },
+      });
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Error al buscar alumnos"
+      );
+    }
+  };
 }
 
 export const usuarioService = new UsuarioService();
