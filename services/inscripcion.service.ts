@@ -65,4 +65,32 @@ export const inscripcionService = {
       );
     }
   },
+
+  asignarPuntos : async (inscripcionId: number, puntos: number) => {
+    try {
+      const response = await api.post(
+        `${INSC}/${inscripcionId}/asignar-puntos`,
+        { puntos }
+      );
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Error al asignar puntos"
+      );
+    }
+  },
+
+  actualizarBeneficio : async (inscripcionId: number, beneficio: number) => {
+    try {
+      const response = await api.put(
+        `${INSC}/${inscripcionId}/actualizar-beneficio`,
+        { beneficio }
+      );
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Error al actualizar beneficio"
+      );
+    }
+  },
 };

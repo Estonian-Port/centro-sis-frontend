@@ -7,13 +7,11 @@ import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import { RoleSelectionModal } from "../../components/modals/RoleSelectionModal";
 import { DrawerContent } from "../../components/navigation/DrawerContent";
-import AccessesScreen from "./accesses";
 import AdminScreen from "./admin";
 import HomeScreen from "./index";
-import PaymentsScreen from "./payments";
-import ProfessorEarningsScreen from "./professor-earnings";
+import IngresosScreen from "./ingresos";
+import PagosScreen from "./pagos"; // ← NUEVO
 import ProfileScreen from "./profile";
-import StudentPaymentsScreen from "./student-payments";
 
 const Drawer = createDrawerNavigator();
 
@@ -39,43 +37,30 @@ function DrawerNavigator() {
       />
 
       {selectedRole === "ADMINISTRADOR" && (
-        <>
-          <Drawer.Screen
-            name="Admin"
-            component={AdminScreen}
-            options={{
-              title: "Administración",
-            }}
-          />
-          <Drawer.Screen
-            name="Payments"
-            component={PaymentsScreen}
-            options={{
-              title: "Pagos",
-            }}
-          />
-        </>
-      )}
-      {selectedRole === "ALUMNO" && (
         <Drawer.Screen
-          name="StudentPayments"
-          component={StudentPaymentsScreen}
-          options={{ title: "Mis Pagos" }}
-        />
-      )}
-      {selectedRole === "PROFESOR" && (
-        <Drawer.Screen
-          name="ProfessorEarnings"
-          component={ProfessorEarningsScreen}
-          options={{ title: "Mis Cobros" }}
+          name="Admin"
+          component={AdminScreen}
+          options={{
+            title: "Administración",
+          }}
         />
       )}
 
+      {/* ← NUEVO: Ingresos para todos */}
       <Drawer.Screen
-        name="Accesses"
-        component={AccessesScreen}
+        name="Ingresos"
+        component={IngresosScreen}
         options={{
-          title: "Accesos",
+          title: "Ingresos",
+        }}
+      />
+
+      {/* ← NUEVO: Pagos para todos */}
+      <Drawer.Screen
+        name="Pagos"
+        component={PagosScreen}
+        options={{
+          title: "Pagos",
         }}
       />
 
@@ -155,8 +140,20 @@ export default function TabLayout() {
           />
         )}
 
+        {/* ← NUEVO: Tab Ingresos */}
         <Tabs.Screen
-          name="payments"
+          name="ingresos"
+          options={{
+            title: "Ingresos",
+            tabBarIcon: ({ size, color }) => (
+              <Ionicons name="log-in-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
+        {/* ← NUEVO: Tab Pagos */}
+        <Tabs.Screen
+          name="pagos"
           options={{
             title: "Pagos",
             tabBarIcon: ({ size, color }) => (

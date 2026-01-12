@@ -34,27 +34,16 @@ export const DrawerContent = (props: any) => {
       roles: [Rol.ADMINISTRADOR],
     },
     {
+      label: "Ingresos",
+      icon: "log-in-outline",
+      onPress: () => props.navigation.navigate("Ingresos"),
+      // Sin 'roles' = visible para todos
+    },
+    {
       label: "Pagos",
       icon: "card-outline",
-      onPress: () => props.navigation.navigate("Payments"),
-      roles: [Rol.ADMINISTRADOR],
-    },
-    {
-      label: "Mis Pagos",
-      icon: "card-outline",
-      onPress: () => props.navigation.navigate("StudentPayments"),
-      roles: [Rol.ALUMNO],
-    },
-    {
-      label: "Mis Cobros",
-      icon: "wallet-outline",
-      onPress: () => props.navigation.navigate("ProfessorEarnings"),
-      roles: [Rol.PROFESOR],
-    },
-    {
-      label: "Accesos",
-      icon: "time-outline",
-      onPress: () => props.navigation.navigate("Accesses"),
+      onPress: () => props.navigation.navigate("Pagos"),
+      // Sin 'roles' = visible para todos
     },
     {
       label: "Perfil",

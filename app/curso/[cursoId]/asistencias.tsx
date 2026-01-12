@@ -1,5 +1,6 @@
 // app/curso/[cursoId]/asistencias.tsx
 import { AsistenciaItem } from "@/components/curso/AsistenciaItem";
+import { TomarAsistenciaModal } from "@/components/curso/modals/TomarAsistenciaModal";
 import { Button } from "@/components/ui/Button";
 import { Curso } from "@/model/model";
 import { cursoService } from "@/services/curso.service";
@@ -28,6 +29,7 @@ export default function AsistenciasTab() {
   const [curso, setCurso] = useState<Curso | null>(null);
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -56,9 +58,7 @@ export default function AsistenciasTab() {
             { id: 2, nombre: "María", apellido: "García" },
             { id: 3, nombre: "Carlos", apellido: "López" },
           ],
-          ausentes: [
-            { id: 4, nombre: "Ana", apellido: "Martínez" },
-          ],
+          ausentes: [{ id: 4, nombre: "Ana", apellido: "Martínez" }],
         },
         {
           id: 2,
@@ -68,9 +68,7 @@ export default function AsistenciasTab() {
             { id: 2, nombre: "María", apellido: "García" },
             { id: 4, nombre: "Ana", apellido: "Martínez" },
           ],
-          ausentes: [
-            { id: 3, nombre: "Carlos", apellido: "López" },
-          ],
+          ausentes: [{ id: 3, nombre: "Carlos", apellido: "López" }],
         },
       ]);
     } catch (error) {
@@ -125,12 +123,8 @@ export default function AsistenciasTab() {
           <Text style={styles.statValue}>
             {asistencias.length > 0
               ? Math.round(
-                  (asistencias.reduce(
-                    (sum, a) => sum + a.presentes.length,
-                    0
-                  ) /
-                    (asistencias.length *
-                      (curso.inscripciones?.length || 1))) *
+                  (asistencias.reduce((sum, a) => sum + a.presentes.length, 0) /
+                    (asistencias.length * (curso.inscripciones?.length || 1))) *
                     100
                 )
               : 0}
@@ -144,13 +138,7 @@ export default function AsistenciasTab() {
       <Button
         title="Tomar Asistencia"
         variant="primary"
-        onPress={() => {
-          Toast.show({
-            type: "info",
-            text1: "Funcionalidad en desarrollo",
-            position: "bottom",
-          });
-        }}
+        onPress={() => setModalVisible(true)}
         disabled={curso?.estado !== "EN_CURSO"}
         style={styles.tomarAsistenciaButton}
       />
@@ -175,6 +163,32 @@ export default function AsistenciasTab() {
           ))
         )}
       </View>
+      <TomarAsistenciaModal
+        cursoId={Number(cursoId)}
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        cursoNombre={curso.nombre}
+        onConfirmar={async () => {
+          await cursoService.tomarAsistenciaAutomatica(Number(cursoId));
+          setModalVisible(false);
+          fetchData();
+          Toast.show({
+            type: "info",
+            text1: "Funcionalidad en desarrollo",
+            position: "bottom",
+          });
+        }}
+        yaSeTomoHoy={asistencias.some((a) => {
+          console.log("Comparando fecha de asistencia:", a.fecha);
+          const hoy = new Date();
+          const fechaHoy = `${hoy.getFullYear()}-${String(
+            hoy.getMonth() + 1
+          ).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
+          const resultado = a.fecha === fechaHoy;
+          console.log("resultado de la comparación:", resultado);
+          return resultado;
+        })}
+      />
     </ScrollView>
   );
 }

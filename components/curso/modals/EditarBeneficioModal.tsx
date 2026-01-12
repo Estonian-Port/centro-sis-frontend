@@ -1,5 +1,5 @@
-// components/modals/AsignarPuntosModal.tsx
-import React, { useState } from "react";
+// components/modals/EditarBeneficioModal.tsx
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   View,
@@ -13,32 +13,50 @@ import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { Alumno, Usuario } from "@/model/model";
 
-interface AsignarPuntosModalProps {
+interface EditarBeneficioModalProps {
   visible: boolean;
   onClose: () => void;
   alumno: Alumno;
-  puntosActuales: number;
-  onAsignar: (puntos: number) => Promise<void>;
+  beneficioActual: number;
+  montoCurso: number;
+  onGuardar: (beneficio: number) => Promise<void>;
 }
 
-export const AsignarPuntosModal: React.FC<AsignarPuntosModalProps> = ({
+export const EditarBeneficioModal: React.FC<EditarBeneficioModalProps> = ({
   visible,
   onClose,
   alumno,
-  puntosActuales,
-  onAsignar,
+  beneficioActual,
+  montoCurso,
+  onGuardar,
 }) => {
-  const [puntos, setPuntos] = useState("");
+  const [beneficio, setBeneficio] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleAsignar = async () => {
-    const puntosNum = parseInt(puntos);
+  useEffect(() => {
+    if (visible) {
+      setBeneficio(beneficioActual.toString());
+    }
+  }, [visible, beneficioActual]);
 
-    if (!puntos || isNaN(puntosNum) || puntosNum <= 0) {
+  const handleGuardar = async () => {
+    const beneficioNum = parseFloat(beneficio);
+
+    if (!beneficio || isNaN(beneficioNum)) {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "Ingresa una cantidad válida de puntos",
+        text2: "Ingresa un porcentaje válido",
+        position: "bottom",
+      });
+      return;
+    }
+
+    if (beneficioNum < 0 || beneficioNum > 100) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "El beneficio debe estar entre 0% y 100%",
         position: "bottom",
       });
       return;
@@ -46,21 +64,20 @@ export const AsignarPuntosModal: React.FC<AsignarPuntosModalProps> = ({
 
     setLoading(true);
     try {
-      await onAsignar(puntosNum);
+      await onGuardar(beneficioNum);
       Toast.show({
         type: "success",
-        text1: "Puntos asignados",
-        text2: `Se asignaron ${puntosNum} puntos a ${alumno.nombre}`,
+        text1: "Beneficio actualizado",
+        text2: `Beneficio del ${beneficioNum}% aplicado a ${alumno.nombre}`,
         position: "bottom",
       });
-      setPuntos("");
       onClose();
     } catch (error) {
-      console.error("Error asignando puntos:", error);
+      console.error("Error actualizando beneficio:", error);
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudieron asignar los puntos",
+        text2: "No se pudo actualizar el beneficio",
         position: "bottom",
       });
     } finally {
@@ -69,12 +86,13 @@ export const AsignarPuntosModal: React.FC<AsignarPuntosModalProps> = ({
   };
 
   const handleClose = () => {
-    setPuntos("");
+    setBeneficio(beneficioActual.toString());
     onClose();
   };
 
-  const nuevosPuntos = parseInt(puntos) || 0;
-  const totalPuntos = puntosActuales + nuevosPuntos;
+  const beneficioNum = parseFloat(beneficio) || 0;
+  const descuento = (montoCurso * beneficioNum) / 100;
+  const montoFinal = montoCurso - descuento;
 
   return (
     <Modal
@@ -88,9 +106,9 @@ export const AsignarPuntosModal: React.FC<AsignarPuntosModalProps> = ({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.iconContainer}>
-              <Ionicons name="trophy" size={24} color="#f59e0b" />
+              <Ionicons name="gift" size={24} color="#f59e0b" />
             </View>
-            <Text style={styles.title}>Asignar Puntos</Text>
+            <Text style={styles.title}>Editar Beneficio</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
               <Ionicons name="close" size={24} color="#6b7280" />
             </TouchableOpacity>
@@ -101,40 +119,56 @@ export const AsignarPuntosModal: React.FC<AsignarPuntosModalProps> = ({
             <Text style={styles.alumnoNombre}>
               {alumno.nombre} {alumno.apellido}
             </Text>
-            <Text style={styles.puntosActuales}>
-              Puntos actuales: {puntosActuales}
+            <Text style={styles.montoOriginal}>
+              Monto del curso: ${montoCurso.toLocaleString("es-AR")}
             </Text>
           </View>
 
           {/* Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Puntos a asignar</Text>
-            <TextInput
-              style={styles.input}
-              value={puntos}
-              onChangeText={setPuntos}
-              placeholder="Ej: 100"
-              keyboardType="numeric"
-              maxLength={5}
-            />
+            <Text style={styles.label}>Porcentaje de descuento (%)</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                value={beneficio}
+                onChangeText={setBeneficio}
+                placeholder="Ej: 10"
+                keyboardType="decimal-pad"
+                maxLength={5}
+              />
+              <Text style={styles.inputSuffix}>%</Text>
+            </View>
+            <Text style={styles.hint}>Ingresa un valor entre 0 y 100</Text>
           </View>
 
           {/* Preview */}
-          {nuevosPuntos > 0 && (
+          {beneficioNum >= 0 && beneficioNum <= 100 && (
             <View style={styles.preview}>
               <View style={styles.previewRow}>
-                <Text style={styles.previewLabel}>Puntos actuales:</Text>
-                <Text style={styles.previewValue}>{puntosActuales}</Text>
+                <Text style={styles.previewLabel}>Monto original:</Text>
+                <Text style={styles.previewValue}>
+                  ${montoCurso.toLocaleString("es-AR")}
+                </Text>
               </View>
               <View style={styles.previewRow}>
-                <Text style={styles.previewLabel}>Puntos a sumar:</Text>
-                <Text style={[styles.previewValue, styles.addValue]}>
-                  +{nuevosPuntos}
+                <Text style={styles.previewLabel}>
+                  Descuento ({beneficioNum}%):
+                </Text>
+                <Text style={[styles.previewValue, styles.discountValue]}>
+                  -${descuento.toLocaleString("es-AR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </Text>
               </View>
               <View style={[styles.previewRow, styles.totalRow]}>
-                <Text style={styles.totalLabel}>Total:</Text>
-                <Text style={styles.totalValue}>{totalPuntos}</Text>
+                <Text style={styles.totalLabel}>Monto a pagar:</Text>
+                <Text style={styles.totalValue}>
+                  ${montoFinal.toLocaleString("es-AR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
               </View>
             </View>
           )}
@@ -150,13 +184,13 @@ export const AsignarPuntosModal: React.FC<AsignarPuntosModalProps> = ({
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, styles.confirmButton]}
-              onPress={handleAsignar}
-              disabled={loading || !puntos}
+              onPress={handleGuardar}
+              disabled={loading || !beneficio}
             >
               {loading ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
-                <Text style={styles.confirmButtonText}>Asignar</Text>
+                <Text style={styles.confirmButtonText}>Guardar</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -216,7 +250,7 @@ const styles = StyleSheet.create({
     color: "#1f2937",
     marginBottom: 4,
   },
-  puntosActuales: {
+  montoOriginal: {
     fontSize: 14,
     color: "#6b7280",
   },
@@ -229,22 +263,38 @@ const styles = StyleSheet.create({
     color: "#374151",
     marginBottom: 8,
   },
-  input: {
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: "#d1d5db",
     borderRadius: 8,
     paddingHorizontal: 12,
+  },
+  input: {
+    flex: 1,
     paddingVertical: 10,
     fontSize: 16,
     color: "#1f2937",
   },
+  inputSuffix: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#6b7280",
+    marginLeft: 8,
+  },
+  hint: {
+    fontSize: 12,
+    color: "#9ca3af",
+    marginTop: 4,
+  },
   preview: {
-    backgroundColor: "#f0fdf4",
+    backgroundColor: "#fef3c7",
     padding: 16,
     borderRadius: 12,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#bbf7d0",
+    borderColor: "#fde68a",
   },
   previewRow: {
     flexDirection: "row",
@@ -260,14 +310,14 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#1f2937",
   },
-  addValue: {
-    color: "#10b981",
+  discountValue: {
+    color: "#f59e0b",
   },
   totalRow: {
     marginTop: 8,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: "#bbf7d0",
+    borderTopColor: "#fde68a",
     marginBottom: 0,
   },
   totalLabel: {
@@ -278,7 +328,7 @@ const styles = StyleSheet.create({
   totalValue: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#10b981",
+    color: "#f59e0b",
   },
   buttons: {
     flexDirection: "row",

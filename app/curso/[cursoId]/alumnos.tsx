@@ -234,12 +234,9 @@ export default function AlumnosTab() {
               <AlumnoItem
                 key={inscripcion.id}
                 inscripcion={inscripcion}
-                onRegistrarPago={() => handleRegistrarPago(inscripcion)}
-                onAsignarPuntos={() => handleAsignarPuntos(inscripcion)}
-                onDarDeBaja={() => handleDarDeBaja(inscripcion)}
-                onModificarBeneficio={() =>
-                  handleModificarBeneficio(inscripcion)
-                }
+                onRefresh={fetchCurso}
+                cursoNombre={curso.nombre}
+                recargoPorcentaje={curso.recargoPorAtraso}
               />
             ))}
           </View>

@@ -83,6 +83,26 @@ class UsuarioService {
       );
     }
   };
+
+  searchByRol = async (
+    query: string,
+    rol: "ALUMNO" | "PROFESOR"
+  ): Promise<Usuario[]> => {
+    try {
+      if (query.length < 2) {
+        return [];
+      }
+
+      const response = await api.get(`${USER}/search-by-rol`, {
+        params: { q: query, rol },
+      });
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Error al buscar usuarios"
+      );
+    }
+  };
 }
 
 export const usuarioService = new UsuarioService();

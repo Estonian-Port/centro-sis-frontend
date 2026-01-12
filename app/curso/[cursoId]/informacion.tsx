@@ -1,6 +1,11 @@
 // app/curso/[cursoId]/informacion.tsx
+import { EditarHorariosModal } from "@/components/curso/modals/EditarHorariosModal";
+import { EditarModalidadesPagoModal } from "@/components/curso/modals/EditarModalidadPagoModal";
+import { EditarNombreCursoModal } from "@/components/curso/modals/EditarNombreCursoModal";
+import { EditarProfesoresModal } from "@/components/curso/modals/EditarProfesoresModal";
 import { Curso } from "@/model/model";
 import { cursoService } from "@/services/curso.service";
+import { usuarioService } from "@/services/usuario.service";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -11,6 +16,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
+  TouchableOpacity,
 } from "react-native";
 import Toast from "react-native-toast-message";
 
@@ -18,6 +24,12 @@ export default function InformacionTab() {
   const { cursoId } = useLocalSearchParams();
   const [curso, setCurso] = useState<Curso | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showEditarNombreModal, setShowEditarNombreModal] = useState(false);
+  const [showEditarProfesoresModal, setShowEditarProfesoresModal] =
+    useState(false);
+  const [showEditarHorariosModal, setShowEditarHorariosModal] = useState(false);
+  const [showEditarModalidadesModal, setShowEditarModalidadesModal] =
+    useState(false);
 
   useEffect(() => {
     fetchCurso();
@@ -66,6 +78,9 @@ export default function InformacionTab() {
         <View style={styles.cardHeader}>
           <Ionicons name="information-circle" size={24} color="#3b82f6" />
           <Text style={styles.cardTitle}>Información General</Text>
+          <TouchableOpacity onPress={() => setShowEditarNombreModal(true)}>
+            <Ionicons name="pencil" size={20} color="#3b82f6" />
+          </TouchableOpacity>
         </View>
         <View style={styles.cardContent}>
           <InfoRow label="Estado" value={curso.estado} />
@@ -85,6 +100,9 @@ export default function InformacionTab() {
           <Text style={styles.cardTitle}>
             Profesores ({curso.profesores.length})
           </Text>
+          <TouchableOpacity onPress={() => setShowEditarProfesoresModal(true)}>
+            <Ionicons name="pencil" size={20} color="#10b981" />
+          </TouchableOpacity>
         </View>
         <View style={styles.cardContent}>
           {curso.profesores.map((profesor, index) => (
@@ -95,8 +113,14 @@ export default function InformacionTab() {
                 index === curso.profesores.length - 1 && styles.listItemLast,
               ]}
             >
-              <Ionicons name="person-circle-outline" size={20} color="#3b82f6" />
-              <Text style={styles.listItemText}>{profesor}</Text>
+              <Ionicons
+                name="person-circle-outline"
+                size={20}
+                color="#3b82f6"
+              />
+              <Text style={styles.listItemText}>
+                {profesor.nombre} {profesor.apellido}
+              </Text>
             </View>
           ))}
         </View>
@@ -106,7 +130,12 @@ export default function InformacionTab() {
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Ionicons name="time" size={24} color="#8b5cf6" />
-          <Text style={styles.cardTitle}>Horarios ({curso.horarios.length})</Text>
+          <Text style={styles.cardTitle}>
+            Horarios ({curso.horarios.length})
+          </Text>
+          <TouchableOpacity onPress={() => setShowEditarHorariosModal(true)}>
+            <Ionicons name="pencil" size={20} color="#8b5cf6" />
+          </TouchableOpacity>
         </View>
         <View style={styles.cardContent}>
           {curso.horarios.map((horario, index) => (
@@ -140,6 +169,11 @@ export default function InformacionTab() {
             <Text style={styles.cardTitle}>
               Modalidades de Pago ({curso.tiposPago.length})
             </Text>
+            <TouchableOpacity
+              onPress={() => setShowEditarModalidadesModal(true)}
+            >
+              <Ionicons name="pencil" size={20} color="#f59e0b" />
+            </TouchableOpacity>
           </View>
           <View style={styles.cardContent}>
             {curso.tiposPago.map((tipoPago, index) => (
@@ -162,6 +196,52 @@ export default function InformacionTab() {
           </View>
         </View>
       )}
+      {/* Modales */}
+      <EditarNombreCursoModal
+        visible={showEditarNombreModal}
+        onClose={() => setShowEditarNombreModal(false)}
+        nombreActual={curso.nombre}
+        onGuardar={async (nombre) => {
+          await cursoService.updateNombre(Number(cursoId), nombre);
+          await fetchCurso();
+        }}
+      />
+
+      <EditarProfesoresModal
+        visible={showEditarProfesoresModal}
+        onClose={() => setShowEditarProfesoresModal(false)}
+        profesoresActuales={curso.profesores}
+        onGuardar={async (ids) => {
+          await cursoService.updateProfesores(Number(cursoId), ids);
+          await fetchCurso();
+        }}
+        onBuscarProfesores={async (query) => {
+          return await usuarioService.searchByRol(query, "PROFESOR");
+        }}
+      />
+
+      <EditarHorariosModal
+        visible={showEditarHorariosModal}
+        onClose={() => setShowEditarHorariosModal(false)}
+        horariosActuales={curso.horarios}
+        onGuardar={async (horarios) => {
+          await cursoService.updateHorarios(Number(cursoId), horarios);
+          await fetchCurso();
+        }}
+      />
+
+      <EditarModalidadesPagoModal
+        visible={showEditarModalidadesModal}
+        onClose={() => setShowEditarModalidadesModal(false)}
+        modalidadesActuales={curso.tiposPago}
+        onGuardar={async (modalidades) => {
+          await cursoService.updateModalidadesPago(
+            Number(cursoId),
+            modalidades
+          );
+          await fetchCurso();
+        }}
+      />
     </ScrollView>
   );
 }

@@ -1,6 +1,6 @@
-// app/curso/[cursoId]/_layout.tsx
+// app/curso/[cursoId]/_layout.tsx - FIXED
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter, Slot } from "expo-router";
+import { useLocalSearchParams, useRouter, Slot, usePathname } from "expo-router";
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -19,9 +19,18 @@ import { Tag } from "@/components/ui/Tag";
 export default function CursoLayout() {
   const { cursoId } = useLocalSearchParams();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"alumnos" | "informacion" | "asistencias">("alumnos");
+  const pathname = usePathname(); // ← FIX: Usar pathname para sincronizar
   const [curso, setCurso] = useState<Curso | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // ← FIX: Derivar activeTab del pathname en lugar de estado local
+  const getActiveTab = (): "alumnos" | "informacion" | "asistencias" => {
+    if (pathname.includes("/informacion")) return "informacion";
+    if (pathname.includes("/asistencias")) return "asistencias";
+    return "alumnos";
+  };
+
+  const activeTab = getActiveTab();
 
   // Helper para obtener variant del tag según estado del curso
   const getEstadoCursoVariant = (estado: EstadoCurso) => {
@@ -56,7 +65,7 @@ export default function CursoLayout() {
 
   const fetchCurso = async () => {
     if (!cursoId) return;
-    
+
     setLoading(true);
     try {
       const response = await cursoService.getById(Number(cursoId));
@@ -75,8 +84,8 @@ export default function CursoLayout() {
   };
 
   const handleTabChange = (tab: "alumnos" | "informacion" | "asistencias") => {
-    setActiveTab(tab);
-    router.push(`/curso/${cursoId}/${tab}`);
+    // ← FIX: Usar replace en lugar de push para no agregar al historial
+    router.replace(`/curso/${cursoId}/${tab}`);
   };
 
   if (loading) {
@@ -93,7 +102,10 @@ export default function CursoLayout() {
     <SafeAreaView style={styles.container}>
       {/* Header con título */}
       <View style={styles.headerTop}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
           <Ionicons name="arrow-back" size={24} color="#1f2937" />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
@@ -129,25 +141,6 @@ export default function CursoLayout() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tab, activeTab === "informacion" && styles.activeTab]}
-          onPress={() => handleTabChange("informacion")}
-        >
-          <Ionicons
-            name="information-circle-outline"
-            size={18}
-            color={activeTab === "informacion" ? "#ffffff" : "#6b7280"}
-          />
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "informacion" && styles.activeTabText,
-            ]}
-          >
-            Información
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
           style={[styles.tab, activeTab === "asistencias" && styles.activeTab]}
           onPress={() => handleTabChange("asistencias")}
         >
@@ -163,6 +156,25 @@ export default function CursoLayout() {
             ]}
           >
             Asistencias
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tab, activeTab === "informacion" && styles.activeTab]}
+          onPress={() => handleTabChange("informacion")}
+        >
+          <Ionicons
+            name="information-circle-outline"
+            size={18}
+            color={activeTab === "informacion" ? "#ffffff" : "#6b7280"}
+          />
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "informacion" && styles.activeTabText,
+            ]}
+          >
+            Información
           </Text>
         </TouchableOpacity>
       </View>
