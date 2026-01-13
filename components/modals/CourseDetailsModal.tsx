@@ -111,7 +111,7 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                       size={20}
                       color="#3b82f6"
                     />
-                    <Text style={styles.profesorName}>{profesor}</Text>
+                    <Text style={styles.profesorName}>{profesor.nombre} {profesor.apellido}</Text>
                   </View>
                 ))}
               </Card>

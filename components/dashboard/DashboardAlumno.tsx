@@ -42,7 +42,7 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
         (course) =>
           course.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
           course.profesores.some((p) =>
-            p.toLowerCase().includes(searchQuery.toLowerCase())
+            p.nombre.toLowerCase().includes(searchQuery.toLowerCase())
           )
       );
     }
