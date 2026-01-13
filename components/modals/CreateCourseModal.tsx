@@ -23,7 +23,7 @@ import {
   PagoType,
   ProfesorLista,
 } from "@/model/model";
-import { DatePickerWrapper } from "../pickers/DataPicker";
+import { DatePicker } from "../pickers/DataPicker";
 import { TimePickerModal } from "../pickers/TimePicker";
 import { usuarioService } from "@/services/usuario.service";
 import { cursoService } from "@/services/curso.service";
@@ -499,79 +499,32 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
             {/* Fechas con Date Picker */}
             <View style={styles.row}>
               <View style={styles.halfWidth}>
-                <Text style={styles.inputLabel}>Fecha de Inicio *</Text>
                 <Controller
                   control={control}
                   name="fechaInicio"
-                  render={({ field: { value } }) => (
-                    <>
-                      <TouchableOpacity
-                        style={[
-                          styles.datePickerButton,
-                          errors.fechaInicio && styles.datePickerButtonError,
-                        ]}
-                        onPress={() => setShowDatePicker("inicio")}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons
-                          name="calendar-outline"
-                          size={20}
-                          color="#6b7280"
-                        />
-                        <Text
-                          style={[
-                            styles.datePickerButtonText,
-                            !value && styles.datePickerPlaceholder,
-                          ]}
-                        >
-                          {value || "Seleccionar"}
-                        </Text>
-                      </TouchableOpacity>
-                      {errors.fechaInicio && (
-                        <Text style={styles.errorText}>
-                          {errors.fechaInicio.message}
-                        </Text>
-                      )}
-                    </>
+                  render={({ field: { onChange, value } }) => (
+                    <DatePicker
+                      label="Fecha de Inicio"
+                      value={value}
+                      onChange={onChange}
+                      error={errors.fechaInicio?.message}
+                    />
                   )}
                 />
               </View>
 
               <View style={styles.halfWidth}>
-                <Text style={styles.inputLabel}>Fecha de Fin *</Text>
                 <Controller
                   control={control}
                   name="fechaFin"
-                  render={({ field: { value } }) => (
-                    <>
-                      <TouchableOpacity
-                        style={[
-                          styles.datePickerButton,
-                          errors.fechaFin && styles.datePickerButtonError,
-                        ]}
-                        onPress={() => setShowDatePicker("fin")}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons
-                          name="calendar-outline"
-                          size={20}
-                          color="#6b7280"
-                        />
-                        <Text
-                          style={[
-                            styles.datePickerButtonText,
-                            !value && styles.datePickerPlaceholder,
-                          ]}
-                        >
-                          {value || "Seleccionar"}
-                        </Text>
-                      </TouchableOpacity>
-                      {errors.fechaFin && (
-                        <Text style={styles.errorText}>
-                          {errors.fechaFin.message}
-                        </Text>
-                      )}
-                    </>
+                  render={({ field: { onChange, value } }) => (
+                    <DatePicker
+                      label="Fecha de Fin"
+                      value={value}
+                      onChange={onChange}
+                      error={errors.fechaFin?.message}
+                      maximumDate={new Date(2030, 11, 31)} // Opcional: limitar fechas
+                    />
                   )}
                 />
               </View>
@@ -1042,35 +995,6 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
         </View>
       </View>
 
-      {/* Modal para Date Picker */}
-      <DatePickerWrapper
-        visible={showDatePicker !== null}
-        onClose={() => setShowDatePicker(null)}
-        onSelect={(date) => {
-          if (showDatePicker) {
-            handleDateSelect(
-              showDatePicker === "inicio" ? "fechaInicio" : "fechaFin",
-              date
-            );
-          }
-        }}
-        title={
-          showDatePicker === "inicio"
-            ? "Seleccionar Fecha de Inicio"
-            : "Seleccionar Fecha de Fin"
-        }
-        initialDate={
-          showDatePicker
-            ? parseDate(showDatePicker === "inicio" ? fechaInicio : fechaFin)
-            : new Date()
-        }
-        minimumDate={
-          showDatePicker === "fin" && fechaInicio
-            ? parseDate(fechaInicio)
-            : undefined
-        }
-      />
-
       {/* Modal para Time Picker */}
       <TimePickerModal
         visible={showTimePicker !== null}
@@ -1173,27 +1097,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#6b7280",
     marginBottom: 6,
-  },
-  datePickerButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 8,
-    backgroundColor: "#ffffff",
-    gap: 8,
-  },
-  datePickerButtonError: {
-    borderColor: "#ef4444",
-  },
-  datePickerButtonText: {
-    fontSize: 14,
-    color: "#374151",
-    flex: 1,
-  },
-  datePickerPlaceholder: {
-    color: "#b0b0b0",
   },
   infoBanner: {
     flexDirection: "row",

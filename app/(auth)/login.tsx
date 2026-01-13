@@ -1,4 +1,3 @@
-import { LoginForm } from "@/components/forms/loginForm";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/context/authContext";
 import { Platform, StyleSheet, Text, View } from "react-native";
@@ -7,6 +6,7 @@ import { TIPOGRAFIA } from "@/util/tipografia";
 import { COLORES } from "@/util/colores";
 import { LinearGradient } from "expo-linear-gradient";
 import { Logo } from "@/components/ui/Logo";
+import { LoginForm } from "@/components/forms/loginForm";
 
 export default function LoginScreen() {
   const { usuario, isLoading, isAuthenticated } = useAuth();

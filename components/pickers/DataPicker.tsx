@@ -1,250 +1,333 @@
-import React, { useState, useEffect, useRef } from "react";
+// components/pickers/DatePicker.tsx
+import React, { useState, useEffect } from "react";
 import {
-  Modal,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
   View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+  Pressable,
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
-import { Button } from "../ui/Button";
 
-interface DatePickerWrapperProps {
-  visible: boolean;
-  onClose: () => void;
-  onSelect: (date: Date) => void;
-  title: string;
-  initialDate?: Date;
-  minimumDate?: Date;
+interface DatePickerProps {
+  label?: string;
+  value: string; // Formato: "YYYY-MM-DD"
+  onChange: (date: string) => void;
+  error?: string;
   maximumDate?: Date;
 }
 
-export const DatePickerWrapper: React.FC<DatePickerWrapperProps> = ({
-  visible,
-  onClose,
-  onSelect,
-  title,
-  initialDate = new Date(),
-  minimumDate,
-  maximumDate,
+const MESES = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
+
+export const DatePicker: React.FC<DatePickerProps> = ({
+  label = "Fecha de Nacimiento",
+  value,
+  onChange,
+  error,
+  maximumDate = new Date(),
 }) => {
-  const [tempDate, setTempDate] = useState<Date>(initialDate);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [dia, setDia] = useState<number | null>(null);
+  const [mes, setMes] = useState<number | null>(null);
+  const [anio, setAnio] = useState<number | null>(null);
 
+  const [showPicker, setShowPicker] = useState<
+    "dia" | "mes" | "anio" | null
+  >(null);
+
+  // Parsear fecha inicial
   useEffect(() => {
-    if (visible) {
-      setTempDate(initialDate);
-      // En web, abrir el picker nativo directamente
-      if (Platform.OS === "web" && inputRef.current) {
-        setTimeout(() => {
-          inputRef.current?.showPicker?.();
-        }, 100);
-      }
+    if (value) {
+      const [y, m, d] = value.split("-").map(Number);
+      setDia(d);
+      setMes(m);
+      setAnio(y);
     }
-  }, [visible, initialDate]);
+  }, [value]);
 
-  const handleConfirm = () => {
-    onSelect(tempDate);
-    onClose();
+  // Actualizar cuando cambie algún valor
+  useEffect(() => {
+    if (dia && mes && anio) {
+      const fecha = `${anio}-${String(mes).padStart(2, "0")}-${String(
+        dia
+      ).padStart(2, "0")}`;
+      onChange(fecha);
+    }
+  }, [dia, mes, anio]);
+
+  // Generar array de días según el mes/año
+  const getDiasDelMes = () => {
+    if (!mes || !anio) return Array.from({ length: 31 }, (_, i) => i + 1);
+
+    const diasEnMes = new Date(anio, mes, 0).getDate();
+    return Array.from({ length: diasEnMes }, (_, i) => i + 1);
   };
 
-  const handleChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === "android") {
-      onClose();
-      if (event.type === "set" && selectedDate) {
-        onSelect(selectedDate);
-      }
-    } else if (selectedDate) {
-      setTempDate(selectedDate);
+  // Generar array de años (desde 1900 hasta año actual)
+  const getAnios = () => {
+    const anioActual = maximumDate.getFullYear();
+    const anios = [];
+    for (let i = anioActual; i >= 1900; i--) {
+      anios.push(i);
     }
+    return anios;
   };
 
-  // Android: mostrar picker nativo
-  if (Platform.OS === "android") {
-    return visible ? (
-      <DateTimePicker
-        value={tempDate}
-        mode="date"
-        display="default"
-        onChange={handleChange}
-        minimumDate={minimumDate}
-        maximumDate={maximumDate}
-      />
-    ) : null;
-  }
+  const diasDisponibles = getDiasDelMes();
+  const aniosDisponibles = getAnios();
 
-  // Web: usar input type="date" nativo SIN modal wrapper
-  if (Platform.OS === "web") {
-    const formatDateForInput = (date: Date): string => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    };
+  const handleSelect = (type: "dia" | "mes" | "anio", value: number) => {
+    if (type === "dia") setDia(value);
+    if (type === "mes") setMes(value);
+    if (type === "anio") setAnio(value);
+    setShowPicker(null);
+  };
 
-    const formatMinDate = minimumDate
-      ? formatDateForInput(minimumDate)
-      : undefined;
-    const formatMaxDate = maximumDate
-      ? formatDateForInput(maximumDate)
-      : undefined;
+  const renderPickerModal = () => {
+    if (!showPicker) return null;
 
-    if (!visible) return null;
+    let items: Array<{ label: string; value: number }> = [];
+    let selectedValue = 0;
+    let title = "";
 
-    // Renderizar un input invisible que se abre automáticamente
+    switch (showPicker) {
+      case "dia":
+        items = diasDisponibles.map((d) => ({ label: String(d), value: d }));
+        selectedValue = dia || 0;
+        title = "Día";
+        break;
+      case "mes":
+        items = MESES.map((m, i) => ({ label: m, value: i + 1 }));
+        selectedValue = mes || 0;
+        title = "Mes";
+        break;
+      case "anio":
+        items = aniosDisponibles.map((a) => ({ label: String(a), value: a }));
+        selectedValue = anio || 0;
+        title = "Año";
+        break;
+    }
+
     return (
-      <>
-        <input
-          ref={inputRef as any}
-          type="date"
-          value={formatDateForInput(tempDate)}
-          onChange={(e) => {
-            const newDate = new Date(e.target.value + "T12:00:00");
-            if (!isNaN(newDate.getTime())) {
-              setTempDate(newDate);
-              onSelect(newDate);
-              onClose();
-            }
-          }}
-          onBlur={() => {
-            // Cerrar si el usuario cancela o hace click fuera
-            setTimeout(() => onClose(), 100);
-          }}
-          min={formatMinDate}
-          max={formatMaxDate}
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 10000,
-            width: "1px",
-            height: "1px",
-            opacity: 0,
-            pointerEvents: "auto",
-          }}
-        />
-      </>
-    );
-  }
-
-  // iOS: usar picker nativo
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <TouchableOpacity
-        style={styles.overlayBottom}
-        activeOpacity={1}
-        onPress={onClose}
+      <Modal
+        visible={true}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowPicker(null)}
       >
-        <View
-          style={styles.modalContent}
-          onStartShouldSetResponder={() => true}
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowPicker(null)}
         >
-          <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color="#6b7280" />
-            </TouchableOpacity>
-          </View>
           <View style={styles.pickerContainer}>
-            <DateTimePicker
-              value={tempDate}
-              mode="date"
-              display="spinner"
-              onChange={handleChange}
-              minimumDate={minimumDate}
-              maximumDate={maximumDate}
-              style={styles.picker}
-            />
+            {/* Header Compacto */}
+            <View style={styles.pickerHeader}>
+              <Text style={styles.pickerTitle}>{title}</Text>
+              <TouchableOpacity onPress={() => setShowPicker(null)}>
+                <Ionicons name="close-circle" size={24} color="#9ca3af" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Lista Compacta con Scroll */}
+            <ScrollView 
+              style={styles.scrollView}
+              showsVerticalScrollIndicator={true}
+            >
+              {items.map((item) => (
+                <TouchableOpacity
+                  key={item.value}
+                  style={[
+                    styles.option,
+                    item.value === selectedValue && styles.optionSelected,
+                  ]}
+                  onPress={() => handleSelect(showPicker!, item.value)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      item.value === selectedValue && styles.optionTextSelected,
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                  {item.value === selectedValue && (
+                    <Ionicons name="checkmark-circle" size={22} color="#3b82f6" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
-          <View style={styles.footer}>
-            <Button
-              title="Cancelar"
-              variant="outline"
-              onPress={onClose}
-              style={styles.button}
-            />
-            <Button
-              title="Confirmar"
-              onPress={handleConfirm}
-              style={styles.button}
-            />
-          </View>
-        </View>
-      </TouchableOpacity>
-    </Modal>
+        </Pressable>
+      </Modal>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Label */}
+      {label && <Text style={styles.label}>{label} *</Text>}
+
+      {/* Inputs */}
+      <View style={styles.inputsRow}>
+        {/* Día */}
+        <TouchableOpacity
+          style={[styles.input, styles.inputSmall, error && styles.inputError]}
+          onPress={() => setShowPicker("dia")}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.inputText, !dia && styles.placeholder]}>
+            {dia || "DD"}
+          </Text>
+          <Ionicons name="chevron-down" size={16} color="#9ca3af" />
+        </TouchableOpacity>
+
+        {/* Mes */}
+        <TouchableOpacity
+          style={[styles.input, styles.inputMedium, error && styles.inputError]}
+          onPress={() => setShowPicker("mes")}
+          activeOpacity={0.7}
+        >
+          <Text
+            style={[styles.inputText, !mes && styles.placeholder]}
+            numberOfLines={1}
+          >
+            {mes ? MESES[mes - 1] : "Mes"}
+          </Text>
+          <Ionicons name="chevron-down" size={16} color="#9ca3af" />
+        </TouchableOpacity>
+
+        {/* Año */}
+        <TouchableOpacity
+          style={[styles.input, styles.inputMedium, error && styles.inputError]}
+          onPress={() => setShowPicker("anio")}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.inputText, !anio && styles.placeholder]}>
+            {anio || "AAAA"}
+          </Text>
+          <Ionicons name="chevron-down" size={16} color="#9ca3af" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Error */}
+      {error && <Text style={styles.errorText}>{error}</Text>}
+
+      {/* Picker Modal */}
+      {renderPickerModal()}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  overlayWeb: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 9999,
+  container: {
+    marginBottom: 16,
   },
-  overlayBottom: {
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 8,
+  },
+  inputsRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  input: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    backgroundColor: "#ffffff",
+  },
+  inputSmall: {
+    flex: 1,
+  },
+  inputMedium: {
+    flex: 2,
+  },
+  inputError: {
+    borderColor: "#ef4444",
+  },
+  inputText: {
+    fontSize: 14,
+    color: "#374151",
+    fontWeight: "500",
+  },
+  placeholder: {
+    color: "#9ca3af",
+    fontWeight: "400",
+  },
+  errorText: {
+    fontSize: 13,
+    color: "#ef4444",
+    marginTop: 4,
+  },
+
+  // Modal Compacto
+  modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "flex-end",
   },
-  modalContent: {
+  pickerContainer: {
     backgroundColor: "#ffffff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingBottom: 20,
-    width: "100%",
+    maxHeight: 400, // ← Altura máxima compacta
   },
-  modalContentWeb: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    width: "90%",
-    maxWidth: 400,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    zIndex: 10000,
-  },
-  header: {
+  pickerHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    padding: 20,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
   },
-  title: {
-    fontSize: 18,
+  pickerTitle: {
+    fontSize: 17,
     fontWeight: "600",
     color: "#1f2937",
   },
-  pickerContainer: {
-    padding: 20,
-    alignItems: "center",
+  scrollView: {
+    maxHeight: 350, // ← Scroll compacto
   },
-  pickerContainerWeb: {
-    padding: 20,
-  },
-  picker: {
-    width: "100%",
-    height: 200,
-  },
-  footer: {
+  option: {
     flexDirection: "row",
-    padding: 20,
-    paddingTop: 0,
-    gap: 12,
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14, // ← Reducido de 16 a 14
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
   },
-  button: {
-    flex: 1,
+  optionSelected: {
+    backgroundColor: "#eff6ff",
+  },
+  optionText: {
+    fontSize: 16,
+    color: "#374151",
+  },
+  optionTextSelected: {
+    color: "#3b82f6",
+    fontWeight: "600",
   },
 });

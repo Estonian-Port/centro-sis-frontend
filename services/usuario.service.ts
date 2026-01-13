@@ -1,5 +1,6 @@
 import api from "@/helper/auth.interceptor";
 import {
+  CompleteProfileData,
   Curso,
   CursoAlumno,
   NuevoUsuario,
@@ -103,6 +104,22 @@ class UsuarioService {
       );
     }
   };
+
+  completarPerfil = async (
+    usuario: CompleteProfileData
+  ): Promise<Usuario> => {
+    console.log("Completing profile for user ID:", usuario.id, "with data:", usuario);
+    const response = await api.put(
+      `${USER}/registro`,
+      usuario
+    );
+    return response.data.data;
+  }
+
+  bajaTotal = async (id: number, adminId: number): Promise<void> => {
+    const response = await api.delete(`${USER}/delete/${id}/${adminId}`);
+    return response.data.data;
+  }
 }
 
 export const usuarioService = new UsuarioService();

@@ -13,7 +13,11 @@ import { Tag } from "../ui/Tag";
 import { UsuarioDetails, Rol } from "@/model/model";
 import { usuarioService } from "@/services/usuario.service";
 import Toast from "react-native-toast-message";
-import { estadoPagoToTagVariant, estadoUsuarioToTagVariant, rolToTagVariant } from "@/helper/funciones";
+import {
+  estadoPagoToTagVariant,
+  estadoUsuarioToTagVariant,
+  rolToTagVariant,
+} from "@/helper/funciones";
 
 interface UserDetailModalProps {
   visible: boolean;
@@ -117,6 +121,12 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   label="Celular"
                   value={usuario.celular}
                 />
+                <InfoRow
+                  icon="calendar-outline"
+                  iconColor="#A72703"
+                  label="Fecha de Nacimiento"
+                  value={usuario.fechaNacimiento}
+                />
                 <View style={styles.infoRow}>
                   <View style={styles.infoLabelContainer}>
                     <Ionicons
@@ -141,12 +151,12 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   <Ionicons name="school-outline" size={20} color="#3b82f6" />
                   <Text style={styles.sectionTitle}>Información de Alumno</Text>
                 </View>
-                
+
                 <Card style={styles.alumnoCard}>
                   <Text style={styles.subsectionTitle}>
                     Cursos Inscriptos ({usuario.cursosInscriptos?.length || 0})
                   </Text>
-                  
+
                   {usuario.cursosInscriptos &&
                   usuario.cursosInscriptos.length > 0 ? (
                     usuario.cursosInscriptos.map((curso) => (
@@ -162,15 +172,18 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                               {curso.nombre}
                             </Text>
                           </View>
-                          
+
                           {/* Horarios */}
                           {curso.horarios && curso.horarios.length > 0 && (
                             <View style={styles.horariosChips}>
-                              {curso.horarios.slice(0, 3).map((horario, index) => (
-                                <Text key={index} style={styles.horarioChip}>
-                                  {horario.dia.substring(0, 2)} {horario.horaInicio}
-                                </Text>
-                              ))}
+                              {curso.horarios
+                                .slice(0, 3)
+                                .map((horario, index) => (
+                                  <Text key={index} style={styles.horarioChip}>
+                                    {horario.dia.substring(0, 2)}{" "}
+                                    {horario.horaInicio}
+                                  </Text>
+                                ))}
                               {curso.horarios.length > 3 && (
                                 <Text style={styles.horarioChip}>
                                   +{curso.horarios.length - 3}
@@ -191,7 +204,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                               Pago elegido: {curso.tipoPagoElegido}
                             </Text>
                           </View>
-                          
+
                           <Tag
                             label={curso.estadoPago}
                             variant={estadoPagoToTagVariant(curso.estadoPago)}
@@ -201,7 +214,11 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                     ))
                   ) : (
                     <View style={styles.emptyState}>
-                      <Ionicons name="folder-open-outline" size={40} color="#9ca3af" />
+                      <Ionicons
+                        name="folder-open-outline"
+                        size={40}
+                        color="#9ca3af"
+                      />
                       <Text style={styles.emptyText}>
                         No hay cursos inscritos
                       </Text>
@@ -216,14 +233,16 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Ionicons name="person-outline" size={20} color="#10b981" />
-                  <Text style={styles.sectionTitle}>Información de Profesor</Text>
+                  <Text style={styles.sectionTitle}>
+                    Información de Profesor
+                  </Text>
                 </View>
-                
+
                 <Card style={styles.profesorCard}>
                   <Text style={styles.subsectionTitle}>
                     Cursos Dictados ({usuario.cursosDictados?.length || 0})
                   </Text>
-                  
+
                   {usuario.cursosDictados &&
                   usuario.cursosDictados.length > 0 ? (
                     usuario.cursosDictados.map((curso) => (
@@ -238,7 +257,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                             {curso.nombre}
                           </Text>
                         </View>
-                        
+
                         <View style={styles.cursoDictadoInfo}>
                           <View style={styles.fechaInfo}>
                             <Ionicons
@@ -258,7 +277,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                               {curso.fechaFin}
                             </Text>
                           </View>
-                          
+
                           <Text style={styles.estadoCursoText}>
                             {curso.estado}
                           </Text>
@@ -267,7 +286,11 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                     ))
                   ) : (
                     <View style={styles.emptyState}>
-                      <Ionicons name="folder-open-outline" size={40} color="#9ca3af" />
+                      <Ionicons
+                        name="folder-open-outline"
+                        size={40}
+                        color="#9ca3af"
+                      />
                       <Text style={styles.emptyText}>
                         No hay cursos dictados
                       </Text>

@@ -12,8 +12,6 @@ export default function RootIndex() {
     if (!isLoading) {
       if (!isAuthenticated) {
         router.replace('/login');
-      } else if (usuario?.primerLogin) {
-        router.replace('/complete-profile');
       } else {
         router.replace('/(tabs)');
       }

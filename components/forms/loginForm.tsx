@@ -7,7 +7,6 @@ import { Alert, StyleSheet, View } from "react-native";
 import * as yup from "yup";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-import { Barlow } from "@/app/_layout";
 import { TIPOGRAFIA } from "@/util/tipografia";
 import { COLORES } from "@/util/colores";
 
@@ -29,7 +28,7 @@ interface LoginFormProps {
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
-  const { login, usuario, isLoading } = useAuth();
+  const { login, isLoading } = useAuth();
 
   const {
     control,
@@ -45,19 +44,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await login(data.email, data.password);
+      // ✅ login() debe retornar el usuario actualizado
+      const usuarioLogueado = await login(data.email, data.password);
 
-      // Pequeño delay para asegurar que el contexto se actualizó
-      setTimeout(() => {
-        if (usuario?.primerLogin) {
-          router.replace("/complete-profile");
-        } else {
-          router.replace("/(tabs)");
-        }
-      }, 300);
+      console.log("Usuario logueado:", usuarioLogueado);
+      console.log("Primer login:", usuarioLogueado.primerLogin);
+
+      // ✅ Decidir redirección basado en el usuario retornado
+      if (usuarioLogueado.primerLogin) {
+        console.log("🔄 Primer login → /complete-profile");
+        router.replace("/complete-profile");
+      } else {
+        console.log("✅ Login completo → /(tabs)");
+        router.replace("/(tabs)");
+      }
 
       onSuccess?.();
     } catch (error) {
+      console.error("Error en login:", error);
       Alert.alert("Error", "Credenciales inválidas");
     }
   };

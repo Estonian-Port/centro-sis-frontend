@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { View, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Curso, EstadoCurso } from "@/model/model";
+import { Curso, Estado, EstadoCurso } from "@/model/model";
 import CourseItem from "@/components/cards/CourseItem";
 import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
 import { ViewMode, ViewToggle } from "@/components/ui/ViewToggle";
@@ -12,6 +12,9 @@ import { TIPOGRAFIA } from "@/util/tipografia";
 import { COLORES } from "@/util/colores";
 import CalendarioSemanal from "@/app/calendario";
 import { router } from "expo-router";
+import { cursoService } from "@/services/curso.service";
+import Toast from "react-native-toast-message";
+import { CursoFormModal } from "../modals/CursoFormModal";
 
 // Definir opciones de filtro por estado
 const estadoFilterOptions: FilterOption<EstadoCurso>[] = [
@@ -21,10 +24,17 @@ const estadoFilterOptions: FilterOption<EstadoCurso>[] = [
   { value: EstadoCurso.PENDIENTE, label: "Pendiente", color: "#f59e0b" },
 ];
 
-export const DashboardProfesor = ({ cursos }: { cursos: Curso[] }) => {
+export const DashboardProfesor = ({
+  cursos,
+  onRefresh,
+}: {
+  cursos: Curso[];
+  onRefresh: () => void;
+}) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [vistaActual, setVistaActual] = useState<ViewMode>("calendario");
   const [filtrosEstado, setFiltrosEstado] = useState<EstadoCurso[]>([]);
+  const [cursoFormVisible, setCursoFormVisible] = useState(false);
 
   // Toggle filtro de estado
   const toggleFiltroEstado = (estado: EstadoCurso) => {
@@ -45,7 +55,7 @@ export const DashboardProfesor = ({ cursos }: { cursos: Curso[] }) => {
         (course) =>
           course.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
           course.profesores.some((p) =>
-            p.toLowerCase().includes(searchQuery.toLowerCase())
+            p.nombre.toLowerCase().includes(searchQuery.toLowerCase())
           )
       );
     }
@@ -61,7 +71,28 @@ export const DashboardProfesor = ({ cursos }: { cursos: Curso[] }) => {
   }, [cursos, searchQuery, filtrosEstado]);
 
   const handleViewCourseDetails = (course: Curso) => {
-    router.push(`/curso/${course.id}/alumnos`);
+    if (course.estadoAlta === Estado.PENDIENTE) {
+      setCursoFormVisible(true);
+    } else {
+      router.push(`/curso/${course.id}/alumnos`);
+    }
+  };
+
+  const handleCursoForm = async (curso: Curso) => {
+    try {
+      const response = await cursoService.completarCursoAlquiler(curso);
+      onRefresh();
+      setCursoFormVisible(false);
+      Toast.show({
+        type: "success",
+        text1: "Curso completado exitosamente",
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error al completar el curso",
+      });
+    }
   };
 
   return (
@@ -99,11 +130,19 @@ export const DashboardProfesor = ({ cursos }: { cursos: Curso[] }) => {
         {vistaActual === "lista" ? (
           <View style={styles.listView}>
             {filteredCourses.map((curso) => (
-              <CourseItem
-                key={curso.id}
-                course={curso}
-                handleCourseDetails={handleViewCourseDetails}
-              />
+              <>
+                <CourseItem
+                  key={curso.id}
+                  course={curso}
+                  handleCourseDetails={handleViewCourseDetails}
+                />
+                <CursoFormModal
+                  visible={cursoFormVisible}
+                  onClose={() => setCursoFormVisible(false)}
+                  onSuccess={(curso: Curso) => handleCursoForm(curso)}
+                  curso={curso}
+                />
+              </>
             ))}
           </View>
         ) : (

@@ -175,7 +175,7 @@ export default function AdminScreen() {
         (course) =>
           course.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
           course.profesores.some((p) =>
-            p.toLowerCase().includes(searchQuery.toLowerCase())
+            p.nombre.toLowerCase().includes(searchQuery.toLowerCase())
           )
       );
     }
@@ -284,6 +284,7 @@ export default function AdminScreen() {
                   key={user.id}
                   user={user}
                   handleUserDetails={(u: Usuario) => handleViewUserDetails(u)}
+                  onRefresh={fetchUsers}
                 />
               ))
             ) : (

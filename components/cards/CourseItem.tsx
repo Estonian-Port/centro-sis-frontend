@@ -44,7 +44,7 @@ const CourseItem = ({
 
       <View style={styles.courseMetaInfo}>
         <Text style={styles.profesorName}>
-          {course.profesores.length > 0 ? course.profesores[0] : "Sin profesor"}
+          {course.profesores.length > 0 ? course.profesores[0].nombre + " " + course.profesores[0].apellido : "Sin profesor"}
         </Text>
         {selectedRole != "ALUMNO" && (
           <Text style={styles.alumnosCount}>

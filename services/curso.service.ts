@@ -70,6 +70,11 @@ class CursoService {
     );
     return response.data;
   };
+
+  completarCursoAlquiler = async (curso: Curso): Promise<any> => {
+    const response = await api.post(`${CURSO}/${curso.id}/completar-alquiler`, curso);
+    return response.data;
+  };
 }
 
 export const cursoService = new CursoService();

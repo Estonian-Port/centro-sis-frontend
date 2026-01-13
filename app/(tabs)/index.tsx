@@ -1,16 +1,7 @@
 import { useAuth } from "@/context/authContext";
-import {
-  CursoAlumno,
-  Curso,
-  Rol,
-  Estadistica,
-} from "@/model/model";
+import { CursoAlumno, Curso, Rol, Estadistica } from "@/model/model";
 import { useEffect, useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { administracionService } from "@/services/administracion.service";
 import { usuarioService } from "@/services/usuario.service";
 import { DashboardProfesor } from "@/components/dashboard/DashboardProfesor";
@@ -28,25 +19,24 @@ export default function HomeScreen() {
     ingresosMensuales: 0,
   });
 
+  const fetchData = async () => {
+    if (usuario != null && selectedRole === Rol.ALUMNO) {
+      let listaCursos = await usuarioService.getAllCoursesByAlumno(usuario.id);
+      setCursosAlumno(listaCursos);
+    }
+    if (usuario != null && selectedRole === Rol.PROFESOR) {
+      let listaCursos = await usuarioService.getAllCoursesByProfesor(
+        usuario.id
+      );
+      setCursosProfesor(listaCursos);
+    }
+    if (selectedRole === Rol.ADMINISTRADOR) {
+      const stats = await administracionService.getEstadisticas();
+      setStats(stats);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (usuario != null && selectedRole === Rol.ALUMNO) {
-        let listaCursos = await usuarioService.getAllCoursesByAlumno(
-          usuario.id
-        );
-        setCursosAlumno(listaCursos);
-      }
-      if (usuario != null && selectedRole === Rol.PROFESOR) {
-        let listaCursos = await usuarioService.getAllCoursesByProfesor(
-          usuario.id
-        );
-        setCursosProfesor(listaCursos);
-      }
-      if (selectedRole === Rol.ADMINISTRADOR) {
-        const stats = await administracionService.getEstadisticas();
-        setStats(stats);
-      }
-    };
     fetchData();
   }, [selectedRole, usuario]);
 
@@ -55,7 +45,9 @@ export default function HomeScreen() {
       case Rol.ALUMNO:
         return <DashboardAlumno cursos={cursosAlumno} />;
       case Rol.PROFESOR:
-        return <DashboardProfesor cursos={cursosProfesor} />;
+        return (
+          <DashboardProfesor cursos={cursosProfesor} onRefresh={fetchData} />
+        );
       case Rol.ADMINISTRADOR:
         return <DashboardAdmin estadisticas={stats} />;
       default:

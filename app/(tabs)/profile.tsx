@@ -48,7 +48,7 @@ const getRoleConfig = (roleName: Rol) => {
 };
 
 export default function ProfileScreen() {
-  const { usuario, logout, setUsuario} = useAuth();
+  const { usuario, logout, setUsuario } = useAuth();
   const { width } = useWindowDimensions();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
@@ -61,7 +61,7 @@ export default function ProfileScreen() {
   const isWideScreen = width >= 768;
 
   // Datos iniciales para el modal de editar
-  const editProfileData : UpdatePerfilUsuario = {
+  const editProfileData: UpdatePerfilUsuario = {
     nombre: usuario?.nombre || "",
     apellido: usuario?.apellido || "",
     email: usuario?.email || "",
@@ -72,7 +72,10 @@ export default function ProfileScreen() {
   // Handler para editar perfil
   const handleEditProfile = async (userUpdate: UpdatePerfilUsuario) => {
     try {
-      const response = await usuarioService.updateProfile(usuario!.id, userUpdate);
+      const response = await usuarioService.updateProfile(
+        usuario!.id,
+        userUpdate
+      );
       setUsuario(response);
       Toast.show({
         type: "success",
@@ -89,7 +92,7 @@ export default function ProfileScreen() {
   };
 
   // Handler para cambiar contraseña
-  const handleChangePassword = async (userUpdate : UsuarioUpdatePassword) => {
+  const handleChangePassword = async (userUpdate: UsuarioUpdatePassword) => {
     try {
       await usuarioService.changePassword(userUpdate, usuario!.id);
       Toast.show({
@@ -139,7 +142,7 @@ export default function ProfileScreen() {
       subtitle: "Actualizar credenciales de acceso",
       onPress: () => setShowChangePasswordModal(true),
       disabled: false,
-    }
+    },
   ];
 
   return (
@@ -204,22 +207,10 @@ export default function ProfileScreen() {
               <InfoItem label="DNI" value={usuario?.dni} />
               <InfoItem label="Celular" value={usuario?.celular} />
               <InfoItem
-                label="Último ingreso"
-                value={
-                  usuario?.ultimoIngreso
-                    ? new Date(usuario.ultimoIngreso).toLocaleDateString(
-                        "es-AR",
-                        {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }
-                      )
-                    : "05/01/2025 14:30"
-                }
+                label="Fecha de Nacimiento"
+                value={usuario?.fechaNacimiento}
               />
+              <InfoItem label="Último ingreso" value={usuario?.ultimoIngreso} />
             </View>
           </View>
 
@@ -441,7 +432,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   infoLabel: {
     fontSize: 14,
@@ -459,7 +450,7 @@ const styles = StyleSheet.create({
   actionItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
   },
@@ -505,7 +496,7 @@ const styles = StyleSheet.create({
   logoutAction: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: 16,
   },
   logoutIconContainer: {
     backgroundColor: "#fee2e2",

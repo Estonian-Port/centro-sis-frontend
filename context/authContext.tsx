@@ -10,7 +10,7 @@ type AuthContextType = {
   setUsuario: (usuario: Usuario | null) => void;
   selectedRole: Rol | null;
   setSelectedRole: (role: Rol | null) => void;
-  login: (username: string, password: string) => Promise<void>
+  login: (username: string, password: string) => Promise<Usuario>; // ← Cambiado: ahora retorna Usuario
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     initAuth();
   }, []);
   
-  const login = async (username: string, password: string) => {
+  const login = async (username: string, password: string): Promise<Usuario> => { // ← Agregado tipo de retorno
     try {
       setIsLoading(true);
       
@@ -73,6 +73,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // 5. Actualizar estado del contexto
       setUsuario(currentUser)
       setIsAuthenticated(true)
+      
+      return currentUser;
+      
     } catch (e) {
       console.error("Error en login:", e)
       // Limpiar en caso de error

@@ -93,6 +93,7 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                 <InfoRow label="DNI" value={alumno.dni || "N/A"} />
                 <InfoRow label="Celular" value={alumno.celular || "N/A"} />
                 <InfoRow label="Email" value={alumno.email} />
+                <InfoRow label="Fecha de nacimiento" value={alumno.fechaNacimiento} />
                 <InfoRow
                   label="Fecha Inscripción"
                   value={

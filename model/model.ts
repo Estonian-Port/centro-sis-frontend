@@ -53,6 +53,7 @@ export interface Usuario {
   dni: string;
   email: string;
   celular: string;
+  fechaNacimiento: string;
   estado: Estado;
   primerLogin: boolean;
   listaRol: Rol[];
@@ -72,6 +73,7 @@ export interface Alumno {
   dni: string;
   email: string;
   celular: string;
+  fechaNacimiento: string;
 }
 
 export interface nuevoCursoAlquiler {
@@ -103,6 +105,7 @@ export interface Curso {
   fechaInicio: string;
   fechaFin: string;
   estado: EstadoCurso;
+  estadoAlta : Estado;
   profesores: Usuario[];
   tiposPago: TipoPago[];
   inscripciones: Inscripcion[];
@@ -140,6 +143,33 @@ export interface UsuarioUpdatePassword {
   passwordActual: string;
   nuevoPassword: string;
   confirmacionPassword: string;
+}
+
+export interface CompleteProfileData {
+  id: number;
+  nombre: string;
+  apellido: string;
+  dni: string;
+  celular: number;
+  fechaNacimiento: string;
+  password: string;
+  confirmPassword?: string;
+  // Campos individuales para el formulario
+  responsableNombre?: string;
+  responsableApellido?: string;
+  responsableDni?: string;
+  responsableCelular?: string;
+  responsableRelacion?: string;
+  // Objeto que se envía al backend
+  adultoResponsable?: AdultoResponsable;
+}
+
+export interface AdultoResponsable {
+  nombre: string;
+  apellido: string;
+  dni: string;
+  celular: number;
+  relacion: string;
 }
 
 export interface Horario {
