@@ -1,68 +1,77 @@
-import { TagVariant } from "@/components/ui/Tag";
-import { EstadoCurso, EstadoPago, Estado, Rol } from "@/model/model";
+// helper/funciones.ts
+import { Estado, EstadoCurso, EstadoPago, Rol } from "@/model/model";
 
-export const rolToTagVariant = (rol: Rol): TagVariant => {
+// Mapeo de Rol a variante de Tag
+export const rolToTagVariant = (rol: Rol): "primary" | "success" | "warning" | "danger" | "info" => {
   switch (rol) {
     case Rol.ALUMNO:
-      return 'rolAlumno';
+      return "primary";
     case Rol.PROFESOR:
-      return 'rolProfesor';
+      return "success";
     case Rol.ADMINISTRADOR:
-      return 'rolAdmin';
+      return "danger";
     case Rol.OFICINA:
-      return 'rolOficina';
+      return "warning";
     default:
-      return 'default';
+      return "info";
   }
 };
 
-export const estadoPagoToTagVariant = (
-  estado: EstadoPago
-): TagVariant => {
-  switch (estado) {
-    case EstadoPago.AL_DIA:
-      return 'alDia';
-    case EstadoPago.ATRASADO:
-      return 'atrasado';
-    case EstadoPago.MOROSO:
-      return 'moroso';
-    case EstadoPago.PENDIENTE:
-      return 'pendiente';
-    default:
-      return 'default';
-  }
-};
-
-export const estadoUsuarioToTagVariant = (
-  estado: Estado
-): TagVariant => {
+// Mapeo de Estado de Usuario a variante de Tag
+export const estadoUsuarioToTagVariant = (estado: Estado): "success" | "warning" | "danger" | "info" => {
   switch (estado) {
     case Estado.ACTIVO:
-      return 'activo';
+      return "success";
     case Estado.INACTIVO:
-      return 'inactivo';
+      return "info";
     case Estado.PENDIENTE:
-      return 'pendiente';
+      return "warning";
     case Estado.BAJA:
-      return 'baja';
+      return "danger";
     default:
-      return 'default';
+      return "info";
   }
 };
 
-export const estadoCursoToTagVariant = (
-  estado: EstadoCurso
-): TagVariant => {
+// Mapeo de Estado (general) a variante de Tag
+export const estadoToTagVariant = (estado: Estado): "success" | "warning" | "danger" | "info" => {
+  return estadoUsuarioToTagVariant(estado);
+};
+
+// Mapeo de Estado de Curso a variante de Tag
+export const estadoCursoToTagVariant = (estado: EstadoCurso): "primary" | "success" | "warning" | "info" => {
   switch (estado) {
     case EstadoCurso.POR_COMENZAR:
-      return 'inactivo';
+      return "primary";
     case EstadoCurso.EN_CURSO:
-      return 'activo';
+      return "success";
     case EstadoCurso.FINALIZADO:
-      return 'finalizado';
-    case EstadoCurso.PENDIENTE:
-      return 'pendiente';
+      return "info";
     default:
-      return 'default';
+      return "info";
   }
+};
+
+// Mapeo de Estado de Pago a variante de Tag
+export const estadoPagoToTagVariant = (estadoPago: EstadoPago): "success" | "warning" | "danger" | "info" => {
+  switch (estadoPago) {
+    case EstadoPago.AL_DIA:
+      return "success";
+    case EstadoPago.ATRASADO:
+      return "warning";
+    case EstadoPago.MOROSO:
+      return "danger";
+    case EstadoPago.PENDIENTE:
+      return "info";
+    default:
+      return "info";
+  }
+};
+
+export const formatDateToDDMMYYYY = (dateString: string): string => {
+  const date = new Date(dateString + 'T00:00:00'); // Forzar timezone local
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
 };

@@ -1,3 +1,4 @@
+// components/curso/CourseDetailModal.tsx
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
@@ -7,93 +8,87 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { Card } from "../ui/Card";
-import { Curso } from "@/model/model";
-import { cursoService } from "@/services/curso.service";
+import { CursoAlumno, Inscripcion } from "@/model/model";
+import { inscripcionService } from "@/services/inscripcion.service";
 import Toast from "react-native-toast-message";
 import { Button } from "../ui/Button";
+import { formatDateToDDMMYYYY, estadoPagoToTagVariant } from "@/helper/funciones";
+import { Tag } from "../ui/Tag";
+import { formatEstadoPago } from "@/model/model";
 
 interface CourseDetailModalProps {
   visible: boolean;
   onClose: () => void;
-  cursoId: number;
-  onNavigateToCourse?: (cursoId: number) => void;
+  curso: CursoAlumno;
 }
 
 export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
   visible,
   onClose,
-  cursoId,
-  onNavigateToCourse,
+  curso,
 }) => {
-  const [curso, setCurso] = useState<Curso | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (visible && cursoId) {
-      fetchCourseDetails();
-    }
-  }, [visible, cursoId]);
-
-  const fetchCourseDetails = async () => {
-    setLoading(true);
-    try {
-      const response = await cursoService.getById(cursoId);
-      setCurso(response);
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "No se pudo obtener el curso.",
-        position: "bottom",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleClose = () => {
-    setCurso(null);
     onClose();
-  };
-
-  const handleCourseClick = (cursoId: string) => {
-    onClose();
-    if (onNavigateToCourse) {
-      onNavigateToCourse(Number(cursoId));
-    }
   };
 
   if (!curso) {
-    return null;
+    return (
+      <Modal visible={visible} transparent animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#3b82f6" />
+            <Text style={styles.loadingText}>Cargando información...</Text>
+          </View>
+        </View>
+      </Modal>
+    );
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="slide">
       <View style={styles.overlay}>
         <View style={styles.modal}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>{curso.nombre}</Text>
+            <View style={styles.headerInfo}>
+              <View style={styles.courseIcon}>
+                <Ionicons name="school" size={24} color="#ffffff" />
+              </View>
+              <View style={styles.headerText}>
+                <Text style={styles.title}>{curso.nombre}</Text>
+                <Tag
+                  label={formatEstadoPago(curso.estadoPago)}
+                  variant={estadoPagoToTagVariant(curso.estadoPago)}
+                />
+              </View>
+            </View>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="#6b7280" />
+              <Ionicons name="close" size={28} color="#6b7280" />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.content}>
-            {/* Información General */}
+            {/* Información del Curso */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Información General</Text>
+              <Text style={styles.sectionTitle}>Información del Curso</Text>
               <Card style={styles.infoCard}>
                 <InfoRow label="Estado" value={curso.estado} />
-                <InfoRow label="Fecha Inicio" value={curso.fechaInicio} />
-                <InfoRow label="Fecha Fin" value={curso.fechaFin} />
                 <InfoRow
-                  label="Alumnos Inscriptos"
-                  value={`${curso.alumnosInscriptos.length} ${
-                    curso.alumnosInscriptos.length === 1 ? "alumno" : "alumnos"
-                  }`}
+                  label="Fecha Inicio"
+                  value={formatDateToDDMMYYYY(curso.fechaInicio)}
+                />
+                <InfoRow
+                  label="Fecha Fin"
+                  value={formatDateToDDMMYYYY(curso.fechaFin)}
+                />
+                <InfoRow
+                  label="Mi Inscripción"
+                  value={formatDateToDDMMYYYY(curso.fechaInscripcion)}
                 />
               </Card>
             </View>
@@ -111,7 +106,14 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                       size={20}
                       color="#3b82f6"
                     />
-                    <Text style={styles.profesorName}>{profesor.nombre} {profesor.apellido}</Text>
+                    <View style={styles.profesorInfo}>
+                      <Text style={styles.profesorName}>
+                        {profesor.nombre} {profesor.apellido}
+                      </Text>
+                      <Text style={styles.profesorContact}>
+                        {profesor.email}
+                      </Text>
+                    </View>
                   </View>
                 ))}
               </Card>
@@ -144,46 +146,131 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
               </Card>
             </View>
 
-            {/* Tipos de Pago */}
-            {curso.tiposPago && curso.tiposPago.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>
-                  Modalidades de Pago ({curso.tiposPago.length})
-                </Text>
-                <Card style={styles.infoCard}>
-                  {curso.tiposPago.map((tipoPago, index) => (
-                    <View key={index} style={styles.tipoPagoItem}>
-                      <View style={styles.tipoPagoHeader}>
-                        <Ionicons
-                          name="cash-outline"
-                          size={18}
-                          color="#f59e0b"
-                        />
-                        <Text style={styles.tipoPagoTipo}>{tipoPago.tipo}</Text>
+            {/* Mi Asistencia */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Mi Asistencia</Text>
+              <Card style={styles.asistenciaCard}>
+                <View style={styles.asistenciaContainer}>
+                  <View style={styles.asistenciaBar}>
+                    <View
+                      style={[
+                        styles.asistenciaProgress,
+                        {
+                          width: `${curso.porcentajeAsistencia || 0}%`,
+                          backgroundColor:
+                            (curso.porcentajeAsistencia || 0) >= 75
+                              ? "#10b981"
+                              : (curso.porcentajeAsistencia || 0) >= 50
+                              ? "#f59e0b"
+                              : "#ef4444",
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.asistenciaText}>
+                    {curso.porcentajeAsistencia || 0}% de asistencia
+                  </Text>
+                </View>
+              </Card>
+            </View>
+
+            {/* Mi Plan de Pago */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Mi Plan de Pago</Text>
+              <Card style={styles.infoCard}>
+                <InfoRow
+                  label="Modalidad"
+                  value={curso.tipoPagoElegido.tipo}
+                  valueStyle={styles.boldValue}
+                />
+                <InfoRow
+                  label="Monto Base"
+                  value={`$${curso.tipoPagoElegido.monto.toLocaleString()}`}
+                  valueStyle={styles.greenValue}
+                />
+                {curso.beneficio > 0 && (
+                  <InfoRow
+                    label="Descuento"
+                    value={`${curso.beneficio}%`}
+                    valueStyle={styles.orangeValue}
+                  />
+                )}
+                <InfoRow
+                  label="Monto a Pagar"
+                  value={`$${(
+                    curso.tipoPagoElegido.monto *
+                    (1 - curso.beneficio / 100)
+                  ).toLocaleString()}`}
+                  valueStyle={[styles.greenValue, styles.totalValue]}
+                />
+              </Card>
+            </View>
+
+            {/* Mis Pagos */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                Mis Pagos ({curso.pagosRealizados?.length || 0})
+              </Text>
+              {curso.pagosRealizados &&
+              curso.pagosRealizados.length > 0 ? (
+                <View style={styles.pagosContainer}>
+                  {curso.pagosRealizados.map((pago) => (
+                    <View key={pago.id} style={styles.pagoItem}>
+                      <View style={styles.pagoInfo}>
+                        <Ionicons name="checkmark-circle" size={20} color="#10b981" />
+                        <View style={styles.pagoDetails}>
+                          <Text style={styles.pagoMonto}>
+                            ${pago.monto.toLocaleString()}
+                          </Text>
+                          <Text style={styles.pagoFecha}>
+                            {formatDateToDDMMYYYY(pago.fecha)}
+                          </Text>
+                        </View>
                       </View>
-                      <Text style={styles.tipoPagoMonto}>
-                        ${tipoPago.monto.toLocaleString()}
-                      </Text>
+                      {pago.beneficioAplicado > 0 && (
+                        <View style={styles.descuentoBadge}>
+                          <Text style={styles.descuentoText}>
+                            -{pago.beneficioAplicado}%
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   ))}
+                </View>
+              ) : (
+                <Card style={styles.emptyPayments}>
+                  <Ionicons name="cash-outline" size={32} color="#d1d5db" />
+                  <Text style={styles.emptyPaymentsText}>
+                    No hay pagos registrados
+                  </Text>
                 </Card>
-              </View>
-            )}
+              )}
+            </View>
+
+            {/* Mis Puntos */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Sistema de Recompensas</Text>
+              <Card style={styles.puntosCard}>
+                <View style={styles.puntosContainer}>
+                  <Ionicons name="star" size={40} color="#f59e0b" />
+                  <View>
+                    <Text style={styles.puntosText}>
+                      {curso.puntos || 0} puntos
+                    </Text>
+                    <Text style={styles.puntosSubtext}>
+                      Acumulados en este curso
+                    </Text>
+                  </View>
+                </View>
+              </Card>
+            </View>
           </ScrollView>
 
           {/* Footer */}
           <View style={styles.footer}>
             <Button
-              title="Ir al curso"
-              variant="primary"
-              onPress={() => {
-                handleCourseClick(curso.id.toString());
-              }}
-              style={styles.footerButton}
-            />
-            <Button
               title="Cerrar"
-              variant="outline"
+              variant="primary"
               onPress={handleClose}
               style={styles.footerButton}
             />
@@ -195,10 +282,18 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
 };
 
 // Componente helper para filas de información
-const InfoRow = ({ label, value }: { label: string; value: string }) => (
+const InfoRow = ({
+  label,
+  value,
+  valueStyle,
+}: {
+  label: string;
+  value: string;
+  valueStyle?: any;
+}) => (
   <View style={styles.infoRow}>
     <Text style={styles.infoLabel}>{label}:</Text>
-    <Text style={styles.infoValue}>{value}</Text>
+    <Text style={[styles.infoValue, valueStyle]}>{value}</Text>
   </View>
 );
 
@@ -206,36 +301,61 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
+    justifyContent: "flex-end",
+  },
+  loadingContainer: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 40,
     alignItems: "center",
-    padding: 20,
+    margin: 20,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#6b7280",
   },
   modal: {
     backgroundColor: "#ffffff",
-    borderRadius: 12,
-    width: "100%",
-    maxWidth: 600,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     maxHeight: "90%",
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
   },
+  headerInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  courseIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#3b82f6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerText: {
+    flex: 1,
+  },
   title: {
     fontSize: 20,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#1f2937",
-    flex: 1,
+    marginBottom: 6,
   },
   closeButton: {
     padding: 4,
   },
   content: {
-    flex: 1,
     padding: 20,
   },
   section: {
@@ -244,7 +364,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#374151",
+    color: "#1f2937",
     marginBottom: 12,
   },
   infoCard: {
@@ -263,26 +383,48 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    fontWeight: "500",
     color: "#6b7280",
   },
   infoValue: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "500",
     color: "#111827",
+    textAlign: "right",
+  },
+  boldValue: {
+    fontWeight: "600",
+  },
+  greenValue: {
+    color: "#10b981",
+    fontWeight: "700",
+  },
+  orangeValue: {
+    color: "#f59e0b",
+    fontWeight: "600",
+  },
+  totalValue: {
+    fontSize: 16,
   },
   profesorItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
+    paddingVertical: 12,
     gap: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
   },
+  profesorInfo: {
+    flex: 1,
+  },
   profesorName: {
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "600",
     color: "#111827",
+    marginBottom: 2,
+  },
+  profesorContact: {
+    fontSize: 13,
+    color: "#6b7280",
   },
   horarioItem: {
     flexDirection: "row",
@@ -312,37 +454,113 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6b7280",
   },
-  tipoPagoItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+  asistenciaCard: {
+    backgroundColor: "#f9fafb",
+    borderColor: "#e5e7eb",
+    borderWidth: 1,
+    padding: 20,
   },
-  tipoPagoHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+  asistenciaContainer: {
+    gap: 12,
   },
-  tipoPagoTipo: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#111827",
+  asistenciaBar: {
+    height: 12,
+    backgroundColor: "#e5e7eb",
+    borderRadius: 6,
+    overflow: "hidden",
   },
-  tipoPagoMonto: {
+  asistenciaProgress: {
+    height: "100%",
+    borderRadius: 6,
+  },
+  asistenciaText: {
     fontSize: 16,
+    fontWeight: "600",
+    color: "#1f2937",
+    textAlign: "center",
+  },
+  pagosContainer: {
+    gap: 12,
+  },
+  pagoItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    backgroundColor: "#f0fdf4",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#86efac",
+  },
+  pagoInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  pagoDetails: {
+    flex: 1,
+  },
+  pagoMonto: {
+    fontSize: 18,
     fontWeight: "700",
     color: "#10b981",
+    marginBottom: 2,
+  },
+  pagoFecha: {
+    fontSize: 13,
+    color: "#6b7280",
+  },
+  descuentoBadge: {
+    backgroundColor: "#fef3c7",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  descuentoText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#f59e0b",
+  },
+  emptyPayments: {
+    alignItems: "center",
+    padding: 40,
+    backgroundColor: "#f9fafb",
+    borderColor: "#e5e7eb",
+    borderWidth: 1,
+  },
+  emptyPaymentsText: {
+    fontSize: 14,
+    color: "#9ca3af",
+    marginTop: 8,
+  },
+  puntosCard: {
+    backgroundColor: "#fef3c7",
+    borderColor: "#fcd34d",
+    borderWidth: 1,
+    padding: 20,
+  },
+  puntosContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+  },
+  puntosText: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#f59e0b",
+  },
+  puntosSubtext: {
+    fontSize: 13,
+    color: "#92400e",
   },
   footer: {
-    flexDirection: "row",
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: "#e5e7eb",
-    gap: 12,
   },
   footerButton: {
-    flex: 1,
+    width: "100%",
   },
 });

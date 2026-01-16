@@ -51,7 +51,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
       console.log("Primer login:", usuarioLogueado.primerLogin);
 
       // ✅ Decidir redirección basado en el usuario retornado
-      if (usuarioLogueado.primerLogin) {
+      if (usuarioLogueado.primerLogin || usuarioLogueado.estado === "PENDIENTE") {
         console.log("🔄 Primer login → /complete-profile");
         router.replace("/complete-profile");
       } else {

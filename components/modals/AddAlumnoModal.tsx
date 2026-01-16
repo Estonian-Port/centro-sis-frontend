@@ -79,7 +79,7 @@ export const AddAlumnoModal: React.FC<AddAlumnoModalProps> = ({
     setIsSearching(true);
     try {
       // Llamar al endpoint de búsqueda que ya filtra en el backend
-      const alumnos = await usuarioService.searchAlumnos(query, curso.id);
+      const alumnos = await usuarioService.searchByRol(query, "ALUMNO");
 
       setSearchResults(alumnos);
     } catch (error) {

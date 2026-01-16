@@ -8,6 +8,7 @@ export const COLORES = {
   cobre: '#D1855C',
   rojo: "#A72703",
   verde: "#84994F",
+  azul: "#254E70",
 
   textPrimary: "#1f2937",
   textSecondary: "#6b7280",

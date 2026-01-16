@@ -1,5 +1,6 @@
 // app/(tabs)/ingresos/mis-ingresos.tsx
 import { IngresoItem } from "@/components/ingresos/IngresoItem";
+import { MultiSelect, MultiSelectOption } from "@/components/ui/MultiSelect";
 import { Access, PaginatedResponse } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
@@ -13,6 +14,8 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
+type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+
 export default function MisIngresosScreen() {
   const [ingresos, setIngresos] = useState<Access[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +23,9 @@ export default function MisIngresosScreen() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+
+  // Filtro
+  const [selectedMeses, setSelectedMeses] = useState<Mes[]>([]);
 
   const PAGE_SIZE = 20;
 
@@ -34,6 +40,7 @@ export default function MisIngresosScreen() {
         dni: "12345678",
         email: "juan@mail.com",
         celular: "1122334455",
+        fechaNacimiento: "1990-05-15",
         estado: "ACTIVO" as any,
         primerLogin: false,
         listaRol: ["ALUMNO" as any],
@@ -49,11 +56,12 @@ export default function MisIngresosScreen() {
         dni: "12345678",
         email: "juan@mail.com",
         celular: "1122334455",
+        fechaNacimiento: "1990-05-15",
         estado: "ACTIVO" as any,
         primerLogin: false,
         listaRol: ["ALUMNO" as any],
       },
-      fecha: "2025-01-12T09:15:00",
+      fecha: "2025-02-15T09:15:00",
     },
     {
       id: 3,
@@ -64,11 +72,12 @@ export default function MisIngresosScreen() {
         dni: "12345678",
         email: "juan@mail.com",
         celular: "1122334455",
+        fechaNacimiento: "1990-05-15",
         estado: "ACTIVO" as any,
         primerLogin: false,
         listaRol: ["ALUMNO" as any],
       },
-      fecha: "2025-01-11T16:45:00",
+      fecha: "2025-03-20T16:45:00",
     },
     {
       id: 4,
@@ -79,11 +88,12 @@ export default function MisIngresosScreen() {
         dni: "12345678",
         email: "juan@mail.com",
         celular: "1122334455",
+        fechaNacimiento: "1990-05-15",
         estado: "ACTIVO" as any,
         primerLogin: false,
         listaRol: ["ALUMNO" as any],
       },
-      fecha: "2025-01-10T08:20:00",
+      fecha: "2025-04-10T08:20:00",
     },
     {
       id: 5,
@@ -94,17 +104,145 @@ export default function MisIngresosScreen() {
         dni: "12345678",
         email: "juan@mail.com",
         celular: "1122334455",
+        fechaNacimiento: "1990-05-15",
         estado: "ACTIVO" as any,
         primerLogin: false,
         listaRol: ["ALUMNO" as any],
       },
-      fecha: "2025-01-09T14:00:00",
+      fecha: "2025-05-25T14:00:00",
     },
+    {
+      id: 6,
+      usuario: {
+        id: 1,
+        nombre: "Juan",
+        apellido: "Pérez",
+        dni: "12345678",
+        email: "juan@mail.com",
+        celular: "1122334455",
+        fechaNacimiento: "1990-05-15",
+        estado: "ACTIVO" as any,
+        primerLogin: false,
+        listaRol: ["ALUMNO" as any],
+      },
+      fecha: "2025-06-08T11:30:00",
+    },
+    {
+      id: 7,
+      usuario: {
+        id: 1,
+        nombre: "Juan",
+        apellido: "Pérez",
+        dni: "12345678",
+        email: "juan@mail.com",
+        celular: "1122334455",
+        fechaNacimiento: "1990-05-15",
+        estado: "ACTIVO" as any,
+        primerLogin: false,
+        listaRol: ["ALUMNO" as any],
+      },
+      fecha: "2025-07-18T13:45:00",
+    },
+    {
+      id: 8,
+      usuario: {
+        id: 1,
+        nombre: "Juan",
+        apellido: "Pérez",
+        dni: "12345678",
+        email: "juan@mail.com",
+        celular: "1122334455",
+        fechaNacimiento: "1990-05-15",
+        estado: "ACTIVO" as any,
+        primerLogin: false,
+        listaRol: ["ALUMNO" as any],
+      },
+      fecha: "2025-08-22T10:00:00",
+    },
+    {
+      id: 9,
+      usuario: {
+        id: 1,
+        nombre: "Juan",
+        apellido: "Pérez",
+        dni: "12345678",
+        email: "juan@mail.com",
+        celular: "1122334455",
+        fechaNacimiento: "1990-05-15",
+        estado: "ACTIVO" as any,
+        primerLogin: false,
+        listaRol: ["ALUMNO" as any],
+      },
+      fecha: "2025-09-05T15:20:00",
+    },
+    {
+      id: 10,
+      usuario: {
+        id: 1,
+        nombre: "Juan",
+        apellido: "Pérez",
+        dni: "12345678",
+        email: "juan@mail.com",
+        celular: "1122334455",
+        fechaNacimiento: "1990-05-15",
+        estado: "ACTIVO" as any,
+        primerLogin: false,
+        listaRol: ["ALUMNO" as any],
+      },
+      fecha: "2025-10-12T09:40:00",
+    },
+    {
+      id: 11,
+      usuario: {
+        id: 1,
+        nombre: "Juan",
+        apellido: "Pérez",
+        dni: "12345678",
+        email: "juan@mail.com",
+        celular: "1122334455",
+        fechaNacimiento: "1990-05-15",
+        estado: "ACTIVO" as any,
+        primerLogin: false,
+        listaRol: ["ALUMNO" as any],
+      },
+      fecha: "2025-11-28T14:15:00",
+    },
+    {
+      id: 12,
+      usuario: {
+        id: 1,
+        nombre: "Juan",
+        apellido: "Pérez",
+        dni: "12345678",
+        email: "juan@mail.com",
+        celular: "1122334455",
+        fechaNacimiento: "1990-05-15",
+        estado: "ACTIVO" as any,
+        primerLogin: false,
+        listaRol: ["ALUMNO" as any],
+      },
+      fecha: "2025-12-20T16:30:00",
+    },
+  ];
+
+  const mesFilterOptions: MultiSelectOption<Mes>[] = [
+    { value: 1, label: "Enero", color: "#3b82f6" },
+    { value: 2, label: "Febrero", color: "#8b5cf6" },
+    { value: 3, label: "Marzo", color: "#10b981" },
+    { value: 4, label: "Abril", color: "#f59e0b" },
+    { value: 5, label: "Mayo", color: "#ef4444" },
+    { value: 6, label: "Junio", color: "#06b6d4" },
+    { value: 7, label: "Julio", color: "#6366f1" },
+    { value: 8, label: "Agosto", color: "#84cc16" },
+    { value: 9, label: "Septiembre", color: "#f97316" },
+    { value: 10, label: "Octubre", color: "#ec4899" },
+    { value: 11, label: "Noviembre", color: "#14b8a6" },
+    { value: 12, label: "Diciembre", color: "#a855f7" },
   ];
 
   useEffect(() => {
     fetchIngresos();
-  }, []);
+  }, [selectedMeses]);
 
   const fetchIngresos = async (pageNum: number = 0) => {
     if (pageNum === 0) {
@@ -117,10 +255,21 @@ export default function MisIngresosScreen() {
       // 🎭 MOCK - Simular llamada API
       await new Promise((resolve) => setTimeout(resolve, 800));
 
-      // 🎭 MOCK - Usar datos mockeados
+      // 🎭 MOCK - Filtrar datos localmente
+      let filtered = [...MOCK_INGRESOS];
+
+      // Filtrar por meses
+      if (selectedMeses.length > 0) {
+        filtered = filtered.filter((ingreso) => {
+          const fechaIngreso = new Date(ingreso.fecha);
+          const mes = (fechaIngreso.getMonth() + 1) as Mes;
+          return selectedMeses.includes(mes);
+        });
+      }
+
       const mockResponse: PaginatedResponse<Access> = {
-        content: MOCK_INGRESOS,
-        totalElements: MOCK_INGRESOS.length,
+        content: filtered,
+        totalElements: filtered.length,
         totalPages: 1,
         page: 0,
         size: 20,
@@ -128,7 +277,11 @@ export default function MisIngresosScreen() {
 
       // 🔥 REAL - Descomentar cuando tengas backend
       // const response: PaginatedResponse<Access> =
-      //   await ingresoService.getMisIngresos(pageNum, PAGE_SIZE);
+      //   await ingresoService.getMisIngresos({
+      //     page: pageNum,
+      //     size: PAGE_SIZE,
+      //     meses: selectedMeses,
+      //   });
 
       const response = mockResponse; // 🎭 MOCK
 
@@ -161,6 +314,12 @@ export default function MisIngresosScreen() {
     }
   };
 
+  const handleToggleMes = (mes: Mes) => {
+    setSelectedMeses((prev) =>
+      prev.includes(mes) ? prev.filter((m) => m !== mes) : [...prev, mes]
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -184,13 +343,34 @@ export default function MisIngresosScreen() {
           </View>
         </View>
 
+        {/* Filtros por Mes */}
+        <View style={styles.filterSection}>
+          <Text style={styles.filterLabel}>Filtrar por Mes:</Text>
+          <MultiSelect
+            options={mesFilterOptions}
+            selectedValues={selectedMeses}
+            onToggle={handleToggleMes}
+            placeholder="Seleccionar meses"
+          />
+        </View>
+
         {/* Lista de Ingresos */}
         {ingresos.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="log-in-outline" size={64} color="#d1d5db" />
-            <Text style={styles.emptyTitle}>No hay ingresos registrados</Text>
+            <Ionicons
+              name={selectedMeses.length > 0 ? "search" : "log-in-outline"}
+              size={64}
+              color="#d1d5db"
+            />
+            <Text style={styles.emptyTitle}>
+              {selectedMeses.length > 0
+                ? "No se encontraron ingresos"
+                : "No hay ingresos registrados"}
+            </Text>
             <Text style={styles.emptyText}>
-              Tus ingresos al centro aparecerán aquí
+              {selectedMeses.length > 0
+                ? "Intenta con otros meses"
+                : "Tus ingresos al centro aparecerán aquí"}
             </Text>
           </View>
         ) : (
@@ -273,6 +453,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     color: "#3b82f6",
+  },
+  filterSection: {
+    marginBottom: 12,
+  },
+  filterLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 6,
   },
   ingresosList: {
     gap: 8,

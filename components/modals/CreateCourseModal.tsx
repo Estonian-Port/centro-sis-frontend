@@ -1,3 +1,4 @@
+// components/modals/CreateCourseModal.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React, { useState, useMemo, useEffect } from "react";
@@ -10,12 +11,14 @@ import {
   TouchableOpacity,
   View,
   Platform,
+  TextInput,
+  ActivityIndicator,
 } from "react-native";
 import * as yup from "yup";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import {
-  nuevoCursoAlquiler,
+  nuevoCursoAlquilerAdmin,
   nuevoCursoComision,
   DayOfWeek,
   HorarioDto,
@@ -23,11 +26,11 @@ import {
   PagoType,
   ProfesorLista,
 } from "@/model/model";
-import { DatePicker } from "../pickers/DataPicker";
 import { TimePickerModal } from "../pickers/TimePicker";
 import { usuarioService } from "@/services/usuario.service";
 import { cursoService } from "@/services/curso.service";
 import Toast from "react-native-toast-message";
+import { DatePicker } from "../pickers/DataPicker";
 
 interface FormValues {
   nombre: string;
@@ -35,8 +38,10 @@ interface FormValues {
   fechaFin: string;
   profesoresId: number[];
   montoAlquiler?: number;
+  cuotasAlquiler?: number;
   horarios?: HorarioDto[];
   tipoPago?: TipoPago[];
+  cuotasMensual?: number;
   recargo?: number | null;
   comisionProfesor?: number | null;
 }
@@ -100,6 +105,11 @@ const getValidationSchema = (modalidad: Modalidad): any => {
         .number()
         .positive("El monto debe ser mayor a 0")
         .required("El monto de alquiler es requerido"),
+      cuotasAlquiler: yup
+        .number()
+        .positive("La cantidad debe ser mayor a 0")
+        .integer("Debe ser un número entero")
+        .required("La cantidad de cuotas es requerida"),
     });
   } else {
     return yup.object().shape({
@@ -144,6 +154,10 @@ const getValidationSchema = (modalidad: Modalidad): any => {
               .number()
               .positive("El monto debe ser mayor a 0")
               .required("El monto es requerido"),
+            cuotas: yup
+              .number()
+              .positive("Las cuotas deben ser mayor a 0")
+              .required("Las cuotas son requeridas"),
           })
         )
         .min(1, "Debe agregar al menos un tipo de pago")
@@ -195,26 +209,18 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   onClose,
 }) => {
   const [modalidad, setModalidad] = useState<Modalidad>("ALQUILER");
-  const [showDatePicker, setShowDatePicker] = useState<"inicio" | "fin" | null>(
-    null
-  );
   const [showTimePicker, setShowTimePicker] = useState<{
     horarioIndex: number;
     field: "horaInicio" | "horaFin";
   } | null>(null);
-  const [profesores, setProfesores] = useState<ProfesorLista[]>([]);
 
-  useEffect(() => {
-    const fetchProfesores = async () => {
-      try {
-        const data = await usuarioService.getNombresProfesores();
-        setProfesores(data);
-      } catch (error) {
-        console.error("Error fetching professors:", error);
-      }
-    };
-    fetchProfesores();
-  }, []);
+  // Estados para búsqueda de profesores
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<ProfesorLista[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [profesoresSeleccionados, setProfesoresSeleccionados] = useState<
+    ProfesorLista[]
+  >([]);
 
   const {
     control,
@@ -224,14 +230,14 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
     watch,
     setValue,
   } = useForm<FormValues>({
-    resolver: yupResolver(getValidationSchema(modalidad)),
+    resolver: yupResolver(getValidationSchema(modalidad)) as any,
     defaultValues: {
       nombre: "",
       fechaInicio: "",
       fechaFin: "",
       profesoresId: [],
       montoAlquiler: undefined,
-      // CAMBIO: Agregar un horario por defecto
+      cuotasAlquiler: undefined,
       horarios: [
         {
           dia: DayOfWeek.MONDAY,
@@ -240,33 +246,83 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
         },
       ],
       tipoPago: [],
+      cuotasMensual: undefined,
       recargo: null,
       comisionProfesor: null,
     },
   });
 
-  const profesoresSeleccionados = watch("profesoresId");
   const horarios = watch("horarios") || [];
   const tiposPago = watch("tipoPago") || [];
   const fechaInicio = watch("fechaInicio");
   const fechaFin = watch("fechaFin");
+  const cuotasAlquiler = watch("cuotasAlquiler");
+  const cuotasMensual = watch("cuotasMensual");
 
-  // Calcular cantidad de meses entre fechas
-  const cantidadMeses = useMemo(() => {
-    if (!fechaInicio || !fechaFin) return 0;
+  // Búsqueda con debounce
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const results = await usuarioService.searchByRol(
+          searchQuery,
+          "PROFESOR"
+        );
+        // Filtrar los que ya están seleccionados
+        const filtered = results.filter(
+          (r) => !profesoresSeleccionados.some((p) => p.id === r.id)
+        );
+        setSearchResults(filtered);
+      } catch (error) {
+        console.error("Error buscando profesores:", error);
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, profesoresSeleccionados]);
+
+  // Calcular duración mejorada en días, meses y días
+  const duracion = useMemo(() => {
+    if (!fechaInicio || !fechaFin) return null;
 
     const inicio = new Date(fechaInicio);
     const fin = new Date(fechaFin);
 
-    if (fin <= inicio) return 0;
+    if (fin <= inicio) return null;
 
-    const meses =
-      (fin.getFullYear() - inicio.getFullYear()) * 12 +
-      (fin.getMonth() - inicio.getMonth()) +
-      (fin.getDate() >= inicio.getDate() ? 1 : 0);
+    // Calcular diferencia en días
+    const diferenciaMs = fin.getTime() - inicio.getTime();
+    const totalDias = Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
 
-    return Math.max(1, meses);
+    // Calcular meses y días restantes
+    const meses = Math.floor(totalDias / 30);
+    const diasRestantes = totalDias % 30;
+
+    return { totalDias, meses, diasRestantes };
   }, [fechaInicio, fechaFin]);
+
+  // Calcular cantidad de cuotas sugerida (se actualiza automáticamente)
+  useEffect(() => {
+    if (duracion && modalidad === "ALQUILER") {
+      const cuotasSugeridas = Math.ceil(duracion.totalDias / 30);
+      setValue("cuotasAlquiler", cuotasSugeridas);
+    }
+  }, [duracion, modalidad]);
+
+  useEffect(() => {
+    if (duracion && tieneTipoPago(PagoType.MENSUAL)) {
+      const cuotasSugeridas = Math.ceil(duracion.totalDias / 30);
+      setValue("cuotasMensual", cuotasSugeridas);
+    }
+  }, [duracion, tiposPago]);
 
   // Verificar si un tipo de pago está seleccionado
   const tieneTipoPago = (tipo: PagoType): boolean => {
@@ -279,12 +335,26 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
     return tipoPago?.monto || 0;
   };
 
-  const toggleProfesor = (profesorId: number): void => {
-    const current = profesoresSeleccionados || [];
-    const newSelection = current.includes(profesorId)
-      ? current.filter((id) => id !== profesorId)
-      : [...current, profesorId];
-    setValue("profesoresId", newSelection);
+  const handleAgregarProfesor = (profesor: ProfesorLista): void => {
+    const nuevosProfs = [...profesoresSeleccionados, profesor];
+    setProfesoresSeleccionados(nuevosProfs);
+    setValue(
+      "profesoresId",
+      nuevosProfs.map((p) => p.id)
+    );
+    setSearchQuery("");
+    setSearchResults([]);
+  };
+
+  const handleEliminarProfesor = (profesorId: number): void => {
+    const nuevosProfs = profesoresSeleccionados.filter(
+      (p) => p.id !== profesorId
+    );
+    setProfesoresSeleccionados(nuevosProfs);
+    setValue(
+      "profesoresId",
+      nuevosProfs.map((p) => p.id)
+    );
   };
 
   const addHorario = (): void => {
@@ -315,18 +385,35 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
     setValue("horarios", newHorarios);
   };
 
+  const updateCuotasTipoPago = (cuotas: number): void => {
+    const newTiposPago = tiposPago.map((tp) =>
+      tp.tipo === PagoType.MENSUAL ? { ...tp, cuotas } : tp
+    );
+    setValue("tipoPago", newTiposPago);
+  };
+
   const toggleTipoPago = (tipo: PagoType): void => {
     const tieneActualmente = tieneTipoPago(tipo);
 
     if (tieneActualmente) {
-      // Remover el tipo de pago
       setValue(
         "tipoPago",
         tiposPago.filter((tp) => tp.tipo !== tipo)
       );
+      if (tipo === PagoType.MENSUAL) {
+        setValue("cuotasMensual", undefined);
+      }
     } else {
-      // Agregar el tipo de pago
-      setValue("tipoPago", [...tiposPago, { tipo, monto: 0 }]);
+      const cuotas =
+        tipo === PagoType.MENSUAL
+          ? duracion
+            ? Math.ceil(duracion.totalDias / 30)
+            : 1
+          : 1;
+      setValue("tipoPago", [...tiposPago, { tipo, monto: 0, cuotas }]);
+      if (tipo === PagoType.MENSUAL && duracion) {
+        setValue("cuotasMensual", Math.ceil(duracion.totalDias / 30));
+      }
     }
   };
 
@@ -337,28 +424,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
     setValue("tipoPago", newTiposPago);
   };
 
-  // Función para formatear fecha a YYYY-MM-DD
-  const formatDate = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
-  // Función para parsear fecha desde string
-  const parseDate = (dateString: string): Date => {
-    if (!dateString) return new Date();
-    const [year, month, day] = dateString.split("-").map(Number);
-    return new Date(year, month - 1, day);
-  };
-
-  // Handlers para date picker
-  const handleDateSelect = (field: "fechaInicio" | "fechaFin", date: Date) => {
-    setValue(field, formatDate(date));
-    setShowDatePicker(null);
-  };
-
-  const crearCursoAlquiler = async (nuevoCurso: nuevoCursoAlquiler) => {
+  const crearCursoAlquiler = async (nuevoCurso: nuevoCursoAlquilerAdmin) => {
     try {
       const response = await cursoService.altaCursoAlquiler(nuevoCurso);
       Toast.show({
@@ -378,7 +444,6 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   };
 
   const crearCursoComision = async (nuevoCurso: nuevoCursoComision) => {
-    console.log("Creando curso por comisión:", nuevoCurso);
     try {
       const response = await cursoService.altaCursoComision(nuevoCurso);
       Toast.show({
@@ -399,13 +464,14 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
 
   const onSubmit = async (data: FormValues): Promise<void> => {
     try {
-      let requestData: nuevoCursoAlquiler | nuevoCursoComision;
+      let requestData: nuevoCursoAlquilerAdmin | nuevoCursoComision;
 
       if (modalidad === "ALQUILER") {
         requestData = {
           id: 0,
           nombre: data.nombre,
           montoAlquiler: data.montoAlquiler || 0,
+          cuotasAlquiler: data.cuotasAlquiler || 1,
           profesoresId: data.profesoresId,
           fechaInicio: data.fechaInicio,
           fechaFin: data.fechaFin,
@@ -416,7 +482,11 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
           id: 0,
           nombre: data.nombre,
           horarios: data.horarios || [],
-          tipoPago: data.tipoPago || [],
+          tipoPago: (data.tipoPago || []).map((tp) => ({
+            tipo: tp.tipo,
+            monto: tp.monto,
+            cuotas: tp.tipo === PagoType.MENSUAL ? data.cuotasMensual || 1 : 1,
+          })),
           recargo: data.recargo || null,
           comisionProfesor: data.comisionProfesor || null,
           profesoresId: data.profesoresId,
@@ -434,8 +504,10 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   const handleClose = (): void => {
     reset();
     setModalidad("ALQUILER");
-    setShowDatePicker(null);
     setShowTimePicker(null);
+    setSearchQuery("");
+    setSearchResults([]);
+    setProfesoresSeleccionados([]);
     onClose();
   };
 
@@ -450,12 +522,16 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
         },
       ]);
       setValue("tipoPago", []);
+      setValue("cuotasMensual", undefined);
       setValue("recargo", null);
       setValue("comisionProfesor", null);
       setValue("montoAlquiler", undefined);
+      if (duracion) {
+        setValue("cuotasAlquiler", Math.ceil(duracion.totalDias / 30));
+      }
     } else {
       setValue("montoAlquiler", undefined);
-      // Mantener el horario por defecto cuando se cambia a comisión
+      setValue("cuotasAlquiler", undefined);
       setValue("horarios", [
         {
           dia: DayOfWeek.MONDAY,
@@ -496,7 +572,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
               )}
             />
 
-            {/* Fechas con Date Picker */}
+            {/* Fechas */}
             <View style={styles.row}>
               <View style={styles.halfWidth}>
                 <Controller
@@ -523,7 +599,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                       value={value}
                       onChange={onChange}
                       error={errors.fechaFin?.message}
-                      maximumDate={new Date(2030, 11, 31)} // Opcional: limitar fechas
+                      maximumDate={new Date(2030, 11, 31)}
                     />
                   )}
                 />
@@ -531,53 +607,112 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
             </View>
 
             {/* Mostrar duración del curso */}
-            {fechaInicio && fechaFin && cantidadMeses > 0 && (
+            {duracion && (
               <View style={styles.infoBanner}>
                 <Ionicons name="information-circle" size={20} color="#3b82f6" />
                 <Text style={styles.infoBannerText}>
-                  Duración del curso: {cantidadMeses}{" "}
-                  {cantidadMeses === 1 ? "mes" : "meses"}
+                  Duración aproximada: ~{duracion.meses}{" "}
+                  {duracion.meses === 1 ? "mes" : "meses"}
+                  {duracion.diasRestantes > 0 &&
+                    ` y ${duracion.diasRestantes} ${
+                      duracion.diasRestantes === 1 ? "día" : "días"
+                    }`}{" "}
+                  ({duracion.totalDias} días)
                 </Text>
               </View>
             )}
 
-            {/* Profesores */}
+            {/* Profesores con Búsqueda */}
             <View style={styles.section}>
               <Text style={styles.sectionLabel}>Profesores Asignados *</Text>
-              {profesores.map((profesor) => (
-                <TouchableOpacity
-                  key={profesor.id}
-                  style={[
-                    styles.checkboxOption,
-                    profesoresSeleccionados?.includes(profesor.id) &&
-                      styles.checkboxSelected,
-                  ]}
-                  onPress={() => toggleProfesor(profesor.id)}
-                >
-                  <Text
-                    style={[
-                      styles.checkboxText,
-                      profesoresSeleccionados?.includes(profesor.id) &&
-                        styles.checkboxTextSelected,
-                    ]}
-                  >
-                    {profesor.nombre} {profesor.apellido}
-                  </Text>
-                  <Ionicons
-                    name={
-                      profesoresSeleccionados?.includes(profesor.id)
-                        ? "checkmark-circle"
-                        : "ellipse-outline"
-                    }
-                    size={20}
-                    color={
-                      profesoresSeleccionados?.includes(profesor.id)
-                        ? "#3b82f6"
-                        : "#9ca3af"
-                    }
-                  />
-                </TouchableOpacity>
-              ))}
+
+              {/* Profesores Seleccionados */}
+              {profesoresSeleccionados.length > 0 && (
+                <View style={styles.selectedProfesores}>
+                  {profesoresSeleccionados.map((profesor) => (
+                    <View key={profesor.id} style={styles.profesorChip}>
+                      <View style={styles.profesorAvatar}>
+                        <Text style={styles.profesorAvatarText}>
+                          {profesor.nombre[0]}
+                          {profesor.apellido[0]}
+                        </Text>
+                      </View>
+                      <Text style={styles.profesorChipText}>
+                        {profesor.nombre} {profesor.apellido}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => handleEliminarProfesor(profesor.id)}
+                        style={styles.removeChip}
+                      >
+                        <Ionicons
+                          name="close-circle"
+                          size={20}
+                          color="#ef4444"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Búsqueda */}
+              <View style={styles.searchContainer}>
+                <Ionicons
+                  name="search"
+                  size={20}
+                  color="#9ca3af"
+                  style={styles.searchIcon}
+                />
+                <TextInput
+                  style={styles.searchInput}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder="Buscar por nombre, apellido, email o dni..."
+                  placeholderTextColor="#9ca3af"
+                />
+                {searching && (
+                  <ActivityIndicator size="small" color="#3b82f6" />
+                )}
+              </View>
+
+              {/* Resultados de Búsqueda */}
+              {searchResults.length > 0 && (
+                <View style={styles.searchResults}>
+                  {searchResults.map((profesor) => (
+                    <TouchableOpacity
+                      key={profesor.id}
+                      style={styles.searchResultItem}
+                      onPress={() => handleAgregarProfesor(profesor)}
+                    >
+                      <View style={styles.resultAvatar}>
+                        <Text style={styles.resultAvatarText}>
+                          {profesor.nombre[0]}
+                          {profesor.apellido[0]}
+                        </Text>
+                      </View>
+                      <View style={styles.resultInfo}>
+                        <Text style={styles.resultName}>
+                          {profesor.nombre} {profesor.apellido}
+                        </Text>
+                        <Text style={styles.resultEmail}>{profesor.email}</Text>
+                      </View>
+                      <Ionicons name="add-circle" size={24} color="#3b82f6" />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {searchQuery.trim() &&
+                !searching &&
+                searchResults.length === 0 && (
+                  <View style={styles.noResults}>
+                    <Ionicons name="search-outline" size={32} color="#d1d5db" />
+                    <Text style={styles.noResultsText}>
+                      No se encontraron profesores
+                    </Text>
+                  </View>
+                )}
+
               {errors.profesoresId && (
                 <Text style={styles.errorText}>
                   {errors.profesoresId.message}
@@ -647,22 +782,63 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                   <Text style={styles.specificTitle}>Datos de Alquiler</Text>
                 </View>
 
-                <Controller
-                  control={control}
-                  name="montoAlquiler"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="Monto de Alquiler ($) *"
-                      value={value?.toString() || ""}
-                      onChangeText={(text) =>
-                        onChange(text ? parseFloat(text) : undefined)
-                      }
-                      keyboardType="numeric"
-                      placeholder="10000"
-                      error={errors.montoAlquiler?.message}
+                {/* Banner de advertencia */}
+                <View style={styles.warningBanner}>
+                  <Ionicons name="alert-circle" size={20} color="#f59e0b" />
+                  <Text style={styles.warningBannerText}>
+                    Un profesor a cargo debe completar los datos restantes
+                    (horarios y modalidades de pago) para activar el curso.
+                  </Text>
+                </View>
+
+                <View style={styles.row}>
+                  <View style={styles.flex2}>
+                    <Controller
+                      control={control}
+                      name="montoAlquiler"
+                      render={({ field: { onChange, value } }) => (
+                        <Input
+                          label="Monto Mensual ($) *"
+                          value={value?.toString() || ""}
+                          onChangeText={(text) =>
+                            onChange(text ? parseFloat(text) : undefined)
+                          }
+                          keyboardType="numeric"
+                          placeholder="10000"
+                          error={errors.montoAlquiler?.message}
+                        />
+                      )}
                     />
-                  )}
-                />
+                  </View>
+                  <View style={styles.flex1}>
+                    <Controller
+                      control={control}
+                      name="cuotasAlquiler"
+                      render={({ field: { onChange, value } }) => (
+                        <Input
+                          label="Cuotas *"
+                          value={value?.toString() || ""}
+                          onChangeText={(text) =>
+                            onChange(text ? parseInt(text, 10) : undefined)
+                          }
+                          keyboardType="numeric"
+                          placeholder="3"
+                          error={errors.cuotasAlquiler?.message}
+                        />
+                      )}
+                    />
+                  </View>
+                </View>
+
+                {/* Total de alquiler */}
+                {watch("montoAlquiler") && cuotasAlquiler && (
+                  <Text style={styles.totalInfo}>
+                    Total de alquiler: $
+                    {(
+                      (watch("montoAlquiler") || 0) * cuotasAlquiler
+                    ).toLocaleString()}
+                  </Text>
+                )}
               </View>
             )}
 
@@ -835,39 +1011,63 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                         />
                         <View style={styles.tipoPagoHeaderText}>
                           <Text style={styles.tipoPagoTitle}>Pago Mensual</Text>
-                          {cantidadMeses > 0 && (
-                            <Text style={styles.tipoPagoSubtitle}>
-                              {cantidadMeses}{" "}
-                              {cantidadMeses === 1 ? "cuota" : "cuotas"}
-                            </Text>
-                          )}
                         </View>
                       </View>
                     </TouchableOpacity>
 
                     {tieneTipoPago(PagoType.MENSUAL) && (
                       <View style={styles.tipoPagoInput}>
-                        <Input
-                          label={`Monto por cuota ($)`}
-                          value={
-                            getMontoTipoPago(PagoType.MENSUAL)?.toString() || ""
-                          }
-                          onChangeText={(text) =>
-                            updateMontoTipoPago(
-                              PagoType.MENSUAL,
-                              parseFloat(text) || 0
-                            )
-                          }
-                          keyboardType="numeric"
-                          placeholder="10000"
-                        />
-                        {cantidadMeses > 0 &&
+                        <View style={styles.row}>
+                          <View style={styles.flex2}>
+                            <Input
+                              label="Monto por cuota ($) *"
+                              value={
+                                getMontoTipoPago(
+                                  PagoType.MENSUAL
+                                )?.toString() || ""
+                              }
+                              onChangeText={(text) =>
+                                updateMontoTipoPago(
+                                  PagoType.MENSUAL,
+                                  parseFloat(text) || 0
+                                )
+                              }
+                              keyboardType="numeric"
+                              placeholder="10000"
+                            />
+                          </View>
+                          <View style={styles.flex1}>
+                            <Controller
+                              control={control}
+                              name="cuotasMensual"
+                              render={({ field: { onChange, value } }) => (
+                                <Input
+                                  label="Cuotas *"
+                                  value={value?.toString() || ""}
+                                  onChangeText={(text) => {
+                                    const newValue = text
+                                      ? parseInt(text, 10)
+                                      : undefined;
+                                    onChange(newValue);
+                                    if (newValue) {
+                                      updateCuotasTipoPago(newValue);
+                                    }
+                                  }}
+                                  keyboardType="numeric"
+                                  placeholder="3"
+                                  error={errors.cuotasMensual?.message}
+                                />
+                              )}
+                            />
+                          </View>
+                        </View>
+                        {cuotasMensual &&
                           getMontoTipoPago(PagoType.MENSUAL) > 0 && (
                             <Text style={styles.totalInfo}>
                               Total: $
                               {(
                                 getMontoTipoPago(PagoType.MENSUAL) *
-                                cantidadMeses
+                                cuotasMensual
                               ).toLocaleString()}
                             </Text>
                           )}
@@ -1092,6 +1292,12 @@ const styles = StyleSheet.create({
   halfWidth: {
     flex: 1,
   },
+  flex1: {
+    flex: 1,
+  },
+  flex2: {
+    flex: 2,
+  },
   inputLabel: {
     fontSize: 13,
     fontWeight: "500",
@@ -1111,29 +1317,134 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#3b82f6",
     fontWeight: "500",
+    flex: 1,
   },
-  checkboxOption: {
+  warningBanner: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     padding: 12,
+    backgroundColor: "#fffbeb",
     borderRadius: 8,
+    marginBottom: 16,
+    gap: 8,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#fde68a",
+  },
+  warningBannerText: {
+    fontSize: 13,
+    color: "#92400e",
+    flex: 1,
+    lineHeight: 18,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     backgroundColor: "#ffffff",
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  checkboxSelected: {
-    borderColor: "#3b82f6",
-    backgroundColor: "#eff6ff",
+  searchIcon: {
+    marginRight: 8,
   },
-  checkboxText: {
-    fontSize: 16,
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
     color: "#374151",
   },
-  checkboxTextSelected: {
-    color: "#3b82f6",
+  searchResults: {
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 8,
+    backgroundColor: "#ffffff",
+    maxHeight: 200,
+  },
+  searchResultItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+    gap: 12,
+  },
+  resultAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#3b82f6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resultAvatarText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  resultInfo: {
+    flex: 1,
+  },
+  resultName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1f2937",
+  },
+  resultEmail: {
+    fontSize: 12,
+    color: "#6b7280",
+    marginTop: 2,
+  },
+  noResults: {
+    alignItems: "center",
+    padding: 24,
+    backgroundColor: "#f9fafb",
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  noResultsText: {
+    fontSize: 14,
+    color: "#9ca3af",
+    marginTop: 8,
+  },
+  selectedProfesores: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 12,
+  },
+  profesorChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#eff6ff",
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#bfdbfe",
+  },
+  profesorAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#3b82f6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profesorAvatarText: {
+    color: "#ffffff",
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  profesorChipText: {
+    fontSize: 13,
+    color: "#1e40af",
     fontWeight: "500",
+  },
+  removeChip: {
+    padding: 2,
   },
   modalidadContainer: {
     flexDirection: "row",
@@ -1310,9 +1621,7 @@ const styles = StyleSheet.create({
   tipoPagoCheckbox: {
     marginBottom: 12,
   },
-  tipoPagoCheckboxSelected: {
-    // No additional styles needed, handled by header
-  },
+  tipoPagoCheckboxSelected: {},
   tipoPagoHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -1337,7 +1646,7 @@ const styles = StyleSheet.create({
   totalInfo: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#10b981",
+    color: "#3b82f6",
     marginTop: 8,
   },
   errorText: {

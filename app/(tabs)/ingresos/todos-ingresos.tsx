@@ -16,6 +16,9 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
+import { MultiSelect, MultiSelectOption } from "@/components/ui/MultiSelect";
+
+type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export default function TodosIngresosScreen() {
   const [ingresos, setIngresos] = useState<Access[]>([]);
@@ -28,6 +31,7 @@ export default function TodosIngresosScreen() {
   // Filtros
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<Rol[]>([]);
+  const [selectedMeses, setSelectedMeses] = useState<Mes[]>([]);
 
   // Modal
   const [showRegistrarModal, setShowRegistrarModal] = useState(false);
@@ -45,6 +49,7 @@ export default function TodosIngresosScreen() {
         dni: "12345678",
         email: "juan@mail.com",
         celular: "1122334455",
+        fechaNacimiento: "1990-05-15",
         estado: "ACTIVO" as any,
         primerLogin: false,
         listaRol: ["ALUMNO" as any],
@@ -60,6 +65,7 @@ export default function TodosIngresosScreen() {
         dni: "87654321",
         email: "maria@mail.com",
         celular: "1155667788",
+        fechaNacimiento: "1985-03-22",
         estado: "ACTIVO" as any,
         primerLogin: false,
         listaRol: ["PROFESOR" as any],
@@ -75,11 +81,12 @@ export default function TodosIngresosScreen() {
         dni: "11223344",
         email: "carlos@mail.com",
         celular: "1199887766",
+        fechaNacimiento: "1995-11-08",
         estado: "ACTIVO" as any,
         primerLogin: false,
         listaRol: ["ALUMNO" as any],
       },
-      fecha: "2025-01-13T08:00:00",
+      fecha: "2025-02-18T08:00:00",
     },
     {
       id: 4,
@@ -90,11 +97,12 @@ export default function TodosIngresosScreen() {
         dni: "55667788",
         email: "ana@mail.com",
         celular: "1144556677",
+        fechaNacimiento: "1988-07-30",
         estado: "ACTIVO" as any,
         primerLogin: false,
         listaRol: ["PROFESOR" as any],
       },
-      fecha: "2025-01-12T16:45:00",
+      fecha: "2025-03-12T16:45:00",
     },
     {
       id: 5,
@@ -105,11 +113,12 @@ export default function TodosIngresosScreen() {
         dni: "99887766",
         email: "pedro@mail.com",
         celular: "1133445566",
+        fechaNacimiento: "1992-09-14",
         estado: "ACTIVO" as any,
         primerLogin: false,
         listaRol: ["ALUMNO" as any],
       },
-      fecha: "2025-01-12T14:20:00",
+      fecha: "2025-04-20T14:20:00",
     },
     {
       id: 6,
@@ -120,11 +129,12 @@ export default function TodosIngresosScreen() {
         dni: "22334455",
         email: "laura@mail.com",
         celular: "1177889900",
+        fechaNacimiento: "1987-12-05",
         estado: "ACTIVO" as any,
         primerLogin: false,
         listaRol: ["OFICINA" as any],
       },
-      fecha: "2025-01-12T09:00:00",
+      fecha: "2025-05-15T09:00:00",
     },
     {
       id: 7,
@@ -135,11 +145,12 @@ export default function TodosIngresosScreen() {
         dni: "66778899",
         email: "diego@mail.com",
         celular: "1166778899",
+        fechaNacimiento: "1993-02-28",
         estado: "ACTIVO" as any,
         primerLogin: false,
         listaRol: ["ALUMNO" as any],
       },
-      fecha: "2025-01-11T15:30:00",
+      fecha: "2025-06-22T15:30:00",
     },
     {
       id: 8,
@@ -150,11 +161,92 @@ export default function TodosIngresosScreen() {
         dni: "44556677",
         email: "sofia@mail.com",
         celular: "1188990011",
+        fechaNacimiento: "1991-04-17",
         estado: "ACTIVO" as any,
         primerLogin: false,
         listaRol: ["PROFESOR" as any],
       },
-      fecha: "2025-01-11T10:15:00",
+      fecha: "2025-07-10T10:15:00",
+    },
+    {
+      id: 9,
+      usuario: {
+        id: 9,
+        nombre: "Roberto",
+        apellido: "Gómez",
+        dni: "33445566",
+        email: "roberto@mail.com",
+        celular: "1155443322",
+        fechaNacimiento: "1989-06-25",
+        estado: "ACTIVO" as any,
+        primerLogin: false,
+        listaRol: ["ALUMNO" as any],
+      },
+      fecha: "2025-08-05T13:00:00",
+    },
+    {
+      id: 10,
+      usuario: {
+        id: 10,
+        nombre: "Valentina",
+        apellido: "Morales",
+        dni: "77889900",
+        email: "valentina@mail.com",
+        celular: "1166554433",
+        fechaNacimiento: "1994-10-12",
+        estado: "ACTIVO" as any,
+        primerLogin: false,
+        listaRol: ["PROFESOR" as any],
+      },
+      fecha: "2025-09-18T11:30:00",
+    },
+    {
+      id: 11,
+      usuario: {
+        id: 11,
+        nombre: "Martín",
+        apellido: "Silva",
+        dni: "88990011",
+        email: "martin@mail.com",
+        celular: "1177665544",
+        fechaNacimiento: "1986-08-03",
+        estado: "ACTIVO" as any,
+        primerLogin: false,
+        listaRol: ["ALUMNO" as any],
+      },
+      fecha: "2025-10-25T14:45:00",
+    },
+    {
+      id: 12,
+      usuario: {
+        id: 12,
+        nombre: "Carolina",
+        apellido: "Ramírez",
+        dni: "99001122",
+        email: "carolina@mail.com",
+        celular: "1188776655",
+        fechaNacimiento: "1990-01-19",
+        estado: "ACTIVO" as any,
+        primerLogin: false,
+        listaRol: ["OFICINA" as any],
+      },
+      fecha: "2025-11-08T09:20:00",
+    },
+    {
+      id: 13,
+      usuario: {
+        id: 13,
+        nombre: "Federico",
+        apellido: "Castro",
+        dni: "00112233",
+        email: "federico@mail.com",
+        celular: "1199887766",
+        fechaNacimiento: "1992-12-31",
+        estado: "ACTIVO" as any,
+        primerLogin: false,
+        listaRol: ["ALUMNO" as any],
+      },
+      fecha: "2025-12-15T16:00:00",
     },
   ];
 
@@ -165,9 +257,24 @@ export default function TodosIngresosScreen() {
     { value: Rol.OFICINA, label: "Oficina", color: "#f59e0b" },
   ];
 
+  const mesFilterOptions: MultiSelectOption<Mes>[] = [
+    { value: 1, label: "Enero", color: "#3b82f6" },
+    { value: 2, label: "Febrero", color: "#8b5cf6" },
+    { value: 3, label: "Marzo", color: "#10b981" },
+    { value: 4, label: "Abril", color: "#f59e0b" },
+    { value: 5, label: "Mayo", color: "#ef4444" },
+    { value: 6, label: "Junio", color: "#06b6d4" },
+    { value: 7, label: "Julio", color: "#6366f1" },
+    { value: 8, label: "Agosto", color: "#84cc16" },
+    { value: 9, label: "Septiembre", color: "#f97316" },
+    { value: 10, label: "Octubre", color: "#ec4899" },
+    { value: 11, label: "Noviembre", color: "#14b8a6" },
+    { value: 12, label: "Diciembre", color: "#a855f7" },
+  ];
+
   useEffect(() => {
     fetchIngresos(0);
-  }, [searchQuery, selectedRoles]);
+  }, [searchQuery, selectedRoles, selectedMeses]);
 
   const fetchIngresos = async (pageNum: number = 0) => {
     if (pageNum === 0) {
@@ -187,7 +294,8 @@ export default function TodosIngresosScreen() {
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         filtered = filtered.filter((ingreso) => {
-          const nombreCompleto = `${ingreso.usuario.nombre} ${ingreso.usuario.apellido}`.toLowerCase();
+          const nombreCompleto =
+            `${ingreso.usuario.nombre} ${ingreso.usuario.apellido}`.toLowerCase();
           const dni = ingreso.usuario.dni.toLowerCase();
           return nombreCompleto.includes(query) || dni.includes(query);
         });
@@ -196,8 +304,19 @@ export default function TodosIngresosScreen() {
       // Filtrar por roles
       if (selectedRoles.length > 0) {
         filtered = filtered.filter((ingreso) =>
-          selectedRoles.some((rol) => ingreso.usuario.listaRol.includes(rol as any))
+          selectedRoles.some((rol) =>
+            ingreso.usuario.listaRol.includes(rol as any)
+          )
         );
+      }
+
+      // Filtrar por meses
+      if (selectedMeses.length > 0) {
+        filtered = filtered.filter((ingreso) => {
+          const fechaIngreso = new Date(ingreso.fecha);
+          const mes = (fechaIngreso.getMonth() + 1) as Mes;
+          return selectedMeses.includes(mes);
+        });
       }
 
       const mockResponse: PaginatedResponse<Access> = {
@@ -215,6 +334,7 @@ export default function TodosIngresosScreen() {
       //     size: PAGE_SIZE,
       //     search: searchQuery,
       //     roles: selectedRoles,
+      //     meses: selectedMeses,
       //   });
 
       const response = mockResponse; // 🎭 MOCK
@@ -251,6 +371,12 @@ export default function TodosIngresosScreen() {
   const handleToggleRol = (rol: Rol) => {
     setSelectedRoles((prev) =>
       prev.includes(rol) ? prev.filter((r) => r !== rol) : [...prev, rol]
+    );
+  };
+
+  const handleToggleMes = (mes: Mes) => {
+    setSelectedMeses((prev) =>
+      prev.includes(mes) ? prev.filter((m) => m !== mes) : [...prev, mes]
     );
   };
 
@@ -293,20 +419,37 @@ export default function TodosIngresosScreen() {
           style={styles.searchBar}
         />
 
-        {/* Filtros */}
-        <FilterChips
-          options={rolFilterOptions}
-          selectedValues={selectedRoles}
-          onToggle={handleToggleRol}
-          style={styles.filterChips}
-        />
+        {/* Filtros Combinados */}
+        <View style={styles.filtersRow}>
+          {/* Chips de Rol */}
+          <View style={styles.filterChipsContainer}>
+            <FilterChips
+              options={rolFilterOptions}
+              selectedValues={selectedRoles}
+              onToggle={handleToggleRol}
+              style={styles.filterChips}
+            />
+          </View>
+
+          {/* Dropdown de Meses */}
+          <View style={styles.multiSelectContainer}>
+            <MultiSelect
+              options={mesFilterOptions}
+              selectedValues={selectedMeses}
+              onToggle={handleToggleMes}
+              placeholder="Meses"
+            />
+          </View>
+        </View>
 
         {/* Lista de Ingresos */}
         {ingresos.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons
               name={
-                searchQuery || selectedRoles.length > 0
+                searchQuery ||
+                selectedRoles.length > 0 ||
+                selectedMeses.length > 0
                   ? "search"
                   : "log-in-outline"
               }
@@ -314,12 +457,16 @@ export default function TodosIngresosScreen() {
               color="#d1d5db"
             />
             <Text style={styles.emptyTitle}>
-              {searchQuery || selectedRoles.length > 0
+              {searchQuery ||
+              selectedRoles.length > 0 ||
+              selectedMeses.length > 0
                 ? "No se encontraron ingresos"
                 : "No hay ingresos registrados"}
             </Text>
             <Text style={styles.emptyText}>
-              {searchQuery || selectedRoles.length > 0
+              {searchQuery ||
+              selectedRoles.length > 0 ||
+              selectedMeses.length > 0
                 ? "Intenta con otros filtros de búsqueda"
                 : "Los ingresos aparecerán aquí"}
             </Text>
@@ -420,12 +567,27 @@ const styles = StyleSheet.create({
     color: "#3b82f6",
   },
   searchBar: {
-    marginBottom: 12,
+    marginBottom: 16,
+  },
+  filtersRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+  filterChipsContainer: {
+    flex: 1,
+    minWidth: 200,
   },
   filterChips: {
-    marginBottom: 16,
     paddingHorizontal: 0,
     backgroundColor: "transparent",
+    marginBottom: 0,
+  },
+  multiSelectContainer: {
+    minWidth: 500,
+    maxWidth: 750,
   },
   ingresosList: {
     gap: 8,

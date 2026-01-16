@@ -10,7 +10,7 @@ import { DrawerContent } from "../../components/navigation/DrawerContent";
 import AdminScreen from "./admin";
 import HomeScreen from "./index";
 import IngresosScreen from "./ingresos";
-import PagosScreen from "./pagos"; // ← NUEVO
+import PagosScreen from "./pagos";
 import ProfileScreen from "./profile";
 
 const Drawer = createDrawerNavigator();
@@ -29,7 +29,7 @@ function DrawerNavigator() {
       }}
     >
       <Drawer.Screen
-        name="Dashboard"
+        name="drawer-dashboard"
         component={HomeScreen}
         options={{
           title: "Dashboard",
@@ -38,7 +38,7 @@ function DrawerNavigator() {
 
       {selectedRole === "ADMINISTRADOR" && (
         <Drawer.Screen
-          name="Admin"
+          name="drawer-admin"
           component={AdminScreen}
           options={{
             title: "Administración",
@@ -46,18 +46,16 @@ function DrawerNavigator() {
         />
       )}
 
-      {/* ← NUEVO: Ingresos para todos */}
       <Drawer.Screen
-        name="Ingresos"
+        name="drawer-ingresos"
         component={IngresosScreen}
         options={{
           title: "Ingresos",
         }}
       />
 
-      {/* ← NUEVO: Pagos para todos */}
       <Drawer.Screen
-        name="Pagos"
+        name="drawer-pagos"
         component={PagosScreen}
         options={{
           title: "Pagos",
@@ -65,7 +63,7 @@ function DrawerNavigator() {
       />
 
       <Drawer.Screen
-        name="Profile"
+        name="drawer-profile"
         component={ProfileScreen}
         options={{
           title: "Perfil",
@@ -79,16 +77,22 @@ export default function TabLayout() {
   const { usuario, selectedRole, setSelectedRole, hasMultipleRoles } =
     useAuth();
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false); // ✅ NUEVO
 
   useEffect(() => {
+    // ✅ Solo ejecutar una vez cuando el usuario cambia
+    if (!usuario || hasInitialized) return;
+
     if (hasMultipleRoles() && !selectedRole) {
+      // Usuario con múltiples roles y sin rol seleccionado
       setShowRoleModal(true);
-    } else {
-      if (usuario?.listaRol[0] != null) {
-        setSelectedRole(usuario?.listaRol[0]);
-      }
+    } else if (!selectedRole && usuario.listaRol.length > 0) {
+      // Usuario con un solo rol o ningún rol seleccionado
+      setSelectedRole(usuario.listaRol[0]);
     }
-  }, [hasMultipleRoles, selectedRole]);
+
+    setHasInitialized(true); // ✅ Marcar como inicializado
+  }, [usuario]); // ✅ Solo depende de usuario
 
   const handleRoleSelection = (role: Rol) => {
     setSelectedRole(role);
@@ -140,7 +144,6 @@ export default function TabLayout() {
           />
         )}
 
-        {/* ← NUEVO: Tab Ingresos */}
         <Tabs.Screen
           name="ingresos"
           options={{
@@ -151,7 +154,6 @@ export default function TabLayout() {
           }}
         />
 
-        {/* ← NUEVO: Tab Pagos */}
         <Tabs.Screen
           name="pagos"
           options={{

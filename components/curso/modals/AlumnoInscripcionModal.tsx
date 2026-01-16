@@ -10,11 +10,12 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
-import { Inscripcion } from "@/model/model";
+import { EstadoPago, Inscripcion } from "@/model/model";
 import { formatEstadoPago } from "@/model/model";
 import { COLORES } from "@/util/colores";
 import { Tag } from "@/components/ui/Tag";
 import { Button } from "@/components/ui/Button";
+import { estadoPagoToTagVariant, estadoToTagVariant, estadoUsuarioToTagVariant } from "@/helper/funciones";
 
 interface AlumnoDetailModalProps {
   visible: boolean;
@@ -36,20 +37,6 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
   onDarDeBaja,
 }) => {
   const alumno = inscripcion.alumno;
-
-  // Helper para obtener variant del tag según estado de pago
-  const getEstadoPagoVariant = (estado: string) => {
-    switch (estado) {
-      case "AL_DIA":
-        return "success";
-      case "ATRASADO":
-        return "warning";
-      case "PENDIENTE":
-        return "error";
-      default:
-        return "info";
-    }
-  };
 
   return (
     <Modal
@@ -75,7 +62,7 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                 </Text>
                 <Tag
                   label={formatEstadoPago(inscripcion.estadoPago)}
-                  variant={getEstadoPagoVariant(inscripcion.estadoPago)}
+                  variant={estadoPagoToTagVariant(inscripcion.estadoPago)}
                   style={styles.modalTag}
                 />
               </View>

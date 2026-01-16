@@ -14,6 +14,7 @@ import { useState } from "react";
 import { BajaTotalUsuario } from "../modals/BajaTotalUsuario";
 import { usuarioService } from "@/services/usuario.service";
 import { useAuth } from "@/context/authContext";
+import { AvisoInvitacionModal } from "../modals/AvisoInvitacionModal";
 
 const UserItem = ({
   user,
@@ -27,17 +28,22 @@ const UserItem = ({
   const { usuario } = useAuth();
   const [modalBajaVisible, setModalBajaVisible] = useState(false);
 
+
   return (
     <TouchableOpacity
       key={user.id}
-      style={user.estado === Estado.BAJA ? styles.tableRowBaja : styles.tableRow}
+      style={
+        user.estado === Estado.BAJA ? styles.tableRowBaja : styles.tableRow
+      }
       onPress={() => handleUserDetails(user)}
       activeOpacity={0.7}
     >
       <View style={styles.userMainInfo}>
-        <Text style={styles.userName}>
-          {user.nombre} {user.apellido}
-        </Text>
+        {user.estado !== Estado.PENDIENTE && (
+          <Text style={styles.userName}>
+            {user.nombre} {user.apellido}
+          </Text>
+        )}
         <Text style={styles.userEmail}>{user.email}</Text>
       </View>
 
@@ -56,9 +62,9 @@ const UserItem = ({
         </View>
 
         {user.estado !== Estado.BAJA && (
-        <TouchableOpacity onPress={() => setModalBajaVisible(true)}>
-          <Ionicons name={"trash-outline"} size={20} color={COLORES.error} />
-        </TouchableOpacity>
+          <TouchableOpacity onPress={() => setModalBajaVisible(true)}>
+            <Ionicons name={"trash-outline"} size={20} color={COLORES.error} />
+          </TouchableOpacity>
         )}
 
         <BajaTotalUsuario

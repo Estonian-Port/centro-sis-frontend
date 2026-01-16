@@ -20,7 +20,7 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [vistaActual, setVistaActual] = useState<ViewMode>("calendario");
   const [filtrosEstado, setFiltrosEstado] = useState<EstadoCurso[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<Curso | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<CursoAlumno | null>(null);
   const [showModalDetailsCourse, setShowModalDetailsCourse] = useState(false);
 
   // Toggle filtro de estado
@@ -57,8 +57,8 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
     return filtered;
   }, [cursos, searchQuery, filtrosEstado]);
 
-  const handleViewCourseDetails = (course: Curso) => {
-    setSelectedCourse(course);
+  const handleViewCourseDetails = (course: CursoAlumno | Curso) => {
+    setSelectedCourse(course as CursoAlumno);
     setShowModalDetailsCourse(true);
   };
 
@@ -115,7 +115,7 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
           <CourseDetailModal
             visible={showModalDetailsCourse}
             onClose={() => setShowModalDetailsCourse(false)}
-            cursoId={selectedCourse.id}
+            curso={selectedCourse}
           />
         )}
       </SafeAreaView>

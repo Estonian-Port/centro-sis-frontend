@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { Card } from "../ui/Card";
 import { Tag } from "../ui/Tag";
-import { UsuarioDetails, Rol } from "@/model/model";
+import { UsuarioDetails, Rol, formatEstadoPago, Curso } from "@/model/model";
 import { usuarioService } from "@/services/usuario.service";
 import Toast from "react-native-toast-message";
 import {
@@ -18,6 +18,9 @@ import {
   estadoUsuarioToTagVariant,
   rolToTagVariant,
 } from "@/helper/funciones";
+import { useAuth } from "@/context/authContext";
+import { Button } from "../ui/Button";
+import { router } from "expo-router";
 
 interface UserDetailModalProps {
   visible: boolean;
@@ -30,8 +33,13 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
   onClose,
   idUsuario,
 }) => {
-  const [usuario, setUsuario] = useState<UsuarioDetails | null>(null);
+  const { usuario } = useAuth();
+  const [user, setUsuario] = useState<UsuarioDetails | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showRoleSelector, setShowRoleSelector] = useState(false);
+
+  // Verificar si el usuario actual es admin
+  const esAdmin = usuario!.listaRol.includes(Rol.ADMINISTRADOR);
 
   useEffect(() => {
     if (visible && idUsuario) {
@@ -59,18 +67,51 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
 
   const handleClose = () => {
     setUsuario(null);
+    setShowRoleSelector(false);
     onClose();
   };
 
-  if (!usuario) {
+  const handleAsignarRol = async (rol: Rol) => {
+    if (!user) return;
+    try {
+      await usuarioService.asignarRol(user.id, rol);
+      Toast.show({
+        type: "success",
+        text1: "Rol Asignado",
+        text2: `Rol de ${rol} asignado correctamente`,
+        position: "bottom",
+      });
+      fetchUserDetails(); // Recargar los datos
+      setShowRoleSelector(false);
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "No se pudo asignar el rol",
+        position: "bottom",
+      });
+    }
+  };
+
+  if (!user) {
     return null;
   }
 
   // Verificar roles
-  const esAlumno = usuario.listaRol.includes(Rol.ALUMNO);
-  const esProfesor = usuario.listaRol.includes(Rol.PROFESOR);
-  const esAdmin = usuario.listaRol.includes(Rol.ADMINISTRADOR);
-  const esOficina = usuario.listaRol.includes(Rol.OFICINA);
+  const esAlumno = user.listaRol.includes(Rol.ALUMNO);
+  const esProfesor = user.listaRol.includes(Rol.PROFESOR);
+  const esAdminUsuario = user.listaRol.includes(Rol.ADMINISTRADOR);
+  const esOficina = user.listaRol.includes(Rol.OFICINA);
+
+  // Roles disponibles para asignar (los que no tiene)
+  const rolesDisponibles = Object.values(Rol).filter(
+    (rol) => !user.listaRol.includes(rol)
+  );
+
+  const handleViewCourseDetails = (course: Curso) => {
+    router.push(`/curso/${course.id}/alumnos`);
+    onClose();
+  };
 
   return (
     <Modal visible={visible} transparent animationType="fade">
@@ -80,10 +121,10 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
           <View style={styles.header}>
             <View style={styles.headerInfo}>
               <Text style={styles.title}>
-                {usuario.nombre} {usuario.apellido}
+                {user.nombre} {user.apellido}
               </Text>
               <View style={styles.rolesContainer}>
-                {usuario.listaRol.map((rol) => (
+                {user.listaRol.map((rol) => (
                   <Tag
                     key={rol}
                     label={rol}
@@ -99,6 +140,62 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
           </View>
 
           <ScrollView style={styles.content}>
+            {/* Botón para asignar roles (solo visible para ADMIN) */}
+            {esAdmin && rolesDisponibles.length > 0 && (
+              <View style={styles.section}>
+                <Card style={styles.roleManagementCard}>
+                  <View style={styles.roleManagementHeader}>
+                    <Ionicons
+                      name="person-add-outline"
+                      size={20}
+                      color="#8b5cf6"
+                    />
+                    <Text style={styles.roleManagementTitle}>
+                      Gestión de Roles
+                    </Text>
+                  </View>
+
+                  {!showRoleSelector ? (
+                    <Button
+                      variant="secondary"
+                      onPress={() => setShowRoleSelector(true)}
+                      style={styles.assignRoleButton}
+                      title="Asignar Nuevo Rol"
+                      textStyle={styles.assignRoleButtonText}
+                    />
+                  ) : (
+                    <View style={styles.roleSelectorContainer}>
+                      <Text style={styles.roleSelectorTitle}>
+                        Selecciona un rol para asignar:
+                      </Text>
+                      <View style={styles.roleOptionsContainer}>
+                        {rolesDisponibles.map((rol) => (
+                          <TouchableOpacity
+                            key={rol}
+                            style={styles.roleOption}
+                            onPress={() => handleAsignarRol(rol)}
+                          >
+                            <Tag label={rol} variant={rolToTagVariant(rol)} />
+                            <Ionicons
+                              name="add-circle"
+                              size={20}
+                              color="#8b5cf6"
+                            />
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                      <Button
+                        variant="secondary"
+                        onPress={() => setShowRoleSelector(false)}
+                        style={styles.cancelButton}
+                        title="Cancelar"
+                      />
+                    </View>
+                  )}
+                </Card>
+              </View>
+            )}
+
             {/* Información Personal */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Información Personal</Text>
@@ -107,25 +204,25 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   icon="mail-outline"
                   iconColor="#3b82f6"
                   label="Email"
-                  value={usuario.email}
+                  value={user.email}
                 />
                 <InfoRow
                   icon="card-outline"
                   iconColor="#10b981"
                   label="DNI"
-                  value={usuario.dni}
+                  value={user.dni}
                 />
                 <InfoRow
                   icon="call-outline"
                   iconColor="#f59e0b"
                   label="Celular"
-                  value={usuario.celular}
+                  value={user.celular}
                 />
                 <InfoRow
                   icon="calendar-outline"
                   iconColor="#A72703"
                   label="Fecha de Nacimiento"
-                  value={usuario.fechaNacimiento}
+                  value={user.fechaNacimiento}
                 />
                 <View style={styles.infoRow}>
                   <View style={styles.infoLabelContainer}>
@@ -137,8 +234,8 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                     <Text style={styles.infoLabel}>Estado</Text>
                   </View>
                   <Tag
-                    label={usuario.estado}
-                    variant={estadoUsuarioToTagVariant(usuario.estado)}
+                    label={user.estado}
+                    variant={estadoUsuarioToTagVariant(user.estado)}
                   />
                 </View>
               </Card>
@@ -154,63 +251,71 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
 
                 <Card style={styles.alumnoCard}>
                   <Text style={styles.subsectionTitle}>
-                    Cursos Inscriptos ({usuario.cursosInscriptos?.length || 0})
+                    Cursos Inscriptos ({user.cursosInscriptos?.length || 0})
                   </Text>
 
-                  {usuario.cursosInscriptos &&
-                  usuario.cursosInscriptos.length > 0 ? (
-                    usuario.cursosInscriptos.map((curso) => (
-                      <View key={curso.id} style={styles.cursoItem}>
-                        <View style={styles.cursoMainInfo}>
-                          <View style={styles.cursoHeader}>
-                            <Ionicons
-                              name="book-outline"
-                              size={18}
-                              color="#3b82f6"
-                            />
-                            <Text style={styles.cursoNombre}>
-                              {curso.nombre}
-                            </Text>
-                          </View>
-
-                          {/* Horarios */}
-                          {curso.horarios && curso.horarios.length > 0 && (
-                            <View style={styles.horariosChips}>
-                              {curso.horarios
-                                .slice(0, 3)
-                                .map((horario, index) => (
-                                  <Text key={index} style={styles.horarioChip}>
-                                    {horario.dia.substring(0, 2)}{" "}
-                                    {horario.horaInicio}
-                                  </Text>
-                                ))}
-                              {curso.horarios.length > 3 && (
-                                <Text style={styles.horarioChip}>
-                                  +{curso.horarios.length - 3}
-                                </Text>
-                              )}
+                  {user.cursosInscriptos && user.cursosInscriptos.length > 0 ? (
+                    user.cursosInscriptos.map((curso) => (
+                      <TouchableOpacity key={curso.id} onPress={() => handleViewCourseDetails(curso)}>
+                        <View style={styles.cursoItem}>
+                          <View style={styles.cursoMainInfo}>
+                            <View style={styles.cursoHeader}>
+                              <Ionicons
+                                name="book-outline"
+                                size={18}
+                                color="#3b82f6"
+                              />
+                              <Text style={styles.cursoNombre}>
+                                {curso.nombre}
+                              </Text>
                             </View>
-                          )}
-                        </View>
 
-                        <View style={styles.cursoMetaInfo}>
-                          <View style={styles.pagoInfo}>
-                            <Ionicons
-                              name="cash-outline"
-                              size={16}
-                              color="#10b981"
-                            />
-                            <Text style={styles.pagoText}>
-                              Pago elegido: {curso.tipoPagoElegido}
-                            </Text>
+                            {/* Horarios */}
+                            {curso.horarios && curso.horarios.length > 0 && (
+                              <View style={styles.horariosChips}>
+                                {curso.horarios
+                                  .slice(0, 3)
+                                  .map((horario, index) => (
+                                    <Text
+                                      key={index}
+                                      style={styles.horarioChip}
+                                    >
+                                      {horario.dia.substring(0, 2)}{" "}
+                                      {horario.horaInicio}
+                                    </Text>
+                                  ))}
+                                {curso.horarios.length > 3 && (
+                                  <Text style={styles.horarioChip}>
+                                    +{curso.horarios.length - 3}
+                                  </Text>
+                                )}
+                              </View>
+                            )}
                           </View>
 
-                          <Tag
-                            label={curso.estadoPago}
-                            variant={estadoPagoToTagVariant(curso.estadoPago)}
-                          />
+                          <View style={styles.cursoMetaInfo}>
+                            <View style={styles.pagoInfo}>
+                              <Ionicons
+                                name="cash-outline"
+                                size={16}
+                                color="#10b981"
+                              />
+                              <Text style={styles.pagoText}>
+                                {curso.tipoPagoElegido?.tipo || "N/A"} - $
+                                {curso.tipoPagoElegido?.monto?.toLocaleString() ||
+                                  0}
+                                {curso.tipoPagoElegido?.cuotas > 1 &&
+                                  ` (${curso.tipoPagoElegido.cuotas} cuotas)`}
+                              </Text>
+                            </View>
+
+                            <Tag
+                              label={formatEstadoPago(curso.estadoPago)}
+                              variant={estadoPagoToTagVariant(curso.estadoPago)}
+                            />
+                          </View>
                         </View>
-                      </View>
+                      </TouchableOpacity>
                     ))
                   ) : (
                     <View style={styles.emptyState}>
@@ -240,49 +345,50 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
 
                 <Card style={styles.profesorCard}>
                   <Text style={styles.subsectionTitle}>
-                    Cursos Dictados ({usuario.cursosDictados?.length || 0})
+                    Cursos Dictados ({user.cursosDictados?.length || 0})
                   </Text>
 
-                  {usuario.cursosDictados &&
-                  usuario.cursosDictados.length > 0 ? (
-                    usuario.cursosDictados.map((curso) => (
-                      <View key={curso.id} style={styles.cursoDictadoItem}>
-                        <View style={styles.cursoDictadoMain}>
-                          <Ionicons
-                            name="easel-outline"
-                            size={18}
-                            color="#10b981"
-                          />
-                          <Text style={styles.cursoDictadoNombre}>
-                            {curso.nombre}
-                          </Text>
-                        </View>
-
-                        <View style={styles.cursoDictadoInfo}>
-                          <View style={styles.fechaInfo}>
+                  {user.cursosDictados && user.cursosDictados.length > 0 ? (
+                    user.cursosDictados.map((curso) => (
+                      <TouchableOpacity key={curso.id} onPress={() => handleViewCourseDetails(curso)}>
+                        <View key={curso.id} style={styles.cursoDictadoItem}>
+                          <View style={styles.cursoDictadoMain}>
                             <Ionicons
-                              name="calendar-outline"
-                              size={14}
-                              color="#6b7280"
+                              name="easel-outline"
+                              size={18}
+                              color="#10b981"
                             />
-                            <Text style={styles.fechaText}>
-                              {curso.fechaInicio}
-                            </Text>
-                            <Ionicons
-                              name="arrow-forward"
-                              size={12}
-                              color="#9ca3af"
-                            />
-                            <Text style={styles.fechaText}>
-                              {curso.fechaFin}
+                            <Text style={styles.cursoDictadoNombre}>
+                              {curso.nombre}
                             </Text>
                           </View>
 
-                          <Text style={styles.estadoCursoText}>
-                            {curso.estado}
-                          </Text>
+                          <View style={styles.cursoDictadoInfo}>
+                            <View style={styles.fechaInfo}>
+                              <Ionicons
+                                name="calendar-outline"
+                                size={14}
+                                color="#6b7280"
+                              />
+                              <Text style={styles.fechaText}>
+                                {curso.fechaInicio}
+                              </Text>
+                              <Ionicons
+                                name="arrow-forward"
+                                size={12}
+                                color="#9ca3af"
+                              />
+                              <Text style={styles.fechaText}>
+                                {curso.fechaFin}
+                              </Text>
+                            </View>
+
+                            <Text style={styles.estadoCursoText}>
+                              {formatEstadoPago(curso.estado)}
+                            </Text>
+                          </View>
                         </View>
-                      </View>
+                      </TouchableOpacity>
                     ))
                   ) : (
                     <View style={styles.emptyState}>
@@ -301,7 +407,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
             )}
 
             {/* Solo roles administrativos sin info adicional */}
-            {(esAdmin || esOficina) && !esAlumno && !esProfesor && (
+            {(esAdminUsuario || esOficina) && !esAlumno && !esProfesor && (
               <View style={styles.section}>
                 <Card style={styles.adminCard}>
                   <View style={styles.adminInfo}>
@@ -311,7 +417,9 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       color="#8b5cf6"
                     />
                     <Text style={styles.adminText}>
-                      {esAdmin ? "Usuario Administrador" : "Usuario de Oficina"}
+                      {esAdminUsuario
+                        ? "Usuario Administrador"
+                        : "Usuario de Oficina"}
                     </Text>
                     <Text style={styles.adminSubtext}>
                       Con permisos de gestión del sistema
@@ -415,6 +523,65 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#111827",
     marginBottom: 12,
+  },
+  // Estilos para gestión de roles
+  roleManagementCard: {
+    backgroundColor: "#faf5ff",
+    borderColor: "#8b5cf6",
+    borderWidth: 1,
+    padding: 16,
+  },
+  roleManagementHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+  roleManagementTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#6b21a8",
+  },
+  assignRoleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#ede9fe",
+    borderColor: "#8b5cf6",
+    borderWidth: 1,
+    padding: 12,
+    borderRadius: 8,
+  },
+  assignRoleButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#8b5cf6",
+  },
+  roleSelectorContainer: {
+    gap: 12,
+  },
+  roleSelectorTitle: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#374151",
+    marginBottom: 8,
+  },
+  roleOptionsContainer: {
+    gap: 10,
+  },
+  roleOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#ffffff",
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  cancelButton: {
+    marginTop: 8,
   },
   infoCard: {
     backgroundColor: "#f9fafb",

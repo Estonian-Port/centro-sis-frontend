@@ -12,9 +12,10 @@ import {
 import { COLORES } from "@/util/colores";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { cursoService } from "@/services/curso.service";
-import { Curso, EstadoCurso } from "@/model/model";
+import { Curso, EstadoCurso, formatEstadoCurso } from "@/model/model";
 import Toast from "react-native-toast-message";
 import { Tag } from "@/components/ui/Tag";
+import { estadoCursoToTagVariant } from "@/helper/funciones";
 
 export default function CursoLayout() {
   const { cursoId } = useLocalSearchParams();
@@ -31,33 +32,6 @@ export default function CursoLayout() {
   };
 
   const activeTab = getActiveTab();
-
-  // Helper para obtener variant del tag según estado del curso
-  const getEstadoCursoVariant = (estado: EstadoCurso) => {
-    switch (estado) {
-      case EstadoCurso.EN_CURSO:
-        return "success";
-      case EstadoCurso.POR_COMENZAR:
-        return "info";
-      case EstadoCurso.FINALIZADO:
-        return "default";
-      case EstadoCurso.PENDIENTE:
-        return "warning";
-      default:
-        return "default";
-    }
-  };
-
-  // Helper para formatear el estado
-  const formatEstadoCurso = (estado: EstadoCurso) => {
-    const map: Record<EstadoCurso, string> = {
-      [EstadoCurso.EN_CURSO]: "EN CURSO",
-      [EstadoCurso.POR_COMENZAR]: "POR COMENZAR",
-      [EstadoCurso.FINALIZADO]: "FINALIZADO",
-      [EstadoCurso.PENDIENTE]: "PENDIENTE",
-    };
-    return map[estado] || estado;
-  };
 
   useEffect(() => {
     fetchCurso();
@@ -113,7 +87,7 @@ export default function CursoLayout() {
           {curso && (
             <Tag
               label={formatEstadoCurso(curso.estado)}
-              variant={getEstadoCursoVariant(curso.estado)}
+              variant={estadoCursoToTagVariant(curso.estado)}
             />
           )}
         </View>

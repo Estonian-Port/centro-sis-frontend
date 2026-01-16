@@ -16,7 +16,6 @@ export enum EstadoCurso {
   POR_COMENZAR = "POR_COMENZAR",
   EN_CURSO = "EN_CURSO",
   FINALIZADO = "FINALIZADO",
-  PENDIENTE = "PENDIENTE",
 }
 
 export enum EstadoPago {
@@ -33,6 +32,20 @@ export const formatEstadoPago = (estado?: string) => {
     AL_DIA: "AL DÍA",
     ATRASADO: "ATRASADO",
     MOROSO: "MOROSO",
+  };
+  if (map[estado]) return map[estado];
+  return estado
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
+export const formatEstadoCurso = (estado?: string) => {
+  if (!estado) return "-";
+  const map: Record<string, string> = {
+    FINALIZADO: "FINALIZADO",
+    EN_CURSO: "EN CURSO",
+    POR_COMENZAR: "POR COMENZAR",
   };
   if (map[estado]) return map[estado];
   return estado
@@ -76,13 +89,21 @@ export interface Alumno {
   fechaNacimiento: string;
 }
 
-export interface nuevoCursoAlquiler {
+export interface nuevoCursoAlquilerAdmin {
   id: number;
   nombre: string;
   montoAlquiler: number;
+  cuotasAlquiler: number;
   profesoresId: number[];
   fechaInicio: string; // formato "YYYY-MM-DD"
   fechaFin: string; // formato "YYYY-MM-DD"
+}
+
+export interface nuevoCursoAlquilerProfesor {
+  id: number;
+  horarios: HorarioDto[];
+  tiposPago: TipoPago[];
+  recargo: number;
 }
 
 export interface nuevoCursoComision {
@@ -110,11 +131,24 @@ export interface Curso {
   tiposPago: TipoPago[];
   inscripciones: Inscripcion[];
   recargoPorAtraso: number;
+  tipoCurso: TipoCurso;
+  montoAlquiler?: number;
+  cuotasAlquiler?: number;
 }
 
 export interface CursoAlumno extends Curso {
   estadoPago: EstadoPago;
-  tipoPagoElegido: PagoType;
+  tipoPagoElegido: TipoPago;
+  fechaInscripcion: string;
+  porcentajeAsistencia: number;
+  beneficio: number;
+  pagosRealizados: PagoCurso[];
+  puntos: number;
+}
+
+export enum TipoCurso {
+  ALQUILER = "ALQUILER",
+  COMISION = "COMISION",
 }
 
 export interface Inscripcion {
@@ -229,12 +263,15 @@ export interface HorarioDto {
 export interface TipoPago {
   tipo: PagoType;
   monto: number;
+  cuotas: number;
 }
 
 export interface ProfesorLista {
   id: number;
   nombre: string;
   apellido: string;
+  email: string;
+  dni: string;
 }
 
 export interface NuevaInscripcion {

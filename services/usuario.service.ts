@@ -65,29 +65,10 @@ class UsuarioService {
     return response.data.data;
   };
 
-  searchAlumnos = async (
-    query: string,
-    cursoId: number
-  ): Promise<Usuario[]> => {
-    try {
-      if (query.length < 2) {
-        return [];
-      }
-
-      const response = await api.get(`${USER}/alumnos/search`, {
-        params: { q: query, cursoId },
-      });
-      return response.data.data;
-    } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || "Error al buscar alumnos"
-      );
-    }
-  };
-
   searchByRol = async (
     query: string,
-    rol: "ALUMNO" | "PROFESOR"
+    rol: "ALUMNO" | "PROFESOR",
+    cursoId?: number
   ): Promise<Usuario[]> => {
     try {
       if (query.length < 2) {
@@ -95,7 +76,7 @@ class UsuarioService {
       }
 
       const response = await api.get(`${USER}/search-by-rol`, {
-        params: { q: query, rol },
+        params: { q: query, rol , cursoId },
       });
       return response.data.data;
     } catch (error: any) {
@@ -120,6 +101,16 @@ class UsuarioService {
     const response = await api.delete(`${USER}/delete/${id}/${adminId}`);
     return response.data.data;
   }
+
+  reenviarInvitacion = async (id: number, adminId: number): Promise<void> => {
+    const response = await api.post(`${USER}/reenviar-invitacion/${id}/${adminId}`);
+    return response.data.data;
+  };
+
+  asignarRol = async (id: number, rol: string): Promise<Usuario> => {
+    const response = await api.post(`${USER}/asignar-rol/${id}/${rol}`);
+    return response.data.data;
+  };
 }
 
 export const usuarioService = new UsuarioService();

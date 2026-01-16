@@ -1,7 +1,7 @@
 // components/modals/CursoFormModal.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   Modal,
@@ -21,19 +21,22 @@ import {
   HorarioDto,
   TipoPago,
   PagoType,
+  nuevoCursoAlquilerAdmin,
+  nuevoCursoAlquilerProfesor,
 } from "@/model/model";
 import { TimePickerModal } from "../pickers/TimePicker";
 
 interface FormValues {
   horarios: HorarioDto[];
   tipoPago: TipoPago[];
+  cuotasMensual?: number | undefined;
   recargo: number | null;
 }
 
 interface CursoFormModalProps {
   visible: boolean;
   onClose: () => void;
-  onSuccess: (curso: Curso) => void;
+  onSuccess: (curso: nuevoCursoAlquilerProfesor) => void;
   curso: Curso;
 }
 
@@ -96,19 +99,43 @@ const validationSchema = yup.object().shape({
           .number()
           .positive("El monto debe ser mayor a 0")
           .required("El monto es requerido"),
+        cuotas: yup
+          .number()
+          .positive("Las cuotas deben ser mayor a 0")
+          .required("Las cuotas son requeridas"),
       })
     )
     .min(1, "Debe agregar al menos un tipo de pago")
     .max(2, "Solo puede agregar pago mensual y/o total")
     .required(),
+  cuotasMensual: yup.number().when("tipoPago", {
+    is: (tipoPago: TipoPago[]) =>
+      tipoPago?.some((tp) => tp.tipo === PagoType.MENSUAL),
+    then: (schema) =>
+      schema
+        .positive("La cantidad debe ser mayor a 0")
+        .integer("Debe ser un número entero")
+        .required("La cantidad de cuotas es requerida"),
+    otherwise: (schema) => schema.nullable().notRequired(),
+  }),
   recargo: yup
     .number()
     .nullable()
     .typeError("El recargo debe ser un número")
     .transform((value, originalValue) => (originalValue === "" ? null : value))
     .min(0, "El recargo no puede ser negativo")
+    .max(100, "El recargo no puede ser mayor a 100%")
     .default(null),
 });
+
+// Función helper para formatear fechas a DD/MM/YYYY
+const formatDateToDDMMYYYY = (dateString: string): string => {
+  const date = new Date(dateString + 'T00:00:00'); // Forzar timezone local
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 
 // Mapeo de días de la semana
 const diasSemanaMap: { [key in DayOfWeek]: string } = {
@@ -151,7 +178,7 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
     watch,
     setValue,
   } = useForm<FormValues>({
-    resolver: yupResolver(validationSchema),
+    resolver: yupResolver(validationSchema) as any,
     defaultValues: {
       horarios: [
         {
@@ -161,29 +188,40 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
         },
       ],
       tipoPago: [],
+      cuotasMensual: undefined,
       recargo: null,
     },
   });
 
   const horarios = watch("horarios") || [];
   const tiposPago = watch("tipoPago") || [];
+  const cuotasMensual = watch("cuotasMensual");
 
-  // Calcular cantidad de meses entre fechas del curso
-  const cantidadMeses = useMemo(() => {
-    if (!curso.fechaInicio || !curso.fechaFin) return 0;
+  // Calcular duración del curso
+  const duracion = useMemo(() => {
+    if (!curso.fechaInicio || !curso.fechaFin) return null;
 
-    const inicio = new Date(curso.fechaInicio);
-    const fin = new Date(curso.fechaFin);
+    // Forzar timezone local para evitar problemas de conversión
+    const inicio = new Date(curso.fechaInicio + 'T00:00:00');
+    const fin = new Date(curso.fechaFin + 'T00:00:00');
 
-    if (fin <= inicio) return 0;
+    if (fin <= inicio) return null;
 
-    const meses =
-      (fin.getFullYear() - inicio.getFullYear()) * 12 +
-      (fin.getMonth() - inicio.getMonth()) +
-      (fin.getDate() >= inicio.getDate() ? 1 : 0);
+    const diferenciaMs = fin.getTime() - inicio.getTime();
+    const totalDias = Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
+    const meses = Math.floor(totalDias / 30);
+    const diasRestantes = totalDias % 30;
 
-    return Math.max(1, meses);
+    return { totalDias, meses, diasRestantes };
   }, [curso.fechaInicio, curso.fechaFin]);
+
+  // Calcular cantidad de cuotas sugerida (se actualiza automáticamente)
+  useEffect(() => {
+    if (duracion && tieneTipoPago(PagoType.MENSUAL)) {
+      const cuotasSugeridas = Math.ceil(duracion.totalDias / 30);
+      setValue("cuotasMensual", cuotasSugeridas);
+    }
+  }, [duracion, tiposPago]);
 
   // Verificar si un tipo de pago está seleccionado
   const tieneTipoPago = (tipo: PagoType): boolean => {
@@ -232,8 +270,17 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
         "tipoPago",
         tiposPago.filter((tp) => tp.tipo !== tipo)
       );
+      if (tipo === PagoType.MENSUAL) {
+        setValue("cuotasMensual", undefined);
+      }
     } else {
-      setValue("tipoPago", [...tiposPago, { tipo, monto: 0 }]);
+      const cuotas = tipo === PagoType.MENSUAL 
+        ? (duracion ? Math.ceil(duracion.totalDias / 30) : 1)
+        : 1;
+      setValue("tipoPago", [...tiposPago, { tipo, monto: 0, cuotas }]);
+      if (tipo === PagoType.MENSUAL && duracion) {
+        setValue("cuotasMensual", Math.ceil(duracion.totalDias / 30));
+      }
     }
   };
 
@@ -244,14 +291,21 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
     setValue("tipoPago", newTiposPago);
   };
 
+  const updateCuotasTipoPago = (cuotas: number): void => {
+    const newTiposPago = tiposPago.map((tp) =>
+      tp.tipo === PagoType.MENSUAL ? { ...tp, cuotas } : tp
+    );
+    setValue("tipoPago", newTiposPago);
+  };
+
   const onSubmit = async (data: FormValues): Promise<void> => {
     try {
       // Construir el objeto curso actualizado
-      const cursoActualizado: Curso = {
-        ...curso,
+      const cursoActualizado: nuevoCursoAlquilerProfesor = {
+        id: curso.id,
         horarios: data.horarios,
         tiposPago: data.tipoPago,
-        recargoPorAtraso: data.recargo || 0,
+        recargo: data.recargo || 0,
       };
 
       onSuccess(cursoActualizado);
@@ -273,7 +327,7 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
           {/* Header */}
           <View style={styles.header}>
             <View>
-              <Text style={styles.title}>Completar Curso</Text>
+              <Text style={styles.title}>Completar Información del Curso</Text>
               <Text style={styles.subtitle}>{curso.nombre}</Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
@@ -282,37 +336,91 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
           </View>
 
           {/* Content */}
-          <ScrollView style={styles.content}>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             {/* Info Banner */}
             <View style={styles.infoBanner}>
               <Ionicons name="information-circle" size={20} color="#3b82f6" />
               <Text style={styles.infoBannerText}>
-                Complete los datos faltantes para activar el curso
+                Complete los horarios y modalidades de pago para activar el curso
               </Text>
             </View>
 
-            {/* Datos del curso (readonly) */}
-            <View style={styles.infoSection}>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Fecha de inicio:</Text>
-                <Text style={styles.infoValue}>{curso.fechaInicio}</Text>
+            {/* Información de Alquiler */}
+            <View style={styles.alquilerInfoSection}>
+              <View style={styles.alquilerInfoHeader}>
+                <Ionicons name="cash-outline" size={20} color="#3b82f6" />
+                <Text style={styles.alquilerInfoTitle}>Información de Alquiler</Text>
               </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Fecha de fin:</Text>
-                <Text style={styles.infoValue}>{curso.fechaFin}</Text>
+              
+              <View style={styles.alquilerInfoContent}>
+                <View style={styles.alquilerInfoRow}>
+                  <Text style={styles.alquilerInfoLabel}>Monto Mensual:</Text>
+                  <Text style={styles.alquilerInfoValue}>
+                    ${curso.montoAlquiler?.toLocaleString() || '0'}
+                  </Text>
+                </View>
+                
+                <View style={styles.alquilerInfoRow}>
+                  <Text style={styles.alquilerInfoLabel}>Cuotas:</Text>
+                  <Text style={styles.alquilerInfoValue}>
+                    {curso.cuotasAlquiler || 0}
+                  </Text>
+                </View>
+                
+                <View style={[styles.alquilerInfoRow, styles.alquilerInfoTotal]}>
+                  <Text style={styles.alquilerInfoLabelBold}>Total Alquiler:</Text>
+                  <Text style={styles.alquilerInfoValueBold}>
+                    ${((curso.montoAlquiler || 0) * (curso.cuotasAlquiler || 0)).toLocaleString()}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Duración:</Text>
-                <Text style={styles.infoValue}>
-                  {cantidadMeses} {cantidadMeses === 1 ? "mes" : "meses"}
-                </Text>
+            </View>
+
+            {/* Sección: Fechas y Duración (readonly) */}
+            <View style={styles.section}>
+              <View style={styles.row}>
+                <View style={styles.halfWidth}>
+                  <Text style={styles.inputLabel}>Fecha de Inicio</Text>
+                  <View style={styles.readonlyField}>
+                    <Ionicons name="calendar-outline" size={16} color="#6b7280" />
+                    <Text style={styles.readonlyText}>
+                      {formatDateToDDMMYYYY(curso.fechaInicio)}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.halfWidth}>
+                  <Text style={styles.inputLabel}>Fecha de Fin</Text>
+                  <View style={styles.readonlyField}>
+                    <Ionicons name="calendar-outline" size={16} color="#6b7280" />
+                    <Text style={styles.readonlyText}>
+                      {formatDateToDDMMYYYY(curso.fechaFin)}
+                    </Text>
+                  </View>
+                </View>
               </View>
+
+              {/* Mostrar duración del curso */}
+              {duracion && (
+                <View style={styles.duracionBanner}>
+                  <Ionicons name="time-outline" size={18} color="#3b82f6" />
+                  <Text style={styles.duracionText}>
+                    Duración aproximada: ~{duracion.meses}{" "}
+                    {duracion.meses === 1 ? "mes" : "meses"}
+                    {duracion.diasRestantes > 0 &&
+                      ` y ${duracion.diasRestantes} ${
+                        duracion.diasRestantes === 1 ? "día" : "días"
+                      }`}{" "}
+                    ({duracion.totalDias} días)
+                  </Text>
+                </View>
+              )}
             </View>
 
             {/* Horarios */}
             <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionLabel}>Horarios *</Text>
+              <View style={styles.subsectionHeader}>
+                <Text style={styles.subsectionLabel}>Horarios del Curso *</Text>
                 <TouchableOpacity onPress={addHorario} style={styles.addButton}>
                   <Ionicons name="add-circle" size={20} color="#3b82f6" />
                   <Text style={styles.addButtonText}>Agregar</Text>
@@ -337,8 +445,7 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
                           <Text
                             style={[
                               styles.dayButtonText,
-                              horario.dia === dia &&
-                                styles.dayButtonTextSelected,
+                              horario.dia === dia && styles.dayButtonTextSelected,
                             ]}
                           >
                             {diasSemanaMap[dia].substring(0, 3)}
@@ -358,17 +465,10 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
                           !horario.horaInicio && styles.timeButtonEmpty,
                         ]}
                         onPress={() =>
-                          setShowTimePicker({
-                            horarioIndex: index,
-                            field: "horaInicio",
-                          })
+                          setShowTimePicker({ horarioIndex: index, field: "horaInicio" })
                         }
                       >
-                        <Ionicons
-                          name="time-outline"
-                          size={20}
-                          color="#9ca3af"
-                        />
+                        <Ionicons name="time-outline" size={20} color="#9ca3af" />
                         <Text
                           style={[
                             styles.timeButtonText,
@@ -388,17 +488,10 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
                           !horario.horaFin && styles.timeButtonEmpty,
                         ]}
                         onPress={() =>
-                          setShowTimePicker({
-                            horarioIndex: index,
-                            field: "horaFin",
-                          })
+                          setShowTimePicker({ horarioIndex: index, field: "horaFin" })
                         }
                       >
-                        <Ionicons
-                          name="time-outline"
-                          size={20}
-                          color="#9ca3af"
-                        />
+                        <Ionicons name="time-outline" size={20} color="#9ca3af" />
                         <Text
                           style={[
                             styles.timeButtonText,
@@ -416,11 +509,7 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
                       onPress={() => removeHorario(index)}
                       style={styles.removeButtonCard}
                     >
-                      <Ionicons
-                        name="trash-outline"
-                        size={18}
-                        color="#ef4444"
-                      />
+                      <Ionicons name="trash-outline" size={18} color="#ef4444" />
                       <Text style={styles.removeButtonText}>Eliminar</Text>
                     </TouchableOpacity>
                   )}
@@ -433,67 +522,76 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
 
             {/* Tipos de Pago */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Modalidades de Pago *</Text>
+              <Text style={styles.subsectionLabel}>Modalidades de Pago *</Text>
 
               {/* Pago Mensual */}
               <View style={styles.tipoPagoCard}>
                 <TouchableOpacity
                   style={[
                     styles.tipoPagoCheckbox,
-                    tieneTipoPago(PagoType.MENSUAL) &&
-                      styles.tipoPagoCheckboxSelected,
+                    tieneTipoPago(PagoType.MENSUAL) && styles.tipoPagoCheckboxSelected,
                   ]}
                   onPress={() => toggleTipoPago(PagoType.MENSUAL)}
                 >
                   <View style={styles.tipoPagoHeader}>
                     <Ionicons
                       name={
-                        tieneTipoPago(PagoType.MENSUAL)
-                          ? "checkbox"
-                          : "square-outline"
+                        tieneTipoPago(PagoType.MENSUAL) ? "checkbox" : "square-outline"
                       }
                       size={24}
-                      color={
-                        tieneTipoPago(PagoType.MENSUAL) ? "#3b82f6" : "#9ca3af"
-                      }
+                      color={tieneTipoPago(PagoType.MENSUAL) ? "#3b82f6" : "#9ca3af"}
                     />
                     <View style={styles.tipoPagoHeaderText}>
                       <Text style={styles.tipoPagoTitle}>Pago Mensual</Text>
-                      {cantidadMeses > 0 && (
-                        <Text style={styles.tipoPagoSubtitle}>
-                          {cantidadMeses}{" "}
-                          {cantidadMeses === 1 ? "cuota" : "cuotas"}
-                        </Text>
-                      )}
                     </View>
                   </View>
                 </TouchableOpacity>
 
                 {tieneTipoPago(PagoType.MENSUAL) && (
                   <View style={styles.tipoPagoInput}>
-                    <Input
-                      label={`Monto por cuota ($)`}
-                      value={
-                        getMontoTipoPago(PagoType.MENSUAL)?.toString() || ""
-                      }
-                      onChangeText={(text) =>
-                        updateMontoTipoPago(
-                          PagoType.MENSUAL,
-                          parseFloat(text) || 0
-                        )
-                      }
-                      keyboardType="numeric"
-                      placeholder="10000"
-                    />
-                    {cantidadMeses > 0 &&
-                      getMontoTipoPago(PagoType.MENSUAL) > 0 && (
-                        <Text style={styles.totalInfo}>
-                          Total: $
-                          {(
-                            getMontoTipoPago(PagoType.MENSUAL) * cantidadMeses
-                          ).toLocaleString()}
-                        </Text>
-                      )}
+                    <View style={styles.row}>
+                      <View style={styles.flex2}>
+                        <Input
+                          label="Monto por cuota ($) *"
+                          value={getMontoTipoPago(PagoType.MENSUAL)?.toString() || ""}
+                          onChangeText={(text) =>
+                            updateMontoTipoPago(PagoType.MENSUAL, parseFloat(text) || 0)
+                          }
+                          keyboardType="numeric"
+                          placeholder="10000"
+                        />
+                      </View>
+                      <View style={styles.flex1}>
+                        <Controller
+                          control={control}
+                          name="cuotasMensual"
+                          render={({ field: { onChange, value } }) => (
+                            <Input
+                              label="Cuotas *"
+                              value={value?.toString() || ""}
+                              onChangeText={(text) => {
+                                const newValue = text ? parseInt(text, 10) : undefined;
+                                onChange(newValue);
+                                if (newValue) {
+                                  updateCuotasTipoPago(newValue);
+                                }
+                              }}
+                              keyboardType="numeric"
+                              placeholder="3"
+                              error={errors.cuotasMensual?.message}
+                            />
+                          )}
+                        />
+                      </View>
+                    </View>
+                    {cuotasMensual && getMontoTipoPago(PagoType.MENSUAL) > 0 && (
+                      <Text style={styles.totalInfo}>
+                        Total: $
+                        {(
+                          getMontoTipoPago(PagoType.MENSUAL) * cuotasMensual
+                        ).toLocaleString()}
+                      </Text>
+                    )}
                   </View>
                 )}
               </View>
@@ -503,22 +601,17 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
                 <TouchableOpacity
                   style={[
                     styles.tipoPagoCheckbox,
-                    tieneTipoPago(PagoType.TOTAL) &&
-                      styles.tipoPagoCheckboxSelected,
+                    tieneTipoPago(PagoType.TOTAL) && styles.tipoPagoCheckboxSelected,
                   ]}
                   onPress={() => toggleTipoPago(PagoType.TOTAL)}
                 >
                   <View style={styles.tipoPagoHeader}>
                     <Ionicons
                       name={
-                        tieneTipoPago(PagoType.TOTAL)
-                          ? "checkbox"
-                          : "square-outline"
+                        tieneTipoPago(PagoType.TOTAL) ? "checkbox" : "square-outline"
                       }
                       size={24}
-                      color={
-                        tieneTipoPago(PagoType.TOTAL) ? "#3b82f6" : "#9ca3af"
-                      }
+                      color={tieneTipoPago(PagoType.TOTAL) ? "#3b82f6" : "#9ca3af"}
                     />
                     <View style={styles.tipoPagoHeaderText}>
                       <Text style={styles.tipoPagoTitle}>Pago Total</Text>
@@ -535,10 +628,7 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
                       label="Monto total ($)"
                       value={getMontoTipoPago(PagoType.TOTAL)?.toString() || ""}
                       onChangeText={(text) =>
-                        updateMontoTipoPago(
-                          PagoType.TOTAL,
-                          parseFloat(text) || 0
-                        )
+                        updateMontoTipoPago(PagoType.TOTAL, parseFloat(text) || 0)
                       }
                       keyboardType="numeric"
                       placeholder="50000"
@@ -551,26 +641,23 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
               )}
             </View>
 
-            {/* Campos opcionales */}
-            <View style={styles.row}>
-              <View style={styles.halfWidth}>
-                <Controller
-                  control={control}
-                  name="recargo"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="Recargo Atraso (%)"
-                      value={value?.toString() || ""}
-                      onChangeText={(text) =>
-                        onChange(text ? parseFloat(text) : null)
-                      }
-                      keyboardType="numeric"
-                      placeholder="10"
-                      error={errors.recargo?.message}
-                    />
-                  )}
-                />
-              </View>
+            {/* Recargo por atraso */}
+            <View style={styles.section}>
+              <Text style={styles.subsectionLabel}>Configuración Adicional (Opcional)</Text>
+              <Controller
+                control={control}
+                name="recargo"
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    label="Recargo por Atraso (%)"
+                    value={value?.toString() || ""}
+                    onChangeText={(text) => onChange(text ? parseFloat(text) : null)}
+                    keyboardType="numeric"
+                    placeholder="10"
+                    error={errors.recargo?.message}
+                  />
+                )}
+              />
             </View>
           </ScrollView>
 
@@ -583,7 +670,7 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
               style={styles.cancelButton}
             />
             <Button
-              title="Completar Curso"
+              title="Activar Curso"
               onPress={handleSubmit(onSubmit)}
               loading={isSubmitting}
               style={styles.submitButton}
@@ -598,11 +685,8 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
         onClose={() => setShowTimePicker(null)}
         onSelect={(time) => {
           if (showTimePicker) {
-            updateHorario(
-              showTimePicker.horarioIndex,
-              showTimePicker.field,
-              time
-            );
+            updateHorario(showTimePicker.horarioIndex, showTimePicker.field, time);
+            setShowTimePicker(null);
           }
         }}
         title={
@@ -686,40 +770,125 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     flex: 1,
   },
-  infoSection: {
-    backgroundColor: "#f9fafb",
-    padding: 12,
-    borderRadius: 8,
+  alquilerInfoSection: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 20,
-    gap: 8,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
-  infoRow: {
+  alquilerInfoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+  },
+  alquilerInfoTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1f2937",
+  },
+  alquilerInfoContent: {
+    gap: 10,
+  },
+  alquilerInfoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 6,
   },
-  infoLabel: {
+  alquilerInfoTotal: {
+    marginTop: 6,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+  },
+  alquilerInfoLabel: {
     fontSize: 14,
     color: "#6b7280",
   },
-  infoValue: {
+  alquilerInfoValue: {
     fontSize: 14,
     color: "#1f2937",
     fontWeight: "500",
   },
+  alquilerInfoLabelBold: {
+    fontSize: 15,
+    color: "#374151",
+    fontWeight: "600",
+  },
+  alquilerInfoValueBold: {
+    fontSize: 16,
+    color: "#3b82f6",
+    fontWeight: "700",
+  },
   section: {
     marginBottom: 24,
   },
-  sectionHeader: {
+  row: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 16,
+  },
+  halfWidth: {
+    flex: 1,
+  },
+  flex1: {
+    flex: 1,
+  },
+  flex2: {
+    flex: 2,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#6b7280",
+    marginBottom: 6,
+  },
+  readonlyField: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    backgroundColor: "#f9fafb",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    gap: 8,
+  },
+  readonlyText: {
+    fontSize: 14,
+    color: "#374151",
+    fontWeight: "500",
+  },
+  duracionBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    backgroundColor: "#eff6ff",
+    borderRadius: 8,
+    gap: 8,
+    marginTop: 8,
+  },
+  duracionText: {
+    fontSize: 13,
+    color: "#3b82f6",
+    fontWeight: "500",
+    flex: 1,
+  },
+  subsectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
   },
-  sectionLabel: {
-    fontSize: 16,
+  subsectionLabel: {
+    fontSize: 15,
     fontWeight: "600",
     color: "#374151",
-    marginBottom: 12,
   },
   addButton: {
     flexDirection: "row",
@@ -732,7 +901,7 @@ const styles = StyleSheet.create({
     color: "#3b82f6",
   },
   horarioCard: {
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#ffffff",
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
@@ -741,12 +910,6 @@ const styles = StyleSheet.create({
   },
   daysContainer: {
     marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#6b7280",
-    marginBottom: 6,
   },
   daysRow: {
     flexDirection: "row",
@@ -855,14 +1018,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#3b82f6",
     marginTop: 8,
-  },
-  row: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 16,
-  },
-  halfWidth: {
-    flex: 1,
   },
   errorText: {
     fontSize: 14,

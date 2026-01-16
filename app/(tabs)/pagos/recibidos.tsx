@@ -1,10 +1,18 @@
 // app/(tabs)/pagos/recibidos.tsx
 import { PagoItem } from "@/components/pagos/PagoItem";
 import { SearchBar } from "@/components/ui/SearchBar";
-import { Pago, PaginatedResponse, pagoToDisplay, PagoType, TipoPagoConcepto } from "@/model/model";
+import { 
+  Pago, 
+  PaginatedResponse, 
+  pagoToDisplay, 
+  TipoPagoConcepto,
+  Rol, 
+  Estado,
+  TipoCurso
+} from "@/model/model";
 import { pagoService } from "@/services/pago.service";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -14,20 +22,46 @@ import {
   TouchableOpacity,
 } from "react-native";
 import Toast from "react-native-toast-message";
+import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
+import { MultiSelect, MultiSelectOption } from "@/components/ui/MultiSelect";
+import { useAuth } from "@/context/authContext";
+
+type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export default function PagosRecibidosScreen() {
+  const { usuario } = useAuth(); // ✅ Corregido
+  
   const [pagos, setPagos] = useState<Pago[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  
+  // Filtros
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTipos, setSelectedTipos] = useState<TipoPagoConcepto[]>([]);
+  const [selectedMeses, setSelectedMeses] = useState<Mes[]>([]);
 
   const PAGE_SIZE = 20;
 
-  // 🎭 MOCK DATA
+  // 👤 MOCK PROFESOR
+  const PROFESOR_GARCIA = {
+    id: 100,
+    nombre: "Ana",
+    apellido: "García",
+    dni: "55667788",
+    email: "ana.garcia@mail.com",
+    celular: "1144556677",
+    fechaNacimiento: "1988-05-12",
+    estado: "ACTIVO" as any,
+    primerLogin: false,
+    listaRol: ["PROFESOR" as any],
+  };
+
+  // 🎭 MOCK DATA - Pagos recibidos según rol
   const MOCK_PAGOS: Pago[] = [
+    // CURSO - Alumno → Instituto (Admin/Oficina lo ve)
     {
       id: 1,
       monto: 15000,
@@ -44,6 +78,7 @@ export default function PagosRecibidosScreen() {
           dni: "12345678",
           email: "juan@mail.com",
           celular: "1122334455",
+          fechaNacimiento: "1995-03-15",
           estado: "ACTIVO" as any,
           primerLogin: false,
           listaRol: ["ALUMNO" as any],
@@ -56,22 +91,27 @@ export default function PagosRecibidosScreen() {
           fechaInicio: "2025-01-01",
           fechaFin: "2025-12-31",
           estado: "EN_CURSO" as any,
-          profesores: ["Prof. García"],
+          profesores: [PROFESOR_GARCIA],
           tiposPago: [],
           inscripciones: [],
+          estadoAlta: Estado.ACTIVO,
+          recargoPorAtraso: 0,
+          tipoCurso: TipoCurso.ALQUILER
         },
         tipoPagoSeleccionado: {
           tipo: "MENSUAL" as any,
           monto: 15000,
+          cuotas: 1,
         },
       },
       retraso: false,
       beneficioAplicado: 10,
     },
+    // CURSO - Otro alumno
     {
       id: 2,
       monto: 12000,
-      fecha: "2025-01-08T00:00:00",
+      fecha: "2025-02-08T00:00:00",
       fechaBaja: null,
       observaciones: null,
       tipo: TipoPagoConcepto.CURSO,
@@ -84,6 +124,7 @@ export default function PagosRecibidosScreen() {
           dni: "87654321",
           email: "maria@mail.com",
           celular: "1155667788",
+          fechaNacimiento: "1992-07-22",
           estado: "ACTIVO" as any,
           primerLogin: false,
           listaRol: ["ALUMNO" as any],
@@ -96,22 +137,27 @@ export default function PagosRecibidosScreen() {
           fechaInicio: "2025-01-01",
           fechaFin: "2025-12-31",
           estado: "EN_CURSO" as any,
-          profesores: ["Prof. Martínez"],
+          profesores: [PROFESOR_GARCIA],
           tiposPago: [],
           inscripciones: [],
+          estadoAlta: Estado.ACTIVO,
+          recargoPorAtraso: 0,
+          tipoCurso: TipoCurso.ALQUILER
         },
         tipoPagoSeleccionado: {
           tipo: "MENSUAL" as any,
           monto: 12000,
+          cuotas: 1,
         },
       },
       retraso: true,
       beneficioAplicado: 0,
     },
+    // ALQUILER - Profesor → Instituto (Admin/Oficina lo ve)
     {
       id: 3,
       monto: 50000,
-      fecha: "2025-01-05T00:00:00",
+      fecha: "2025-03-05T00:00:00",
       fechaBaja: null,
       observaciones: null,
       tipo: TipoPagoConcepto.ALQUILER,
@@ -123,57 +169,81 @@ export default function PagosRecibidosScreen() {
         fechaInicio: "2025-01-01",
         fechaFin: "2025-12-31",
         estado: "EN_CURSO" as any,
-        profesores: ["Prof. López"],
+        profesores: [PROFESOR_GARCIA],
         tiposPago: [],
         inscripciones: [],
+        estadoAlta: Estado.ACTIVO,
+        recargoPorAtraso: 0,
+        tipoCurso: TipoCurso.ALQUILER
       },
-      profesor: {
-        id: 3,
-        nombre: "Carlos",
-        apellido: "López",
-        dni: "11223344",
-        email: "carlos@mail.com",
-        celular: "1199887766",
-        estado: "ACTIVO" as any,
-        primerLogin: false,
-        listaRol: ["PROFESOR" as any],
-      },
+      profesor: PROFESOR_GARCIA,
     },
+    // COMISION - Instituto → Profesor (Profesor lo ve)
     {
-      id: 7,
-      monto: 20000,
-      fecha: "2025-01-03T00:00:00",
+      id: 4,
+      monto: 25000,
+      fecha: "2025-04-15T00:00:00",
+      fechaBaja: null,
+      observaciones: "Comisión mensual curso Taekwondo",
+      tipo: TipoPagoConcepto.COMISION,
+      curso: {
+        id: 1,
+        nombre: "Taekwondo Infantil",
+        horarios: [],
+        alumnosInscriptos: [],
+        fechaInicio: "2025-01-01",
+        fechaFin: "2025-12-31",
+        estado: "EN_CURSO" as any,
+        profesores: [PROFESOR_GARCIA],
+        tiposPago: [],
+        inscripciones: [],
+        estadoAlta: Estado.ACTIVO,
+        recargoPorAtraso: 0,
+        tipoCurso: TipoCurso.ALQUILER
+      },
+      profesor: PROFESOR_GARCIA,
+    },
+    // CURSO - Alumno en curso alquiler (Profesor lo ve)
+    {
+      id: 5,
+      monto: 18000,
+      fecha: "2025-05-20T00:00:00",
       fechaBaja: null,
       observaciones: null,
       tipo: TipoPagoConcepto.CURSO,
       inscripcion: {
-        id: 5,
+        id: 3,
         alumno: {
-          id: 4,
-          nombre: "Ana",
-          apellido: "Martínez",
-          dni: "55667788",
-          email: "ana@mail.com",
-          celular: "1144556677",
+          id: 5,
+          nombre: "Pedro",
+          apellido: "Sánchez",
+          dni: "99887766",
+          email: "pedro@mail.com",
+          celular: "1133445566",
+          fechaNacimiento: "1998-02-28",
           estado: "ACTIVO" as any,
           primerLogin: false,
           listaRol: ["ALUMNO" as any],
         },
         curso: {
-          id: 4,
-          nombre: "Natación Adultos",
+          id: 3,
+          nombre: "Pilates Avanzado", // Curso de alquiler
           horarios: [],
           alumnosInscriptos: [],
           fechaInicio: "2025-01-01",
           fechaFin: "2025-12-31",
           estado: "EN_CURSO" as any,
-          profesores: ["Prof. Silva"],
+          profesores: [PROFESOR_GARCIA],
           tiposPago: [],
           inscripciones: [],
+          estadoAlta: Estado.ACTIVO,
+          recargoPorAtraso: 0,
+          tipoCurso: TipoCurso.ALQUILER
         },
         tipoPagoSeleccionado: {
           tipo: "MENSUAL" as any,
-          monto: 20000,
+          monto: 18000,
+          cuotas: 1,
         },
       },
       retraso: false,
@@ -181,9 +251,52 @@ export default function PagosRecibidosScreen() {
     },
   ];
 
+  // Determinar tipos de pago disponibles según rol
+  const tiposPagoDisponibles = useMemo((): FilterOption<TipoPagoConcepto>[] => {
+    if (!usuario) return [];
+
+    const roles = usuario.listaRol;
+    const isAdminOrOficina = roles.includes(Rol.ADMINISTRADOR) || roles.includes(Rol.OFICINA);
+    const isProfesor = roles.includes(Rol.PROFESOR);
+
+    if (isAdminOrOficina) {
+      // Admin/Oficina ve CURSO (alumnos) y ALQUILER (profesores)
+      return [
+        { value: TipoPagoConcepto.CURSO, label: "Cursos", color: "#3b82f6" },
+        { value: TipoPagoConcepto.ALQUILER, label: "Alquiler", color: "#10b981" },
+      ];
+    }
+
+    if (isProfesor) {
+      // Profesor ve CURSO (alumnos de sus cursos alquiler) y COMISION (del instituto)
+      return [
+        { value: TipoPagoConcepto.CURSO, label: "Cursos", color: "#3b82f6" },
+        { value: TipoPagoConcepto.COMISION, label: "Comisión", color: "#8b5cf6" },
+      ];
+    }
+
+    // Alumnos no ven pagos recibidos
+    return [];
+  }, [usuario]);
+
+  const mesFilterOptions: MultiSelectOption<Mes>[] = [
+    { value: 1, label: "Enero", color: "#3b82f6" },
+    { value: 2, label: "Febrero", color: "#8b5cf6" },
+    { value: 3, label: "Marzo", color: "#10b981" },
+    { value: 4, label: "Abril", color: "#f59e0b" },
+    { value: 5, label: "Mayo", color: "#ef4444" },
+    { value: 6, label: "Junio", color: "#06b6d4" },
+    { value: 7, label: "Julio", color: "#6366f1" },
+    { value: 8, label: "Agosto", color: "#84cc16" },
+    { value: 9, label: "Septiembre", color: "#f97316" },
+    { value: 10, label: "Octubre", color: "#ec4899" },
+    { value: 11, label: "Noviembre", color: "#14b8a6" },
+    { value: 12, label: "Diciembre", color: "#a855f7" },
+  ];
+
   useEffect(() => {
     fetchPagos(0);
-  }, [searchQuery]);
+  }, [searchQuery, selectedTipos, selectedMeses]);
 
   const fetchPagos = async (pageNum: number = 0) => {
     if (pageNum === 0) {
@@ -197,6 +310,8 @@ export default function PagosRecibidosScreen() {
       await new Promise((resolve) => setTimeout(resolve, 800));
 
       let filtered = [...MOCK_PAGOS];
+
+      // Filtrar por búsqueda
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         filtered = filtered.filter((pago) => {
@@ -205,6 +320,20 @@ export default function PagosRecibidosScreen() {
             display.curso.toLowerCase().includes(query) ||
             display.usuarioPago.toLowerCase().includes(query)
           );
+        });
+      }
+
+      // Filtrar por tipo de pago
+      if (selectedTipos.length > 0) {
+        filtered = filtered.filter((pago) => selectedTipos.includes(pago.tipo));
+      }
+
+      // Filtrar por mes
+      if (selectedMeses.length > 0) {
+        filtered = filtered.filter((pago) => {
+          const fechaPago = new Date(pago.fecha);
+          const mes = (fechaPago.getMonth() + 1) as Mes;
+          return selectedMeses.includes(mes);
         });
       }
 
@@ -221,6 +350,8 @@ export default function PagosRecibidosScreen() {
       //   page: pageNum,
       //   size: PAGE_SIZE,
       //   search: searchQuery,
+      //   tipos: selectedTipos,
+      //   meses: selectedMeses,
       // });
 
       const response = mockResponse;
@@ -254,6 +385,18 @@ export default function PagosRecibidosScreen() {
     }
   };
 
+  const handleToggleTipo = (tipo: TipoPagoConcepto) => {
+    setSelectedTipos((prev) =>
+      prev.includes(tipo) ? prev.filter((t) => t !== tipo) : [...prev, tipo]
+    );
+  };
+
+  const handleToggleMes = (mes: Mes) => {
+    setSelectedMeses((prev) =>
+      prev.includes(mes) ? prev.filter((m) => m !== mes) : [...prev, mes]
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -285,13 +428,52 @@ export default function PagosRecibidosScreen() {
           style={styles.searchBar}
         />
 
+        {/* Filtros en una línea */}
+        {tiposPagoDisponibles.length > 0 && (
+          <View style={styles.filtersRow}>
+            
+            {/* Chips de Tipo */}
+            <View style={styles.filterChipsContainer}>
+              <FilterChips
+                options={tiposPagoDisponibles}
+                selectedValues={selectedTipos}
+                onToggle={handleToggleTipo}
+                style={styles.filterChips}
+              />
+            </View>
+
+            {/* Dropdown de Meses */}
+            <View style={styles.multiSelectContainer}>
+              <MultiSelect
+                options={mesFilterOptions}
+                selectedValues={selectedMeses}
+                onToggle={handleToggleMes}
+                placeholder="Meses"
+              />
+            </View>
+          </View>
+        )}
+
+        {/* Si es alumno, solo muestra filtro de meses */}
+        {tiposPagoDisponibles.length === 0 && (
+          <View style={styles.filterSection}>
+            <Text style={styles.filterLabel}>Filtrar por Mes:</Text>
+            <MultiSelect
+              options={mesFilterOptions}
+              selectedValues={selectedMeses}
+              onToggle={handleToggleMes}
+              placeholder="Seleccionar meses"
+            />
+          </View>
+        )}
+
         {/* Lista de Pagos */}
         {pagos.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="wallet-outline" size={64} color="#d1d5db" />
             <Text style={styles.emptyTitle}>No hay pagos recibidos</Text>
             <Text style={styles.emptyText}>
-              {searchQuery
+              {searchQuery || selectedTipos.length > 0 || selectedMeses.length > 0
                 ? "No se encontraron pagos con ese criterio"
                 : "Los pagos recibidos aparecerán aquí"}
             </Text>
@@ -376,6 +558,33 @@ const styles = StyleSheet.create({
     color: "#3b82f6",
   },
   searchBar: {
+    marginBottom: 16,
+  },
+  filtersRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+  filterLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#374151",
+    marginRight: 4,
+  },
+  filterChipsContainer: {
+    flex: 1,
+  },
+  filterChips: {
+    paddingHorizontal: 0,
+    backgroundColor: "transparent",
+    marginBottom: 0,
+  },
+  multiSelectContainer: {
+    flex: 1,
+  },
+  filterSection: {
     marginBottom: 16,
   },
   pagosList: {

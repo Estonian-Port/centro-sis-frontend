@@ -1,16 +1,23 @@
 import { Rol, Usuario } from "@/model/model";
 import { authService } from "@/services/api.service";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
-export const STORAGE_KEY_TOKEN = "token"
+export const STORAGE_KEY_TOKEN = "token";
+export const STORAGE_KEY_SELECTED_ROLE = "selectedRole"; // ✅ NUEVO
 
 type AuthContextType = {
   usuario: Usuario | null;
   setUsuario: (usuario: Usuario | null) => void;
   selectedRole: Rol | null;
   setSelectedRole: (role: Rol | null) => void;
-  login: (username: string, password: string) => Promise<Usuario>; // ← Cambiado: ahora retorna Usuario
+  login: (username: string, password: string) => Promise<Usuario>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -18,18 +25,28 @@ type AuthContextType = {
   hasMultipleRoles: () => boolean;
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 type AuthProviderProps = {
-  children: ReactNode
-}
+  children: ReactNode;
+};
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [usuario, setUsuario] = useState<Usuario | null>(null)
-  const [selectedRole, setSelectedRole] = useState<Rol | null>(null);
+  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [selectedRole, setSelectedRoleState] = useState<Rol | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  
+
+  // ✅ Wrapper para persistir el rol seleccionado
+  const setSelectedRole = async (role: Rol | null) => {
+    setSelectedRoleState(role);
+    if (role) {
+      await AsyncStorage.setItem(STORAGE_KEY_SELECTED_ROLE, role);
+    } else {
+      await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
+    }
+  };
+
   // Inicializar autenticación al montar
   useEffect(() => {
     const initAuth = async () => {
@@ -39,6 +56,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const currentUser = await authService.getCurrentUser();
           setUsuario(currentUser);
           setIsAuthenticated(true);
+
+          // ✅ Restaurar rol seleccionado si existe
+          const savedRole = await AsyncStorage.getItem(
+            STORAGE_KEY_SELECTED_ROLE
+          );
+          if (savedRole && currentUser.listaRol.includes(savedRole as Rol)) {
+            setSelectedRoleState(savedRole as Rol);
+          }
         } else {
           setUsuario(null);
           setIsAuthenticated(false);
@@ -53,57 +78,63 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
     initAuth();
   }, []);
-  
-  const login = async (username: string, password: string): Promise<Usuario> => { // ← Agregado tipo de retorno
+
+  const login = async (
+    username: string,
+    password: string
+  ): Promise<Usuario> => {
     try {
       setIsLoading(true);
-      
+
       // 1. Obtener token del servidor
-      const receivedToken = await authService.login(username, password)
-      
+      const receivedToken = await authService.login(username, password);
+
       // 2. Guardar token en storage
-      await AsyncStorage.setItem(STORAGE_KEY_TOKEN, receivedToken)
-      
+      await AsyncStorage.setItem(STORAGE_KEY_TOKEN, receivedToken);
+
       // 3. Configurar headers del API con el token
-      await authService.setAuthToken()
-      
+      await authService.setAuthToken();
+
       // 4. Obtener datos del usuario actual
-      const currentUser = await authService.getCurrentUser()
-      
+      const currentUser = await authService.getCurrentUser();
+
       // 5. Actualizar estado del contexto
-      setUsuario(currentUser)
-      setIsAuthenticated(true)
-      
+      setUsuario(currentUser);
+      setIsAuthenticated(true);
+
+      // ✅ 6. Limpiar rol anterior (nuevo login)
+      await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
+      setSelectedRoleState(null);
+
       return currentUser;
-      
     } catch (e) {
-      console.error("Error en login:", e)
+      console.error("Error en login:", e);
       // Limpiar en caso de error
-      setUsuario(null)
-      setIsAuthenticated(false)
-      throw e
+      setUsuario(null);
+      setIsAuthenticated(false);
+      throw e;
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   const logout = async () => {
     try {
       setIsLoading(true);
-      
-      await AsyncStorage.removeItem(STORAGE_KEY_TOKEN)
-      
-      setUsuario(null)
-      setIsAuthenticated(false)
-      setSelectedRole(null)
-      
+
+      await AsyncStorage.removeItem(STORAGE_KEY_TOKEN);
+      await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE); // ✅ Limpiar rol
+
+      setUsuario(null);
+      setIsAuthenticated(false);
+      setSelectedRoleState(null);
     } catch (e) {
-      console.error("Error en logout:", e)
-      throw e
+      console.error("Error en logout:", e);
+      throw e;
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   const hasRole = (roleName: string) => {
     return usuario?.listaRol.some((r) => r === roleName) || false;
@@ -124,15 +155,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     isLoading,
     hasRole,
     hasMultipleRoles,
-  }
-  
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
 
 export const useAuth = () => {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth debe ser usado dentro de un AuthProvider")
+    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
   }
-  return context
-}
+  return context;
+};

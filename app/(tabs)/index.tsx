@@ -7,6 +7,7 @@ import { usuarioService } from "@/services/usuario.service";
 import { DashboardProfesor } from "@/components/dashboard/DashboardProfesor";
 import { DashboardAlumno } from "@/components/dashboard/DashboardAlumno";
 import DashboardAdmin from "@/components/dashboard/DashboardAdmin";
+import { router } from "expo-router";
 
 export default function HomeScreen() {
   const { selectedRole, usuario } = useAuth();
@@ -49,6 +50,8 @@ export default function HomeScreen() {
           <DashboardProfesor cursos={cursosProfesor} onRefresh={fetchData} />
         );
       case Rol.ADMINISTRADOR:
+        return <DashboardAdmin estadisticas={stats} />;
+      case Rol.OFICINA:
         return <DashboardAdmin estadisticas={stats} />;
       default:
         return (

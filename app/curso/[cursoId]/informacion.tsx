@@ -3,7 +3,8 @@ import { EditarHorariosModal } from "@/components/curso/modals/EditarHorariosMod
 import { EditarModalidadesPagoModal } from "@/components/curso/modals/EditarModalidadPagoModal";
 import { EditarNombreCursoModal } from "@/components/curso/modals/EditarNombreCursoModal";
 import { EditarProfesoresModal } from "@/components/curso/modals/EditarProfesoresModal";
-import { Curso } from "@/model/model";
+import { formatDateToDDMMYYYY } from "@/helper/funciones";
+import { Curso, formatEstadoCurso } from "@/model/model";
 import { cursoService } from "@/services/curso.service";
 import { usuarioService } from "@/services/usuario.service";
 import { Ionicons } from "@expo/vector-icons";
@@ -83,9 +84,9 @@ export default function InformacionTab() {
           </TouchableOpacity>
         </View>
         <View style={styles.cardContent}>
-          <InfoRow label="Estado" value={curso.estado} />
-          <InfoRow label="Fecha Inicio" value={curso.fechaInicio} />
-          <InfoRow label="Fecha Fin" value={curso.fechaFin} />
+          <InfoRow label="Estado" value={formatEstadoCurso(curso.estado)} />
+          <InfoRow label="Fecha Inicio" value={formatDateToDDMMYYYY(curso.fechaInicio)} />
+          <InfoRow label="Fecha Fin" value={formatDateToDDMMYYYY(curso.fechaFin)} />
           <InfoRow
             label="Alumnos Inscriptos"
             value={`${curso.inscripciones?.length || 0}`}
@@ -186,7 +187,7 @@ export default function InformacionTab() {
               >
                 <View style={styles.tipoPagoInfo}>
                   <Ionicons name="cash-outline" size={18} color="#f59e0b" />
-                  <Text style={styles.tipoPagoTipo}>{tipoPago.tipo}</Text>
+                  <Text style={styles.tipoPagoTipo}>{tipoPago.tipo} {tipoPago.tipo === "MENSUAL" ? `- ${tipoPago.cuotas} cuotas` : ""}</Text>
                 </View>
                 <Text style={styles.tipoPagoMonto}>
                   ${tipoPago.monto.toLocaleString()}

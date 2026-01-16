@@ -7,7 +7,14 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Curso, EstadoCurso, NuevoUsuario, Rol, Usuario } from "@/model/model";
+import {
+  Curso,
+  EstadoCurso,
+  NuevoUsuario,
+  Rol,
+  Usuario,
+  Estado,
+} from "@/model/model";
 import { ViewToggle, ViewMode } from "@/components/ui/ViewToggle";
 import CourseItem from "@/components/cards/CourseItem";
 import { Button } from "@/components/ui/Button";
@@ -24,8 +31,15 @@ import { CreateUserModal } from "@/components/modals/CreateUserModal";
 import { CreateCourseModal } from "@/components/modals/CreateCourseModal";
 import { COLORES } from "@/util/colores";
 import { router } from "expo-router";
+import { AvisoInvitacionModal } from "@/components/modals/AvisoInvitacionModal";
+import { Ionicons } from "@expo/vector-icons";
+import { TIPOGRAFIA } from "@/util/tipografia";
 
-// Definir opciones de filtro por rol (para usuarios)
+// ============================================
+// OPCIONES DE FILTROS
+// ============================================
+
+// Filtros de ROL
 const rolFilterOptions: FilterOption<Rol>[] = [
   { value: Rol.ALUMNO, label: "Alumno", color: "#3b82f6" },
   { value: Rol.PROFESOR, label: "Profesor", color: "#10b981" },
@@ -33,20 +47,46 @@ const rolFilterOptions: FilterOption<Rol>[] = [
   { value: Rol.OFICINA, label: "Oficina", color: "#f59e0b" },
 ];
 
-// Definir opciones de filtro por estado
-const estadoFilterOptions: FilterOption<EstadoCurso>[] = [
+// Filtros de ESTADO DE USUARIO
+const estadoUsuarioFilterOptions: FilterOption<Estado>[] = [
+  { value: Estado.ACTIVO, label: "Activo", color: "#10b981" },
+  { value: Estado.INACTIVO, label: "Inactivo", color: "#6b7280" },
+  { value: Estado.PENDIENTE, label: "Pendiente", color: "#f59e0b" },
+  { value: Estado.BAJA, label: "Baja", color: "#ef4444" },
+];
+
+// Filtros de ESTADO DE CURSO
+const estadoCursoFilterOptions: FilterOption<EstadoCurso>[] = [
   { value: EstadoCurso.POR_COMENZAR, label: "Por Comenzar", color: "#3b82f6" },
   { value: EstadoCurso.EN_CURSO, label: "En Curso", color: "#10b981" },
   { value: EstadoCurso.FINALIZADO, label: "Finalizado", color: "#6b7280" },
-  { value: EstadoCurso.PENDIENTE, label: "Pendiente", color: "#f59e0b" },
+];
+
+// Filtros de ESTADO DE ALTA (para cursos)
+const estadoAltaFilterOptions: FilterOption<Estado>[] = [
+  { value: Estado.ACTIVO, label: "Activo", color: "#10b981" },
+  { value: Estado.INACTIVO, label: "Inactivo", color: "#6b7280" },
+  { value: Estado.PENDIENTE, label: "Pendiente", color: "#f59e0b" },
+  { value: Estado.BAJA, label: "Baja", color: "#ef4444" },
 ];
 
 export default function AdminScreen() {
   const [activeTab, setActiveTab] = useState<"users" | "courses">("users");
   const [searchQuery, setSearchQuery] = useState("");
   const [vistaActual, setVistaActual] = useState<ViewMode>("calendario");
+
+  // Filtros para USUARIOS
   const [filtrosRol, setFiltrosRol] = useState<Rol[]>([]);
-  const [filtrosEstado, setFiltrosEstado] = useState<EstadoCurso[]>([]);
+  const [filtrosEstadoUsuario, setFiltrosEstadoUsuario] = useState<Estado[]>(
+    []
+  );
+
+  // Filtros para CURSOS
+  const [filtrosEstadoCurso, setFiltrosEstadoCurso] = useState<EstadoCurso[]>(
+    []
+  );
+  const [filtrosEstadoAlta, setFiltrosEstadoAlta] = useState<Estado[]>([]);
+
   const [courses, setCourses] = useState<Curso[]>([]);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
@@ -55,6 +95,10 @@ export default function AdminScreen() {
   const [showModalDetailsUser, setShowModalDetailsUser] = useState(false);
   const [loading, setLoading] = useState(false);
   const { usuario } = useAuth();
+  const [modalInvitacionVisible, setModalInvitacionVisible] = useState(false);
+  const [showEditCourseModal, setShowEditCourseModal] = useState(false);
+  const [selectedPendingCourse, setSelectedPendingCourse] =
+    useState<Curso | null>(null);
 
   // Cargar datos
   useEffect(() => {
@@ -98,12 +142,22 @@ export default function AdminScreen() {
   };
 
   const handleViewUserDetails = (user: Usuario) => {
-    setSelectedUser(user);
-    setShowModalDetailsUser(true);
+    if (user.estado !== "PENDIENTE") {
+      setSelectedUser(user);
+      setShowModalDetailsUser(true);
+    } else {
+      setSelectedUser(user);
+      setModalInvitacionVisible(true);
+    }
   };
 
   const handleViewCourseDetails = (course: Curso) => {
     router.push(`/curso/${course.id}/alumnos`);
+  };
+
+  const handleEditPendingCourse = (course: Curso) => {
+    setSelectedPendingCourse(course);
+    setShowEditCourseModal(true);
   };
 
   const altaUsuario = async (nuevoUsuario: NuevoUsuario) => {
@@ -115,6 +169,7 @@ export default function AdminScreen() {
         text2: `La invitación ha sido enviada a ${nuevoUsuario.email}.`,
         position: "bottom",
       });
+      fetchUsers();
     } catch (error) {
       Toast.show({
         type: "error",
@@ -124,14 +179,56 @@ export default function AdminScreen() {
       });
     }
   };
-  // Toggle filtro de rol
+
+  // ============================================
+  // TOGGLES DE FILTROS
+  // ============================================
+
   const toggleFiltroRol = (rol: Rol) => {
     setFiltrosRol((prev) =>
       prev.includes(rol) ? prev.filter((r) => r !== rol) : [...prev, rol]
     );
   };
 
-  // Usuarios filtrados
+  const toggleFiltroEstadoUsuario = (estado: Estado) => {
+    setFiltrosEstadoUsuario((prev) =>
+      prev.includes(estado)
+        ? prev.filter((e) => e !== estado)
+        : [...prev, estado]
+    );
+  };
+
+  const toggleFiltroEstadoCurso = (estado: EstadoCurso) => {
+    setFiltrosEstadoCurso((prev) =>
+      prev.includes(estado)
+        ? prev.filter((e) => e !== estado)
+        : [...prev, estado]
+    );
+  };
+
+  const toggleFiltroEstadoAlta = (estado: Estado) => {
+    setFiltrosEstadoAlta((prev) =>
+      prev.includes(estado)
+        ? prev.filter((e) => e !== estado)
+        : [...prev, estado]
+    );
+  };
+
+  // Limpiar filtros
+  const limpiarFiltrosUsuarios = () => {
+    setFiltrosRol([]);
+    setFiltrosEstadoUsuario([]);
+  };
+
+  const limpiarFiltrosCursos = () => {
+    setFiltrosEstadoCurso([]);
+    setFiltrosEstadoAlta([]);
+  };
+
+  // ============================================
+  // FILTRADO DE USUARIOS
+  // ============================================
+
   const filteredUsers = useMemo(() => {
     let filtered = users;
 
@@ -153,19 +250,20 @@ export default function AdminScreen() {
       );
     }
 
+    // Filtrar por estado de usuario
+    if (filtrosEstadoUsuario.length > 0) {
+      filtered = filtered.filter((user) =>
+        filtrosEstadoUsuario.includes(user.estado)
+      );
+    }
+
     return filtered;
-  }, [users, searchQuery, filtrosRol]);
+  }, [users, searchQuery, filtrosRol, filtrosEstadoUsuario]);
 
-  // Toggle filtro de estado
-  const toggleFiltroEstado = (estado: EstadoCurso) => {
-    setFiltrosEstado((prev) =>
-      prev.includes(estado)
-        ? prev.filter((e) => e !== estado)
-        : [...prev, estado]
-    );
-  };
+  // ============================================
+  // FILTRADO DE CURSOS
+  // ============================================
 
-  // Cursos filtrados
   const filteredCourses = useMemo(() => {
     let filtered = courses;
 
@@ -180,21 +278,34 @@ export default function AdminScreen() {
       );
     }
 
-    // Filtrar por estado
-    if (filtrosEstado.length > 0) {
+    // Filtrar por estado de curso
+    if (filtrosEstadoCurso.length > 0) {
       filtered = filtered.filter((course) =>
-        filtrosEstado.includes(course.estado)
+        filtrosEstadoCurso.includes(course.estado)
+      );
+    }
+
+    // Filtrar por estado de alta
+    if (filtrosEstadoAlta.length > 0) {
+      filtered = filtered.filter((course) =>
+        filtrosEstadoAlta.includes(course.estadoAlta)
       );
     }
 
     return filtered;
-  }, [courses, searchQuery, filtrosEstado]);
+  }, [courses, searchQuery, filtrosEstadoCurso, filtrosEstadoAlta]);
+
+  // Contador de filtros activos
+  const contadorFiltrosUsuarios =
+    filtrosRol.length + filtrosEstadoUsuario.length;
+  const contadorFiltrosCursos =
+    filtrosEstadoCurso.length + filtrosEstadoAlta.length;
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header con tabs */}
       <View style={styles.header}>
-        {/* Tabs */}
+        <Text style={styles.title}>Administración</Text>
         <View style={styles.tabContainer}>
           <TouchableOpacity
             style={[styles.tab, activeTab === "users" && styles.activeTab]}
@@ -208,6 +319,13 @@ export default function AdminScreen() {
             >
               Usuarios
             </Text>
+            {activeTab === "users" && contadorFiltrosUsuarios > 0 && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeText}>
+                  {contadorFiltrosUsuarios}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -222,6 +340,13 @@ export default function AdminScreen() {
             >
               Cursos
             </Text>
+            {activeTab === "courses" && contadorFiltrosCursos > 0 && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeText}>
+                  {contadorFiltrosCursos}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -236,30 +361,13 @@ export default function AdminScreen() {
           }...`}
         />
 
-        {/* Filtros por rol (solo en usuarios) */}
-        {activeTab === "users" && (
-          <FilterChips
-            options={rolFilterOptions}
-            selectedValues={filtrosRol}
-            onToggle={toggleFiltroRol}
-          />
-        )}
-
         {/* Toggle vista solo en cursos */}
         {activeTab === "courses" && (
-          <>
-            <ViewToggle
-              currentView={vistaActual}
-              onViewChange={setVistaActual}
-              availableViews={["calendario", "lista"]}
-            />
-
-            <FilterChips
-              options={estadoFilterOptions}
-              selectedValues={filtrosEstado}
-              onToggle={toggleFiltroEstado}
-            />
-          </>
+          <ViewToggle
+            currentView={vistaActual}
+            onViewChange={setVistaActual}
+            availableViews={["calendario", "lista"]}
+          />
         )}
 
         <Button
@@ -274,10 +382,106 @@ export default function AdminScreen() {
         />
       </View>
 
+      {/* Filtros para USUARIOS - Una línea horizontal */}
+      {activeTab === "users" && (
+        <View style={styles.filtersSection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filtersScrollContent}
+          >
+            {/* Filtros de Rol */}
+            <View style={styles.filterGroup}>
+              <FilterChips
+                options={rolFilterOptions}
+                selectedValues={filtrosRol}
+                onToggle={toggleFiltroRol}
+              />
+            </View>
+
+            {/* Separador */}
+            <View style={styles.filterSeparator} />
+
+            {/* Filtros de Estado */}
+            <View style={styles.filterGroup}>
+              <FilterChips
+                options={estadoUsuarioFilterOptions}
+                selectedValues={filtrosEstadoUsuario}
+                onToggle={toggleFiltroEstadoUsuario}
+              />
+            </View>
+
+            {/* Botón limpiar filtros */}
+            {contadorFiltrosUsuarios > 0 && (
+              <>
+                <View style={styles.filterSeparator} />
+                <TouchableOpacity
+                  style={styles.clearFiltersButtonCompact}
+                  onPress={limpiarFiltrosUsuarios}
+                >
+                  <Ionicons name="close-circle" size={18} color="#ef4444" />
+                </TouchableOpacity>
+              </>
+            )}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Filtros para CURSOS - Una línea horizontal */}
+      {activeTab === "courses" && (
+        <View style={styles.filtersSection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filtersScrollContent}
+          >
+            {/* Filtros de Estado del Curso */}
+            <View style={styles.filterGroup}>
+              <FilterChips
+                options={estadoCursoFilterOptions}
+                selectedValues={filtrosEstadoCurso}
+                onToggle={toggleFiltroEstadoCurso}
+              />
+            </View>
+
+            {/* Separador */}
+            <View style={styles.filterSeparator} />
+
+            {/* Filtros de Estado de Alta */}
+            <View style={styles.filterGroup}>
+              <FilterChips
+                options={estadoAltaFilterOptions}
+                selectedValues={filtrosEstadoAlta}
+                onToggle={toggleFiltroEstadoAlta}
+              />
+            </View>
+
+            {/* Botón limpiar filtros */}
+            {contadorFiltrosCursos > 0 && (
+              <>
+                <View style={styles.filterSeparator} />
+                <TouchableOpacity
+                  style={styles.clearFiltersButtonCompact}
+                  onPress={limpiarFiltrosCursos}
+                >
+                  <Ionicons name="close-circle" size={18} color="#ef4444" />
+                </TouchableOpacity>
+              </>
+            )}
+          </ScrollView>
+        </View>
+      )}
+
       {/* Content */}
       <ScrollView style={styles.content}>
         {activeTab === "users" && (
           <View style={styles.tableContainer}>
+            {/* Contador de resultados */}
+            <Text style={styles.resultCount}>
+              {filteredUsers.length}{" "}
+              {filteredUsers.length === 1 ? "usuario" : "usuarios"}
+            </Text>
+
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user) => (
                 <UserItem
@@ -288,7 +492,12 @@ export default function AdminScreen() {
                 />
               ))
             ) : (
-              <Text style={styles.emptyText}>No hay usuarios para mostrar</Text>
+              <View style={styles.emptyState}>
+                <Ionicons name="people-outline" size={48} color="#9ca3af" />
+                <Text style={styles.emptyText}>
+                  No hay usuarios que coincidan con los filtros
+                </Text>
+              </View>
             )}
           </View>
         )}
@@ -297,17 +506,33 @@ export default function AdminScreen() {
           <>
             {vistaActual === "lista" ? (
               <View style={styles.tableContainer}>
-                {filteredCourses.map((curso) => (
-                  <CourseItem
-                    key={curso.id}
-                    course={curso}
-                    handleCourseDetails={handleViewCourseDetails}
-                  />
-                ))}
+                {/* Contador de resultados */}
+                <Text style={styles.resultCount}>
+                  {filteredCourses.length}{" "}
+                  {filteredCourses.length === 1 ? "curso" : "cursos"}
+                </Text>
+
+                {filteredCourses.length > 0 ? (
+                  filteredCourses.map((curso) => (
+                    <CourseItem
+                      key={curso.id}
+                      course={curso}
+                      handleCourseDetails={handleViewCourseDetails}
+                      onEditPendingCourse={handleEditPendingCourse}
+                    />
+                  ))
+                ) : (
+                  <View style={styles.emptyState}>
+                    <Ionicons name="book-outline" size={48} color="#9ca3af" />
+                    <Text style={styles.emptyText}>
+                      No hay cursos que coincidan con los filtros
+                    </Text>
+                  </View>
+                )}
               </View>
             ) : (
               <CalendarioSemanal
-                cursos={filteredCourses}
+                cursos={filteredCourses as any}
                 onCursoPress={handleViewCourseDetails}
               />
             )}
@@ -329,7 +554,7 @@ export default function AdminScreen() {
           }}
         />
 
-        {selectedUser && (
+        {selectedUser && selectedUser.estado !== "PENDIENTE" && (
           <UserDetailModal
             visible={showModalDetailsUser}
             onClose={() => {
@@ -337,6 +562,27 @@ export default function AdminScreen() {
               setSelectedUser(null);
             }}
             idUsuario={selectedUser.id}
+          />
+        )}
+
+        {selectedUser && selectedUser.estado === "PENDIENTE" && (
+          <AvisoInvitacionModal
+            visible={modalInvitacionVisible}
+            onClose={() => {
+              setModalInvitacionVisible(false);
+              setSelectedUser(null);
+            }}
+            usuario={selectedUser}
+            onConfirmar={async () => {
+              try {
+                await usuarioService.reenviarInvitacion(
+                  selectedUser.id,
+                  usuario!.id
+                );
+              } catch (error) {
+                console.error("Error reenviando mail de invitación:", error);
+              }
+            }}
           />
         )}
       </ScrollView>
@@ -367,12 +613,45 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
   },
+  filtersSection: {
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  filtersScrollContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    paddingVertical: 4,
+  },
+  filterGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  filterSeparator: {
+    width: 1,
+    height: 32,
+    backgroundColor: "#e5e7eb",
+  },
+  clearFiltersButtonCompact: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: "#fef2f2",
+  },
   content: {
     flex: 1,
   },
   tableContainer: {
     padding: 20,
     gap: 8,
+  },
+  resultCount: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6b7280",
+    marginBottom: 12,
   },
   tabContainer: {
     flexDirection: "row",
@@ -381,9 +660,13 @@ const styles = StyleSheet.create({
   tab: {
     flex: 1,
     paddingVertical: 12,
+    paddingHorizontal: 16,
     alignItems: "center",
     borderRadius: 8,
     backgroundColor: "#f3f4f6",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
   },
   activeTab: {
     backgroundColor: COLORES.violeta,
@@ -396,10 +679,33 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: "#ffffff",
   },
+  filterBadge: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    minWidth: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  filterBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: COLORES.violeta,
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 48,
+    gap: 12,
+  },
   emptyText: {
     textAlign: "center",
     fontSize: 14,
     color: "#9ca3af",
-    marginTop: 40,
   },
+  title: {
+    ...TIPOGRAFIA.titleL,
+    color: COLORES.textPrimary,
+    marginBottom: 8,},
 });

@@ -21,23 +21,24 @@ import { ChangePasswordModal } from "@/components/modals/ChangePasswordModal";
 import { EditProfileModal } from "@/components/modals/EditProfileModal";
 import { COLORES } from "@/util/colores";
 import Toast from "react-native-toast-message";
+import { rolToTagVariant } from "@/helper/funciones";
 
 // Configuración de roles
 const ROLE_CONFIG = {
   [Rol.ALUMNO]: {
-    variant: "rolAlumno" as const,
+    variant: rolToTagVariant(Rol.ALUMNO),
     label: "ALUMNO",
   },
   [Rol.PROFESOR]: {
-    variant: "rolProfesor" as const,
+    variant: rolToTagVariant(Rol.PROFESOR),
     label: "PROFESOR",
   },
   [Rol.ADMINISTRADOR]: {
-    variant: "rolAdmin" as const,
+    variant: rolToTagVariant(Rol.ADMINISTRADOR),
     label: "ADMINISTRADOR",
   },
   [Rol.OFICINA]: {
-    variant: "rolOficina" as const,
+    variant: rolToTagVariant(Rol.OFICINA),
     label: "OFICINA",
   },
 } as const;

@@ -13,6 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { Usuario } from "@/model/model";
+import { cursoService } from "@/services/curso.service";
 
 interface EditarProfesoresModalProps {
   visible: boolean;
@@ -133,7 +134,7 @@ export const EditarProfesoresModal: React.FC<EditarProfesoresModalProps> = ({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
@@ -207,7 +208,7 @@ export const EditarProfesoresModal: React.FC<EditarProfesoresModalProps> = ({
                   style={styles.searchInput}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
-                  placeholder="Buscar por nombre o email..."
+                  placeholder="Buscar por nombre, apellido, email o dni..."
                   placeholderTextColor="#9ca3af"
                 />
                 {searching && (

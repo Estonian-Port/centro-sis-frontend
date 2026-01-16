@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { View, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Curso, Estado, EstadoCurso } from "@/model/model";
+import { Curso, Estado, EstadoCurso, nuevoCursoAlquilerProfesor } from "@/model/model";
 import CourseItem from "@/components/cards/CourseItem";
 import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
 import { ViewMode, ViewToggle } from "@/components/ui/ViewToggle";
@@ -21,7 +21,6 @@ const estadoFilterOptions: FilterOption<EstadoCurso>[] = [
   { value: EstadoCurso.POR_COMENZAR, label: "Por Comenzar", color: "#3b82f6" },
   { value: EstadoCurso.EN_CURSO, label: "En Curso", color: "#10b981" },
   { value: EstadoCurso.FINALIZADO, label: "Finalizado", color: "#6b7280" },
-  { value: EstadoCurso.PENDIENTE, label: "Pendiente", color: "#f59e0b" },
 ];
 
 export const DashboardProfesor = ({
@@ -35,6 +34,7 @@ export const DashboardProfesor = ({
   const [vistaActual, setVistaActual] = useState<ViewMode>("calendario");
   const [filtrosEstado, setFiltrosEstado] = useState<EstadoCurso[]>([]);
   const [cursoFormVisible, setCursoFormVisible] = useState(false);
+  const [cursoPendienteSeleccionado, setCursoPendienteSeleccionado] = useState<Curso | null>(null);
 
   // Toggle filtro de estado
   const toggleFiltroEstado = (estado: EstadoCurso) => {
@@ -72,17 +72,21 @@ export const DashboardProfesor = ({
 
   const handleViewCourseDetails = (course: Curso) => {
     if (course.estadoAlta === Estado.PENDIENTE) {
+      // Guardar el curso pendiente y abrir modal
+      setCursoPendienteSeleccionado(course);
       setCursoFormVisible(true);
     } else {
+      // Ir al panel del curso
       router.push(`/curso/${course.id}/alumnos`);
     }
   };
 
-  const handleCursoForm = async (curso: Curso) => {
+  const handleCursoForm = async (curso: nuevoCursoAlquilerProfesor) => {
     try {
       const response = await cursoService.completarCursoAlquiler(curso);
       onRefresh();
       setCursoFormVisible(false);
+      setCursoPendienteSeleccionado(null);
       Toast.show({
         type: "success",
         text1: "Curso completado exitosamente",
@@ -93,6 +97,11 @@ export const DashboardProfesor = ({
         text1: "Error al completar el curso",
       });
     }
+  };
+
+  const handleCloseModal = () => {
+    setCursoFormVisible(false);
+    setCursoPendienteSeleccionado(null);
   };
 
   return (
@@ -130,19 +139,12 @@ export const DashboardProfesor = ({
         {vistaActual === "lista" ? (
           <View style={styles.listView}>
             {filteredCourses.map((curso) => (
-              <>
-                <CourseItem
-                  key={curso.id}
-                  course={curso}
-                  handleCourseDetails={handleViewCourseDetails}
-                />
-                <CursoFormModal
-                  visible={cursoFormVisible}
-                  onClose={() => setCursoFormVisible(false)}
-                  onSuccess={(curso: Curso) => handleCursoForm(curso)}
-                  curso={curso}
-                />
-              </>
+              <CourseItem
+                key={curso.id}
+                course={curso}
+                handleCourseDetails={handleViewCourseDetails}
+                onEditPendingCourse={handleViewCourseDetails}
+              />
             ))}
           </View>
         ) : (
@@ -151,6 +153,7 @@ export const DashboardProfesor = ({
             onCursoPress={handleViewCourseDetails}
           />
         )}
+
         <View style={styles.resumenContainer}>
           <Text style={styles.cardTitle}>Resumen</Text>
           <Card>
@@ -168,6 +171,16 @@ export const DashboardProfesor = ({
           </Card>
         </View>
       </SafeAreaView>
+
+      {/* MODAL ÚNICO - Fuera del map */}
+      {cursoPendienteSeleccionado && (
+        <CursoFormModal
+          visible={cursoFormVisible}
+          onClose={handleCloseModal}
+          onSuccess={handleCursoForm}
+          curso={cursoPendienteSeleccionado}
+        />
+      )}
     </ScrollView>
   );
 };

@@ -9,13 +9,13 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Curso } from "@/model/model";
+import { Curso, CursoAlumno } from "@/model/model";
 import { COLORES } from "@/util/colores";
 import { useAuth } from "@/context/authContext";
 
 interface CalendarioSemanalProps {
-  cursos: Curso[];
-  onCursoPress?: (curso: Curso) => void;
+  cursos: CursoAlumno[];
+  onCursoPress?: (curso: Curso | CursoAlumno) => void;
 }
 
 const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
@@ -69,7 +69,7 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
         });
       });
       return acc;
-    }, {} as Record<string, Array<{ curso: Curso; horario: any }>>);
+    }, {} as Record<string, Array<{ curso: CursoAlumno; horario: any }>>);
   }, [cursos]);
 
   const renderDaySchedule = (dia: string) => {
@@ -92,7 +92,7 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
     return cursosOrdenados.map(({ curso, horario }, index) => (
       <TouchableOpacity
         key={`${curso.id}-${horario.horaInicio}-${index}`}
-        style={[styles.cursoItem, { borderLeftColor: getCursoColor(index) }]}
+        style={[styles.cursoItem, { borderLeftColor: getCursoColor(curso) }]}
         onPress={() => onCursoPress && onCursoPress(curso)}
         activeOpacity={0.7}
       >
@@ -118,16 +118,23 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
     ));
   };
 
-  const getCursoColor = (index: number) => {
-    const colores = [
-      "#3b82f6",
-      "#10b981",
-      "#f59e0b",
-      "#8b5cf6",
-      "#ef4444",
-      "#06b6d4",
-    ];
-    return colores[index % colores.length];
+  const getCursoColor = (curso: Curso | CursoAlumno) => {
+    if (selectedRole === "ALUMNO") {
+      if (
+        "estadoPago" in curso &&
+        (curso.estadoPago === "MOROSO" || curso.estadoPago === "ATRASADO")
+      ) {
+        return COLORES.rojo;
+      } else {
+        return COLORES.violeta;
+      }
+    }
+    if (curso.tipoCurso === "ALQUILER") {
+      return COLORES.verde;
+    }
+    if (curso.tipoCurso === "COMISION") {
+      return COLORES.azul;
+    }
   };
 
   // Mapeo de nombres de días del enum a español
@@ -173,7 +180,9 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
     <View style={styles.container}>
       {/* Header opcional */}
       <View style={styles.header}>
-        <Text style={styles.sectionTitle}>Calendario Semanal</Text>
+        <Text style={styles.sectionTitle}>
+          Calendario Semanal - Cursos activos
+        </Text>
       </View>
 
       {/* Grid de días */}

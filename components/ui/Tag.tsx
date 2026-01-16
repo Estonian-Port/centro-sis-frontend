@@ -1,43 +1,76 @@
-import React from 'react';
-import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+// components/ui/Tag.tsx
+import React from "react";
+import { View, Text, StyleSheet, ViewStyle } from "react-native";
 
-export type TagVariant =
-  | 'default'
-  // Roles
-  | 'rolAlumno'
-  | 'rolProfesor'
-  | 'rolAdmin'
-  | 'rolOficina'
-  // Estados
-  | 'activo'
-  | 'inactivo'
-  | 'pendiente'
-  | 'baja'
-  | 'finalizado'
-  // Pagos
-  | 'alDia'
-  | 'atrasado'
-  | 'moroso'
-  // Otros
-  | 'success'
-  | 'error'
-  | 'warning'
-  | 'info';
+type TagVariant = "primary" | "success" | "warning" | "danger" | "info" | "default";
+type TagSize = "default" | "small";
 
 interface TagProps {
   label: string;
   variant?: TagVariant;
+  size?: TagSize;
   style?: ViewStyle;
 }
 
-export const Tag: React.FC<TagProps> = ({
-  label,
-  variant = 'default',
-  style,
+export const Tag: React.FC<TagProps> = ({ 
+  label, 
+  variant = "default", 
+  size = "default",
+  style 
 }) => {
+  // ✅ Validar y sanitizar el variant
+  const validVariants: TagVariant[] = ["primary", "success", "warning", "danger", "info", "default"];
+  const safeVariant = validVariants.includes(variant) ? variant : "default";
+  
+  const variantStyles = {
+    primary: {
+      container: styles.primaryContainer,
+      text: styles.primaryText,
+    },
+    success: {
+      container: styles.successContainer,
+      text: styles.successText,
+    },
+    warning: {
+      container: styles.warningContainer,
+      text: styles.warningText,
+    },
+    danger: {
+      container: styles.dangerContainer,
+      text: styles.dangerText,
+    },
+    info: {
+      container: styles.infoContainer,
+      text: styles.infoText,
+    },
+    default: {
+      container: styles.defaultContainer,
+      text: styles.defaultText,
+    },
+  };
+
+  const sizeStyles = {
+    default: {
+      container: styles.containerDefault,
+      text: styles.textDefault,
+    },
+    small: {
+      container: styles.containerSmall,
+      text: styles.textSmall,
+    },
+  };
+
   return (
-    <View style={[styles.tag, styles[variant], style]}>
-      <Text style={[styles.text, styles[`${variant}Text`]]}>
+    <View
+      pointerEvents="none" // ✅ No intercepta clicks
+      style={[
+        styles.container,
+        sizeStyles[size].container,
+        variantStyles[safeVariant].container, // ✅ Usa safeVariant
+        style,
+      ]}
+    >
+      <Text style={[sizeStyles[size].text, variantStyles[safeVariant].text]}>
         {label}
       </Text>
     </View>
@@ -45,77 +78,73 @@ export const Tag: React.FC<TagProps> = ({
 };
 
 const styles = StyleSheet.create({
-  tag: {
-    paddingHorizontal: 8,
+  container: {
+    borderRadius: 4,
+    borderWidth: 1,
+    alignSelf: "flex-start",
+  },
+  containerDefault: {
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-    marginRight: 8,
-    marginBottom: 4,
   },
-  text: {
+  containerSmall: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  textDefault: {
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: "600",
   },
-
+  textSmall: {
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  // Primary (Azul)
+  primaryContainer: {
+    backgroundColor: "#dbeafe",
+    borderColor: "#3b82f6",
+  },
+  primaryText: {
+    color: "#1e40af",
+  },
+  // Success (Verde)
+  successContainer: {
+    backgroundColor: "#d1fae5",
+    borderColor: "#10b981",
+  },
+  successText: {
+    color: "#065f46",
+  },
+  // Warning (Amarillo)
+  warningContainer: {
+    backgroundColor: "#fef3c7",
+    borderColor: "#f59e0b",
+  },
+  warningText: {
+    color: "#92400e",
+  },
+  // Danger (Rojo)
+  dangerContainer: {
+    backgroundColor: "#fee2e2",
+    borderColor: "#ef4444",
+  },
+  dangerText: {
+    color: "#991b1b",
+  },
+  // Info (Gris)
+  infoContainer: {
+    backgroundColor: "#f3f4f6",
+    borderColor: "#9ca3af",
+  },
+  infoText: {
+    color: "#374151",
+  },
   // Default
-  default: { backgroundColor: '#f3f4f6' },
-  defaultText: { color: '#374151' },
-
-  /* =====================
-     ROLES
-     ===================== */
-  rolAlumno: { backgroundColor: '#dbeafe' }, // Celeste
-  rolAlumnoText: { color: '#1e40af' },
-
-  rolProfesor: { backgroundColor: '#8BE378' }, // Verde
-  rolProfesorText: { color: '#065f46' },
-
-  rolAdmin: { backgroundColor: '#EB4242' }, // Rojo
-  rolAdminText: { color: '#000' },
-
-  rolOficina: { backgroundColor: '#fef3c7' }, // Amarillo/Naranja
-  rolOficinaText: { color: '#92400e' },
-
-  /* =====================
-     ESTADOS
-     ===================== */
-  activo: { backgroundColor: '#CCF3C4' },
-  activoText: { color: '#166534' },
-
-  inactivo: { backgroundColor: '#e5e7eb' },
-  inactivoText: { color: '#374151' },
-
-  pendiente: { backgroundColor: '#fef3c7' },
-  pendienteText: { color: '#92400e' },
-
-  baja: { backgroundColor: '#fee2e2' },
-  bajaText: { color: '#991b1b' },
-
-  finalizado: { backgroundColor: '#e0e7ff' },
-  finalizadoText: { color: '#3730a3' },
-
-  /* =====================
-     ESTADOS DE PAGO
-     ===================== */
-  alDia: { backgroundColor: '#d1fae5' },
-  alDiaText: { color: '#065f46' },
-
-  atrasado: { backgroundColor: '#ffedd5' },
-  atrasadoText: { color: '#9a3412' },
-
-  moroso: { backgroundColor: '#fecaca' },
-  morosoText: { color: '#7f1d1d' },
-
-  success: { backgroundColor: '#d1fae5' },
-  successText: { color: '#065f46' },
-
-  error: { backgroundColor: '#fecaca' },
-  errorText: { color: '#7f1d1d' },
-
-  warning: { backgroundColor: '#ffedd5' },
-  warningText: { color: '#9a3412' },
-
-  info: { backgroundColor: '#dbeafe' },
-  infoText: { color: '#1e40af' },
+  defaultContainer: {
+    backgroundColor: "#f9fafb",
+    borderColor: "#d1d5db",
+  },
+  defaultText: {
+    color: "#6b7280",
+  },
 });
