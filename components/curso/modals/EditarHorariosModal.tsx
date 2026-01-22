@@ -171,7 +171,7 @@ export const EditarHorariosModal: React.FC<EditarHorariosModalProps> = ({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
@@ -219,7 +219,7 @@ export const EditarHorariosModal: React.FC<EditarHorariosModalProps> = ({
                       <View style={styles.horarioDia}>
                         <Ionicons name="calendar" size={18} color="#8b5cf6" />
                         <Text style={styles.horarioDiaText}>
-                          {horario.dia}
+                          {diasSemanaMap[horario.dia as DayOfWeek] || horario.dia}
                         </Text>
                       </View>
                       <View style={styles.horarioHoras}>

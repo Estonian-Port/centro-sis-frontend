@@ -6,114 +6,136 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
   ActivityIndicator,
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { Usuario, PagoType, TipoPago, Alumno, Curso } from "@/model/model";
+import { pagoService } from "@/services/pago.service";
+
+interface PagoPreview {
+  inscripcionId: number;
+  alumnoNombre: string;
+  cursoNombre: string;
+  montoPorCuota: number;
+  beneficio: number;
+  descuento: number;
+  recargoPorcentaje: number;
+  recargo: number;
+  montoFinal: number;
+  aplicaRecargo: boolean;
+  cuotasPagadas: number;
+  cuotasTotales: number;
+  cuotasEsperadas: number;
+  cuotasAtrasadas: number;
+  puedeRegistrar: boolean;
+}
 
 interface RegistrarPagoModalProps {
   visible: boolean;
   onClose: () => void;
-  alumno: Alumno;
-  curso: string;
-  tipoPago: TipoPago;
-  beneficio: number;
-  onRegistrar: (data: {
-    fecha: string;
-    aplicarRecargo: boolean;
-    medioPago: string;
-  }) => Promise<void>;
-  recargoPorAtraso: number;
+  inscripcionId: number;
+  usuarioId: number;
+  onSuccess: () => void;
 }
 
 export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
   visible,
   onClose,
-  alumno,
-  curso,
-  tipoPago,
-  beneficio,
-  onRegistrar,
-    recargoPorAtraso,
+  inscripcionId,
+  usuarioId,
+  onSuccess,
 }) => {
-  const [fecha, setFecha] = useState("");
-  const [medioPago, setMedioPago] = useState<string | null>(null);
-  const [aplicarRecargo, setAplicarRecargo] = useState(true);
+  const [preview, setPreview] = useState<PagoPreview | null>(null);
+  const [aplicarRecargo, setAplicarRecargo] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingPreview, setLoadingPreview] = useState(false);
 
-  // Calcular si hay retraso y si aplica recargo
-  const esPagoMensual = tipoPago.tipo === PagoType.MENSUAL;
-  const fechaActual = new Date();
-  const fechaPago = fecha ? new Date(fecha) : fechaActual;
-  const diaDelMes = fechaPago.getDate();
-  const hayRetraso = esPagoMensual && diaDelMes > 10;
 
+  // Sugerir recargo solo la primera vez que se abre el modal
   useEffect(() => {
     if (visible) {
-      // Setear fecha actual
-      const hoy = new Date();
-      const year = hoy.getFullYear();
-      const month = String(hoy.getMonth() + 1).padStart(2, "0");
-      const day = String(hoy.getDate()).padStart(2, "0");
-      setFecha(`${year}-${month}-${day}`);
-      setMedioPago(null);
-      setAplicarRecargo(true);
+      setAplicarRecargo(false); // Reiniciar estado al abrir
+      setLoadingPreview(true);
+      pagoService.calcularPreviewPago(usuarioId, {
+        inscripcionId,
+        aplicarRecargo: false,
+      })
+        .then((data) => {
+          setPreview(data);
+          // Sugerir recargo solo la primera vez
+          if (data.cuotasAtrasadas > 0) {
+            setAplicarRecargo(true);
+          }
+        })
+        .catch((error) => {
+          console.error("Error cargando preview:", error);
+          Toast.show({
+            type: "error",
+            text1: "Error",
+            text2: "No se pudo cargar la información del pago",
+            position: "bottom",
+          });
+          onClose();
+        })
+        .finally(() => {
+          setLoadingPreview(false);
+        });
     }
-  }, [visible]);
+  }, [visible, usuarioId, inscripcionId]);
 
-  // Calcular montos
-  const montoBase = tipoPago.monto;
-  const descuento = (montoBase * beneficio) / 100;
-  const montoConDescuento = montoBase - descuento;
-  const recargo = hayRetraso && aplicarRecargo 
-    ? (montoConDescuento * recargoPorAtraso) / 100 
-    : 0;
-  const montoFinal = montoConDescuento + recargo;
+  // Recargar preview solo cuando cambia aplicarRecargo (no sugerir recargo aquí)
+  useEffect(() => {
+    if (visible && preview) {
+      setLoadingPreview(true);
+      pagoService.calcularPreviewPago(usuarioId, {
+        inscripcionId,
+        aplicarRecargo,
+      })
+        .then((data) => {
+          setPreview(data);
+        })
+        .catch((error) => {
+          console.error("Error cargando preview:", error);
+          Toast.show({
+            type: "error",
+            text1: "Error",
+            text2: "No se pudo cargar la información del pago",
+            position: "bottom",
+          });
+          onClose();
+        })
+        .finally(() => {
+          setLoadingPreview(false);
+        });
+    }
+  }, [aplicarRecargo, visible, usuarioId, inscripcionId]);
 
   const handleRegistrar = async () => {
-    if (!fecha) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Selecciona una fecha de pago",
-        position: "bottom",
-      });
-      return;
-    }
-
-    if (!medioPago) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Selecciona un medio de pago",
-        position: "bottom",
-      });
-      return;
-    }
+    if (!preview) return;
 
     setLoading(true);
     try {
-      await onRegistrar({
-        fecha,
-        aplicarRecargo: hayRetraso && aplicarRecargo,
-        medioPago,
+      await pagoService.registrarPagoCurso(usuarioId, {
+        inscripcionId,
+        aplicarRecargo,
       });
+
       Toast.show({
         type: "success",
         text1: "Pago registrado",
-        text2: `Pago de $${montoFinal.toLocaleString("es-AR")} registrado`,
+        text2: `Pago de $${preview.montoFinal.toLocaleString("es-AR")} registrado`,
         position: "bottom",
       });
+      
+      onSuccess();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error registrando pago:", error);
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo registrar el pago",
+        text2: error.response?.data?.message || "No se pudo registrar el pago",
         position: "bottom",
       });
     } finally {
@@ -122,17 +144,23 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
   };
 
   const handleClose = () => {
-    setFecha("");
-    setMedioPago(null);
-    setAplicarRecargo(true);
+    setPreview(null);
+    setAplicarRecargo(false);
     onClose();
   };
 
-  const mediosPago = [
-    { id: "efectivo", label: "Efectivo", icon: "cash" },
-    { id: "transferencia", label: "Transferencia", icon: "swap-horizontal" },
-    { id: "tarjeta", label: "Tarjeta", icon: "card" },
-  ];
+  if (!preview || loadingPreview) {
+    return (
+      <Modal visible={visible} transparent animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#10b981" />
+            <Text style={styles.loadingText}>Calculando pago...</Text>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
 
   return (
     <Modal
@@ -165,154 +193,111 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
             <View style={styles.infoSection}>
               <View style={styles.infoRow}>
                 <Ionicons name="person" size={18} color="#6b7280" />
-                <Text style={styles.infoText}>
-                  {alumno.nombre} {alumno.apellido}
-                </Text>
+                <Text style={styles.infoText}>{preview.alumnoNombre}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Ionicons name="school" size={18} color="#6b7280" />
-                <Text style={styles.infoText}>{curso}</Text>
+                <Text style={styles.infoText}>{preview.cursoNombre}</Text>
               </View>
             </View>
 
-            {/* Tipo de pago (informativo) */}
+            {/* Progreso de cuotas */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Tipo de pago seleccionado</Text>
-              <View style={styles.tipoPagoCard}>
-                <Text style={styles.tipoPagoLabel}>
-                  {tipoPago.tipo === PagoType.MENSUAL
-                    ? "Pago Mensual"
-                    : "Pago Total"}
-                </Text>
-                <Text style={styles.tipoPagoMonto}>
-                  ${montoBase.toLocaleString("es-AR")}
-                </Text>
-              </View>
-            </View>
-
-            {/* Fecha de pago */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Fecha de pago</Text>
-              <TextInput
-                style={styles.dateInput}
-                value={fecha}
-                onChangeText={setFecha}
-                placeholder="YYYY-MM-DD"
-              />
-            </View>
-
-            {/* Advertencia de recargo */}
-            {esPagoMensual && (
-              <View style={styles.recargoSection}>
-                <View
-                  style={[
-                    styles.recargoInfo,
-                    hayRetraso ? styles.recargoWarning : styles.recargoOk,
-                  ]}
-                >
-                  <Ionicons
-                    name={hayRetraso ? "alert-circle" : "checkmark-circle"}
-                    size={20}
-                    color={hayRetraso ? "#f59e0b" : "#10b981"}
-                  />
-                  <Text
-                    style={[
-                      styles.recargoText,
-                      hayRetraso ? styles.recargoTextWarning : null,
-                    ]}
-                  >
-                    {hayRetraso
-                      ? `Pago fuera de fecha (después del día 10). Se aplicará ${recargoPorAtraso}% de recargo.`
-                      : "Pago dentro del plazo. Sin recargo."}
+              <Text style={styles.sectionTitle}>Progreso de cuotas</Text>
+              <View style={styles.progressCard}>
+                <View style={styles.progressInfo}>
+                  <Text style={styles.progressLabel}>Pagadas</Text>
+                  <Text style={styles.progressValue}>
+                    {preview.cuotasPagadas} / {preview.cuotasTotales}
                   </Text>
                 </View>
+                <View style={styles.progressBar}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      {
+                        width: `${(preview.cuotasPagadas / preview.cuotasTotales) * 100}%`,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+            </View>
 
-                {/* Checkbox para omitir recargo */}
-                {hayRetraso && (
-                  <TouchableOpacity
-                    style={styles.checkboxContainer}
-                    onPress={() => setAplicarRecargo(!aplicarRecargo)}
-                  >
-                    <View
-                      style={[
-                        styles.checkbox,
-                        !aplicarRecargo && styles.checkboxChecked,
-                      ]}
-                    >
-                      {!aplicarRecargo && (
-                        <Ionicons name="checkmark" size={16} color="#ffffff" />
-                      )}
-                    </View>
-                    <Text style={styles.checkboxLabel}>
-                      No aplicar recargo
-                    </Text>
-                  </TouchableOpacity>
-                )}
+            {/* Alerta de atraso */}
+            {preview.cuotasAtrasadas > 0 && (
+              <View style={styles.alertaAtraso}>
+                <Ionicons name="alert-circle" size={20} color="#dc2626" />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.alertaTitle}>
+                    {preview.cuotasAtrasadas}{" "}
+                    {preview.cuotasAtrasadas === 1 ? "cuota atrasada" : "cuotas atrasadas"}
+                  </Text>
+                  <Text style={styles.alertaSubtitle}>
+                    Debería haber pagado {preview.cuotasEsperadas} cuotas hasta hoy
+                  </Text>
+                </View>
               </View>
             )}
 
-            {/* Medio de pago */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Medio de pago</Text>
-              <View style={styles.mediosPagoContainer}>
-                {mediosPago.map((medio) => (
-                  <TouchableOpacity
-                    key={medio.id}
-                    style={[
-                      styles.medioPagoButton,
-                      medioPago === medio.id && styles.medioPagoButtonActive,
-                    ]}
-                    onPress={() => setMedioPago(medio.id)}
-                  >
-                    <Ionicons
-                      name={medio.icon as any}
-                      size={24}
-                      color={
-                        medioPago === medio.id ? "#10b981" : "#6b7280"
-                      }
-                    />
-                    <Text
-                      style={[
-                        styles.medioPagoLabel,
-                        medioPago === medio.id && styles.medioPagoLabelActive,
-                      ]}
-                    >
-                      {medio.label}
+            {/* Checkbox de recargo */}
+            <View style={styles.recargoSection}>
+              <TouchableOpacity
+                style={styles.checkboxContainer}
+                onPress={() => setAplicarRecargo(!aplicarRecargo)}
+              >
+                <View
+                  style={[
+                    styles.checkbox,
+                    aplicarRecargo && styles.checkboxChecked,
+                  ]}
+                >
+                  {aplicarRecargo && (
+                    <Ionicons name="checkmark" size={16} color="#ffffff" />
+                  )}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.checkboxLabel}>
+                    Aplicar recargo por atraso ({preview.recargoPorcentaje.toFixed(0)}%)
+                  </Text>
+                  {preview.cuotasAtrasadas > 0 && (
+                    <Text style={styles.checkboxHint}>
+                      Sugerido por cuotas atrasadas
                     </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                  )}
+                </View>
+              </TouchableOpacity>
             </View>
 
             {/* Resumen del pago */}
             <View style={styles.resumen}>
               <Text style={styles.resumenTitle}>Resumen del pago</Text>
-              
+
               <View style={styles.resumenRow}>
-                <Text style={styles.resumenLabel}>Monto base:</Text>
+                <Text style={styles.resumenLabel}>Monto por cuota:</Text>
                 <Text style={styles.resumenValue}>
-                  ${montoBase.toLocaleString("es-AR")}
+                  ${preview.montoPorCuota.toLocaleString("es-AR")}
                 </Text>
               </View>
 
-              {beneficio > 0 && (
+              {preview.beneficio > 0 && (
                 <View style={styles.resumenRow}>
                   <Text style={styles.resumenLabel}>
-                    Descuento ({beneficio}%):
+                    Descuento aplicado ({preview.beneficio}%):
                   </Text>
                   <Text style={[styles.resumenValue, styles.descuentoText]}>
-                    -${descuento.toLocaleString("es-AR")}
+                    -${preview.descuento.toLocaleString("es-AR")}
                   </Text>
                 </View>
               )}
 
-              {recargo > 0 && (
+              {preview.recargo > 0 && (
                 <View style={styles.resumenRow}>
                   <Text style={styles.resumenLabel}>
-                    Recargo ({recargoPorAtraso}%):
+                    Recargo ({preview.recargoPorcentaje.toFixed(0)}%):
                   </Text>
                   <Text style={[styles.resumenValue, styles.recargoText]}>
-                    +${recargo.toLocaleString("es-AR")}
+                    +${preview.recargo.toLocaleString("es-AR")}
                   </Text>
                 </View>
               )}
@@ -320,7 +305,7 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
               <View style={[styles.resumenRow, styles.totalRow]}>
                 <Text style={styles.totalLabel}>Total a pagar:</Text>
                 <Text style={styles.totalValue}>
-                  ${montoFinal.toLocaleString("es-AR", {
+                  ${preview.montoFinal.toLocaleString("es-AR", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -338,14 +323,20 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
                 <Text style={styles.cancelButtonText}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.button, styles.confirmButton]}
+                style={[
+                  styles.button,
+                  styles.confirmButton,
+                  !preview.puedeRegistrar && styles.disabledButton,
+                ]}
                 onPress={handleRegistrar}
-                disabled={loading || !fecha || !medioPago}
+                disabled={loading || !preview.puedeRegistrar}
               >
                 {loading ? (
                   <ActivityIndicator color="#ffffff" />
                 ) : (
-                  <Text style={styles.confirmButtonText}>Registrar Pago</Text>
+                  <Text style={styles.confirmButtonText}>
+                    {preview.puedeRegistrar ? "Registrar Pago" : "Pagos Completos"}
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -360,6 +351,20 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingContainer: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 32,
+    alignItems: "center",
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#6b7280",
+    fontWeight: "500",
   },
   scrollContent: {
     flexGrow: 1,
@@ -423,64 +428,68 @@ const styles = StyleSheet.create({
     color: "#374151",
     marginBottom: 8,
   },
-  tipoPagoCard: {
+  progressCard: {
     backgroundColor: "#f0fdf4",
     padding: 16,
     borderRadius: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     borderWidth: 1,
     borderColor: "#bbf7d0",
   },
-  tipoPagoLabel: {
+  progressInfo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  progressLabel: {
     fontSize: 14,
     color: "#6b7280",
   },
-  tipoPagoMonto: {
-    fontSize: 18,
+  progressValue: {
+    fontSize: 16,
     fontWeight: "700",
     color: "#10b981",
   },
-  dateInput: {
+  progressBar: {
+    height: 8,
+    backgroundColor: "#d1fae5",
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#10b981",
+  },
+  alertaAtraso: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    backgroundColor: "#fef2f2",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: "#1f2937",
+    borderColor: "#fecaca",
+  },
+  alertaTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#dc2626",
+    marginBottom: 4,
+  },
+  alertaSubtitle: {
+    fontSize: 13,
+    color: "#991b1b",
   },
   recargoSection: {
     marginBottom: 20,
   },
-  recargoInfo: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  recargoOk: {
-    backgroundColor: "#d1fae5",
-  },
-  recargoWarning: {
-    backgroundColor: "#fef3c7",
-  },
-  recargoText: {
-    flex: 1,
-    fontSize: 13,
-    color: "#1f2937",
-    lineHeight: 18,
-  },
-  recargoTextWarning: {
-    color: "#92400e",
-  },
   checkboxContainer: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    alignItems: "flex-start",
+    gap: 12,
+    padding: 16,
+    backgroundColor: "#f9fafb",
+    borderRadius: 12,
   },
   checkbox: {
     width: 20,
@@ -490,6 +499,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 2,
   },
   checkboxChecked: {
     backgroundColor: "#10b981",
@@ -497,32 +507,13 @@ const styles = StyleSheet.create({
   },
   checkboxLabel: {
     fontSize: 14,
+    fontWeight: "600",
     color: "#374151",
   },
-  mediosPagoContainer: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  medioPagoButton: {
-    flex: 1,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: "#e5e7eb",
-    borderRadius: 12,
-    alignItems: "center",
-    gap: 8,
-  },
-  medioPagoButtonActive: {
-    borderColor: "#10b981",
-    backgroundColor: "#f0fdf4",
-  },
-  medioPagoLabel: {
-    fontSize: 13,
-    fontWeight: "600",
+  checkboxHint: {
+    fontSize: 12,
     color: "#6b7280",
-  },
-  medioPagoLabelActive: {
-    color: "#10b981",
+    marginTop: 2,
   },
   resumen: {
     backgroundColor: "#f0fdf4",
@@ -553,7 +544,10 @@ const styles = StyleSheet.create({
     color: "#1f2937",
   },
   descuentoText: {
-    color: "#f59e0b",
+    color: "#10b981",
+  },
+  recargoText: {
+    color: "#dc2626",
   },
   totalRow: {
     marginTop: 8,
@@ -593,6 +587,9 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     backgroundColor: "#10b981",
+  },
+  disabledButton: {
+    backgroundColor: "#d1d5db",
   },
   confirmButtonText: {
     fontSize: 16,

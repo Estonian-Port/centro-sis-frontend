@@ -58,11 +58,11 @@ export const estadoPagoToTagVariant = (estadoPago: EstadoPago): "success" | "war
     case EstadoPago.AL_DIA:
       return "success";
     case EstadoPago.ATRASADO:
-      return "warning";
-    case EstadoPago.MOROSO:
       return "danger";
     case EstadoPago.PENDIENTE:
       return "info";
+    case EstadoPago.PAGO_COMPLETO:
+      return "success";
     default:
       return "info";
   }

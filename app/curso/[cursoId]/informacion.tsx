@@ -4,65 +4,72 @@ import { EditarModalidadesPagoModal } from "@/components/curso/modals/EditarModa
 import { EditarNombreCursoModal } from "@/components/curso/modals/EditarNombreCursoModal";
 import { EditarProfesoresModal } from "@/components/curso/modals/EditarProfesoresModal";
 import { formatDateToDDMMYYYY } from "@/helper/funciones";
-import { Curso, formatEstadoCurso } from "@/model/model";
+import { formatEstadoCurso, Pago, pagoToDisplay } from "@/model/model";
 import { cursoService } from "@/services/curso.service";
 import { usuarioService } from "@/services/usuario.service";
+import { useCurso } from "@/context/cursoContext";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
-  ActivityIndicator,
   Platform,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
-import Toast from "react-native-toast-message";
+import { useAuth } from "@/context/authContext";
+import { pagoService } from "@/services/pago.service";
+import { useEffect } from "react";
 
 export default function InformacionTab() {
   const { cursoId } = useLocalSearchParams();
-  const [curso, setCurso] = useState<Curso | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { selectedRole } = useAuth();
+  const { curso, fetchCurso } = useCurso();
   const [showEditarNombreModal, setShowEditarNombreModal] = useState(false);
   const [showEditarProfesoresModal, setShowEditarProfesoresModal] =
     useState(false);
   const [showEditarHorariosModal, setShowEditarHorariosModal] = useState(false);
   const [showEditarModalidadesModal, setShowEditarModalidadesModal] =
     useState(false);
+  const [pagosCurso, setPagosCurso] = useState<Pago[]>([]);
+  const [loadingPagos, setLoadingPagos] = useState(false);
+  const [mostrarTodos, setMostrarTodos] = useState(false);
 
+  // Agregar este useEffect para cargar pagos
   useEffect(() => {
-    fetchCurso();
-  }, [cursoId]);
+    if (curso && cursoId) {
+      loadPagos();
+    }
+  }, [curso, cursoId]);
 
-  const fetchCurso = async () => {
-    if (!cursoId) return;
-
-    setLoading(true);
+  // Cargar todos los pagos
+  const loadPagos = async () => {
+    setLoadingPagos(true);
     try {
-      const response = await cursoService.getById(Number(cursoId));
-      setCurso(response);
+      const pagos = await pagoService.getPagosPorCurso(Number(cursoId));
+      setPagosCurso(pagos);
     } catch (error) {
-      console.error("Error fetching curso:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "No se pudo cargar el curso",
-        position: "bottom",
-      });
+      console.error("Error cargando pagos:", error);
     } finally {
-      setLoading(false);
+      setLoadingPagos(false);
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-      </View>
-    );
-  }
+  const evaluarPorRol =
+    (curso?.tipoCurso === "COMISION" &&
+      selectedRole !== null &&
+      (selectedRole === "ADMINISTRADOR" || selectedRole === "OFICINA")) ||
+    (curso?.tipoCurso === "ALQUILER" &&
+      selectedRole !== null &&
+      (selectedRole === "ADMINISTRADOR" || selectedRole === "PROFESOR"));
+
+  const puedeEditar =
+    (curso?.estado === "EN_CURSO" || curso?.estado === "POR_COMENZAR") &&
+    curso?.estadoAlta === "ACTIVO" &&
+    evaluarPorRol;
 
   if (!curso) {
     return (
@@ -79,14 +86,22 @@ export default function InformacionTab() {
         <View style={styles.cardHeader}>
           <Ionicons name="information-circle" size={24} color="#3b82f6" />
           <Text style={styles.cardTitle}>Información General</Text>
-          <TouchableOpacity onPress={() => setShowEditarNombreModal(true)}>
-            <Ionicons name="pencil" size={20} color="#3b82f6" />
-          </TouchableOpacity>
+          {puedeEditar && (
+            <TouchableOpacity onPress={() => setShowEditarNombreModal(true)}>
+              <Ionicons name="pencil" size={20} color="#3b82f6" />
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.cardContent}>
           <InfoRow label="Estado" value={formatEstadoCurso(curso.estado)} />
-          <InfoRow label="Fecha Inicio" value={formatDateToDDMMYYYY(curso.fechaInicio)} />
-          <InfoRow label="Fecha Fin" value={formatDateToDDMMYYYY(curso.fechaFin)} />
+          <InfoRow
+            label="Fecha Inicio"
+            value={formatDateToDDMMYYYY(curso.fechaInicio)}
+          />
+          <InfoRow
+            label="Fecha Fin"
+            value={formatDateToDDMMYYYY(curso.fechaFin)}
+          />
           <InfoRow
             label="Alumnos Inscriptos"
             value={`${curso.inscripciones?.length || 0}`}
@@ -101,9 +116,13 @@ export default function InformacionTab() {
           <Text style={styles.cardTitle}>
             Profesores ({curso.profesores.length})
           </Text>
-          <TouchableOpacity onPress={() => setShowEditarProfesoresModal(true)}>
-            <Ionicons name="pencil" size={20} color="#10b981" />
-          </TouchableOpacity>
+          {puedeEditar && (
+            <TouchableOpacity
+              onPress={() => setShowEditarProfesoresModal(true)}
+            >
+              <Ionicons name="pencil" size={20} color="#10b981" />
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.cardContent}>
           {curso.profesores.map((profesor, index) => (
@@ -134,9 +153,11 @@ export default function InformacionTab() {
           <Text style={styles.cardTitle}>
             Horarios ({curso.horarios.length})
           </Text>
-          <TouchableOpacity onPress={() => setShowEditarHorariosModal(true)}>
-            <Ionicons name="pencil" size={20} color="#8b5cf6" />
-          </TouchableOpacity>
+          {puedeEditar && (
+            <TouchableOpacity onPress={() => setShowEditarHorariosModal(true)}>
+              <Ionicons name="pencil" size={20} color="#8b5cf6" />
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.cardContent}>
           {curso.horarios.map((horario, index) => (
@@ -170,11 +191,13 @@ export default function InformacionTab() {
             <Text style={styles.cardTitle}>
               Modalidades de Pago ({curso.tiposPago.length})
             </Text>
-            <TouchableOpacity
-              onPress={() => setShowEditarModalidadesModal(true)}
-            >
-              <Ionicons name="pencil" size={20} color="#f59e0b" />
-            </TouchableOpacity>
+            {puedeEditar && (
+              <TouchableOpacity
+                onPress={() => setShowEditarModalidadesModal(true)}
+              >
+                <Ionicons name="pencil" size={20} color="#f59e0b" />
+              </TouchableOpacity>
+            )}
           </View>
           <View style={styles.cardContent}>
             {curso.tiposPago.map((tipoPago, index) => (
@@ -187,7 +210,12 @@ export default function InformacionTab() {
               >
                 <View style={styles.tipoPagoInfo}>
                   <Ionicons name="cash-outline" size={18} color="#f59e0b" />
-                  <Text style={styles.tipoPagoTipo}>{tipoPago.tipo} {tipoPago.tipo === "MENSUAL" ? `- ${tipoPago.cuotas} cuotas` : ""}</Text>
+                  <Text style={styles.tipoPagoTipo}>
+                    {tipoPago.tipo}{" "}
+                    {tipoPago.tipo === "MENSUAL"
+                      ? `- ${tipoPago.cuotas} cuotas`
+                      : ""}
+                  </Text>
                 </View>
                 <Text style={styles.tipoPagoMonto}>
                   ${tipoPago.monto.toLocaleString()}
@@ -197,14 +225,149 @@ export default function InformacionTab() {
           </View>
         </View>
       )}
-      {/* Modales */}
+
+      {/* Pagos del Curso */}
+      {(curso.tipoCurso === "ALQUILER" || curso.tipoCurso === "COMISION") && (
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Ionicons
+              name="wallet"
+              size={24}
+              color={curso.tipoCurso === "ALQUILER" ? "#3b82f6" : "#10b981"}
+            />
+            <Text style={styles.cardTitle}>
+              {curso.tipoCurso === "ALQUILER"
+                ? "Pagos de Alquiler"
+                : "Pagos de Comisión"}
+            </Text>
+            {pagosCurso.length > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{pagosCurso.length}</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.cardContent}>
+            {loadingPagos ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#3b82f6" />
+                <Text style={styles.loadingText}>Cargando pagos...</Text>
+              </View>
+            ) : pagosCurso.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="receipt-outline" size={48} color="#d1d5db" />
+                <Text style={styles.emptyText}>
+                  No hay pagos registrados aún
+                </Text>
+              </View>
+            ) : (
+              <>
+                {/* Mostrar últimos 5 o todos si son menos */}
+                {pagosCurso
+                  .slice(0, mostrarTodos ? pagosCurso.length : 5)
+                  .map((pago, index, array) => {
+                    const pagoDisplay = pagoToDisplay(pago);
+                    return (
+                      <View
+                        key={pago.id}
+                        style={[
+                          styles.pagoItem,
+                          index === array.length - 1 &&
+                            (mostrarTodos || pagosCurso.length <= 5) &&
+                            styles.listItemLast,
+                        ]}
+                      >
+                        <View style={styles.pagoInfo}>
+                          <View style={styles.pagoHeader}>
+                            <Ionicons
+                              name="calendar-outline"
+                              size={16}
+                              color="#6b7280"
+                            />
+                            <Text style={styles.pagoFecha}>
+                              {formatDateToDDMMYYYY(pago.fecha)}
+                            </Text>
+                          </View>
+                          <Text style={styles.pagoDescripcion}>
+                            {curso.tipoCurso === "ALQUILER"
+                              ? `${pagoDisplay.usuarioPago} → Instituto`
+                              : `Instituto → ${pagoDisplay.usuarioRecibe}`}
+                          </Text>
+                        </View>
+                        <View style={styles.pagoMonto}>
+                          <Text
+                            style={[
+                              styles.pagoMontoText,
+                              {
+                                color:
+                                  curso.tipoCurso === "ALQUILER"
+                                    ? "#3b82f6"
+                                    : "#10b981",
+                              },
+                            ]}
+                          >
+                            ${pago.monto.toLocaleString()}
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  })}
+
+                {/* Botón Expandir/Contraer (solo si hay más de 5) */}
+                {pagosCurso.length > 5 && (
+                  <TouchableOpacity
+                    style={styles.expandButton}
+                    onPress={() => setMostrarTodos(!mostrarTodos)}
+                  >
+                    <Text style={styles.expandText}>
+                      {mostrarTodos
+                        ? "Mostrar menos"
+                        : `Ver ${pagosCurso.length - 5} más`}
+                    </Text>
+                    <Ionicons
+                      name={mostrarTodos ? "chevron-up" : "chevron-down"}
+                      size={16}
+                      color="#3b82f6"
+                    />
+                  </TouchableOpacity>
+                )}
+
+                {/* Resumen total */}
+                <View style={styles.resumenTotal}>
+                  <Text style={styles.resumenLabel}>
+                    Total{" "}
+                    {curso.tipoCurso === "ALQUILER" ? "pagado" : "liquidado"}:
+                  </Text>
+                  <Text
+                    style={[
+                      styles.resumenMonto,
+                      {
+                        color:
+                          curso.tipoCurso === "ALQUILER"
+                            ? "#3b82f6"
+                            : "#10b981",
+                      },
+                    ]}
+                  >
+                    $
+                    {pagosCurso
+                      .reduce((sum, p) => sum + p.monto, 0)
+                      .toLocaleString()}
+                  </Text>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      )}
+
       <EditarNombreCursoModal
         visible={showEditarNombreModal}
         onClose={() => setShowEditarNombreModal(false)}
         nombreActual={curso.nombre}
         onGuardar={async (nombre) => {
           await cursoService.updateNombre(Number(cursoId), nombre);
-          await fetchCurso();
+          await fetchCurso(false);
         }}
       />
 
@@ -214,7 +377,7 @@ export default function InformacionTab() {
         profesoresActuales={curso.profesores}
         onGuardar={async (ids) => {
           await cursoService.updateProfesores(Number(cursoId), ids);
-          await fetchCurso();
+          await fetchCurso(false);
         }}
         onBuscarProfesores={async (query) => {
           return await usuarioService.searchByRol(query, "PROFESOR");
@@ -227,7 +390,7 @@ export default function InformacionTab() {
         horariosActuales={curso.horarios}
         onGuardar={async (horarios) => {
           await cursoService.updateHorarios(Number(cursoId), horarios);
-          await fetchCurso();
+          await fetchCurso(false);
         }}
       />
 
@@ -238,9 +401,9 @@ export default function InformacionTab() {
         onGuardar={async (modalidades) => {
           await cursoService.updateModalidadesPago(
             Number(cursoId),
-            modalidades
+            modalidades,
           );
-          await fetchCurso();
+          await fetchCurso(false);
         }}
       />
     </ScrollView>
@@ -258,11 +421,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f9fafb",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
   errorContainer: {
     flex: 1,
@@ -396,5 +554,105 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#10b981",
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    padding: 24,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#6b7280",
+  },
+  emptyState: {
+    alignItems: "center",
+    padding: 32,
+    gap: 12,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#9ca3af",
+    textAlign: "center",
+  },
+  badge: {
+    backgroundColor: "#dbeafe",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: "auto",
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#1e40af",
+  },
+  pagoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+  },
+  pagoInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  pagoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  pagoFecha: {
+    fontSize: 13,
+    color: "#6b7280",
+    fontWeight: "500",
+  },
+  pagoDescripcion: {
+    fontSize: 14,
+    color: "#111827",
+    fontWeight: "500",
+  },
+  pagoMonto: {
+    marginLeft: 12,
+  },
+  pagoMontoText: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  expandButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    marginTop: 8,
+    backgroundColor: "#f0f9ff",
+    borderRadius: 8,
+  },
+  expandText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#3b82f6",
+  },
+  resumenTotal: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 16,
+    marginTop: 8,
+    borderTopWidth: 2,
+    borderTopColor: "#e5e7eb",
+  },
+  resumenLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#1f2937",
+  },
+  resumenMonto: {
+    fontSize: 18,
+    fontWeight: "700",
   },
 });

@@ -1,13 +1,7 @@
 import { Rol, Usuario } from "@/model/model";
 import { authService } from "@/services/api.service";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 export const STORAGE_KEY_TOKEN = "token";
 export const STORAGE_KEY_SELECTED_ROLE = "selectedRole"; // ✅ NUEVO
@@ -36,7 +30,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [selectedRole, setSelectedRoleState] = useState<Rol | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
+  
   // ✅ Wrapper para persistir el rol seleccionado
   const setSelectedRole = async (role: Rol | null) => {
     setSelectedRoleState(role);
@@ -46,7 +40,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
     }
   };
-
+  
   // Inicializar autenticación al montar
   useEffect(() => {
     const initAuth = async () => {
@@ -58,9 +52,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setIsAuthenticated(true);
 
           // ✅ Restaurar rol seleccionado si existe
-          const savedRole = await AsyncStorage.getItem(
-            STORAGE_KEY_SELECTED_ROLE
-          );
+          const savedRole = await AsyncStorage.getItem(STORAGE_KEY_SELECTED_ROLE);
           if (savedRole && currentUser.listaRol.includes(savedRole as Rol)) {
             setSelectedRoleState(savedRole as Rol);
           }
@@ -78,35 +70,33 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
     initAuth();
   }, []);
-
-  const login = async (
-    username: string,
-    password: string
-  ): Promise<Usuario> => {
+  
+  const login = async (username: string, password: string): Promise<Usuario> => {
     try {
       setIsLoading(true);
-
+      
       // 1. Obtener token del servidor
       const receivedToken = await authService.login(username, password);
-
+      
       // 2. Guardar token en storage
       await AsyncStorage.setItem(STORAGE_KEY_TOKEN, receivedToken);
-
+      
       // 3. Configurar headers del API con el token
       await authService.setAuthToken();
-
+      
       // 4. Obtener datos del usuario actual
       const currentUser = await authService.getCurrentUser();
-
+      
       // 5. Actualizar estado del contexto
       setUsuario(currentUser);
       setIsAuthenticated(true);
-
+      
       // ✅ 6. Limpiar rol anterior (nuevo login)
       await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
       setSelectedRoleState(null);
-
+      
       return currentUser;
+      
     } catch (e) {
       console.error("Error en login:", e);
       // Limpiar en caso de error
@@ -121,13 +111,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = async () => {
     try {
       setIsLoading(true);
-
+      
       await AsyncStorage.removeItem(STORAGE_KEY_TOKEN);
       await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE); // ✅ Limpiar rol
-
+      
       setUsuario(null);
       setIsAuthenticated(false);
       setSelectedRoleState(null);
+      
     } catch (e) {
       console.error("Error en logout:", e);
       throw e;
@@ -156,7 +147,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     hasRole,
     hasMultipleRoles,
   };
-
+  
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 

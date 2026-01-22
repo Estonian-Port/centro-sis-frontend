@@ -2,7 +2,8 @@
 import { AsistenciaItem } from "@/components/curso/AsistenciaItem";
 import { TomarAsistenciaModal } from "@/components/curso/modals/TomarAsistenciaModal";
 import { Button } from "@/components/ui/Button";
-import { Curso } from "@/model/model";
+import { useAuth } from "@/context/authContext";
+import { Curso, ParteAsistencia, Rol } from "@/model/model";
 import { cursoService } from "@/services/curso.service";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
@@ -16,20 +17,15 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
-// TODO: Crear modelo Asistencia en model.ts
-interface Asistencia {
-  id: number;
-  fecha: string;
-  presentes: Array<{ id: number; nombre: string; apellido: string }>;
-  ausentes: Array<{ id: number; nombre: string; apellido: string }>;
-}
-
 export default function AsistenciasTab() {
   const { cursoId } = useLocalSearchParams();
   const [curso, setCurso] = useState<Curso | null>(null);
-  const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
+  const [partesAsistencia, setPartesAsistencias] = useState<ParteAsistencia[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const { selectedRole, usuario } = useAuth();
 
   useEffect(() => {
     fetchData();
@@ -40,43 +36,20 @@ export default function AsistenciasTab() {
 
     setLoading(true);
     try {
-      // Cargar curso
       const cursoData = await cursoService.getById(Number(cursoId));
       setCurso(cursoData);
 
-      // TODO: Cargar asistencias desde el backend
-      // const asistenciasData = await asistenciaService.getByCursoId(Number(cursoId));
-      // setAsistencias(asistenciasData);
+      const partesAsistenciaData = await cursoService.obtenerPartesAsistencias(
+        Number(cursoId),
+      );
+      setPartesAsistencias(partesAsistenciaData.data);
 
-      // Datos de ejemplo mientras tanto
-      setAsistencias([
-        {
-          id: 1,
-          fecha: "2025-01-08",
-          presentes: [
-            { id: 1, nombre: "Juan", apellido: "Pérez" },
-            { id: 2, nombre: "María", apellido: "García" },
-            { id: 3, nombre: "Carlos", apellido: "López" },
-          ],
-          ausentes: [{ id: 4, nombre: "Ana", apellido: "Martínez" }],
-        },
-        {
-          id: 2,
-          fecha: "2025-01-06",
-          presentes: [
-            { id: 1, nombre: "Juan", apellido: "Pérez" },
-            { id: 2, nombre: "María", apellido: "García" },
-            { id: 4, nombre: "Ana", apellido: "Martínez" },
-          ],
-          ausentes: [{ id: 3, nombre: "Carlos", apellido: "López" }],
-        },
-      ]);
     } catch (error) {
       console.error("Error fetching data:", error);
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudieron cargar las asistencias",
+        text2: "No se pudieron cargar los partes de asistencia",
         position: "bottom",
       });
     } finally {
@@ -100,13 +73,21 @@ export default function AsistenciasTab() {
     );
   }
 
+  if (!usuario) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Usuario no autenticado</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Estadísticas Generales */}
       <View style={styles.statsCard}>
         <View style={styles.statItem}>
           <Ionicons name="calendar-outline" size={24} color="#3b82f6" />
-          <Text style={styles.statValue}>{asistencias.length}</Text>
+          <Text style={styles.statValue}>{partesAsistencia.length}</Text>
           <Text style={styles.statLabel}>Clases dictadas</Text>
         </View>
         <View style={styles.statDivider} />
@@ -121,11 +102,11 @@ export default function AsistenciasTab() {
         <View style={styles.statItem}>
           <Ionicons name="trending-up-outline" size={24} color="#f59e0b" />
           <Text style={styles.statValue}>
-            {asistencias.length > 0
+            {partesAsistencia.length > 0
               ? Math.round(
-                  (asistencias.reduce((sum, a) => sum + a.presentes.length, 0) /
-                    (asistencias.length * (curso.inscripciones?.length || 1))) *
-                    100
+                  (partesAsistencia.reduce((sum, a) => sum + a.presentes.length, 0) /
+                    (partesAsistencia.length * (curso.inscripciones?.length || 1))) *
+                    100,
                 )
               : 0}
             %
@@ -139,7 +120,10 @@ export default function AsistenciasTab() {
         title="Tomar Asistencia"
         variant="primary"
         onPress={() => setModalVisible(true)}
-        disabled={curso?.estado !== "EN_CURSO"}
+        disabled={
+          curso?.estado !== "EN_CURSO" ||
+          !(selectedRole === Rol.ADMINISTRADOR || selectedRole === Rol.PROFESOR)
+        }
         style={styles.tomarAsistenciaButton}
       />
 
@@ -147,45 +131,36 @@ export default function AsistenciasTab() {
       <View style={styles.historySection}>
         <Text style={styles.historyTitle}>Historial de Asistencias</Text>
 
-        {asistencias.length === 0 ? (
+        {partesAsistencia.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="calendar-outline" size={64} color="#d1d5db" />
             <Text style={styles.emptyStateTitle}>
-              No hay asistencias registradas
+              No hay partes de asistencia registradas
             </Text>
             <Text style={styles.emptyStateText}>
-              Las asistencias tomadas aparecerán aquí
+              Los partes de asistencia tomados aparecerán aquí
             </Text>
           </View>
         ) : (
-          asistencias.map((asistencia) => (
-            <AsistenciaItem key={asistencia.id} asistencia={asistencia} />
-          ))
+          partesAsistencia.map((p) => <AsistenciaItem key={p.id} parte={p} />)
         )}
       </View>
       <TomarAsistenciaModal
         cursoId={Number(cursoId)}
+        usuarioId={usuario.id}
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         cursoNombre={curso.nombre}
         onConfirmar={async () => {
-          await cursoService.tomarAsistenciaAutomatica(Number(cursoId));
+          await fetchData();
           setModalVisible(false);
-          fetchData();
-          Toast.show({
-            type: "info",
-            text1: "Funcionalidad en desarrollo",
-            position: "bottom",
-          });
         }}
-        yaSeTomoHoy={asistencias.some((a) => {
-          console.log("Comparando fecha de asistencia:", a.fecha);
+        yaSeTomoHoy={partesAsistencia.some((a) => {
           const hoy = new Date();
           const fechaHoy = `${hoy.getFullYear()}-${String(
-            hoy.getMonth() + 1
+            hoy.getMonth() + 1,
           ).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
           const resultado = a.fecha === fechaHoy;
-          console.log("resultado de la comparación:", resultado);
           return resultado;
         })}
       />

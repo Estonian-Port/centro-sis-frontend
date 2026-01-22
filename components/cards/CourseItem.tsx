@@ -24,20 +24,29 @@ import {
   estadoCursoToTagVariant,
   estadoToTagVariant,
 } from "@/helper/funciones";
+import { BajaTotalCurso } from "../modals/BajaTotalCursoModal";
+import { RegistrarPagoCursoModal } from "../modals/RegistrarPagoCursoModal";
+import { set } from "react-hook-form";
 
 interface CourseItemProps {
   course: Curso | CursoAlumno;
   handleCourseDetails: (course: Curso | CursoAlumno) => void;
   onEditPendingCourse?: (course: Curso) => void;
+  onRegistrarPago?: (course: Curso) => void;
+  onDarDeBaja?: (courseId: number) => void;
 }
 
 const CourseItem = ({
   course,
   handleCourseDetails,
   onEditPendingCourse,
+  onRegistrarPago,
+  onDarDeBaja,
 }: CourseItemProps) => {
-  const { selectedRole } = useAuth();
+  const { selectedRole, usuario } = useAuth();
   const [showPendingModal, setShowPendingModal] = useState(false);
+  const [showBajaModal, setShowBajaModal] = useState(false);
+  const [showRegistrarPagoModal, setShowRegistrarPagoModal] = useState(false);
 
   // Determinar si es CursoAlumno (tiene estadoPago)
   const esCursoAlumno = (curso: Curso | CursoAlumno): curso is CursoAlumno => {
@@ -49,9 +58,7 @@ const CourseItem = ({
 
   // Determinar si el alumno tiene deuda
   const tieneDeuda =
-    esCursoAlumno(course) &&
-    (course.estadoPago === EstadoPago.ATRASADO ||
-      course.estadoPago === EstadoPago.MOROSO);
+    esCursoAlumno(course) && course.estadoPago === EstadoPago.ATRASADO;
 
   // 🎨 LÓGICA DE COLORES ACTUALIZADA
   const getEstilosCurso = () => {
@@ -106,6 +113,16 @@ const CourseItem = ({
         }
       : {};
 
+  // Colores para cursos dados de baja (gris, opaco, texto deshabilitado)
+  const estilosBaja =
+    course.estadoAlta === Estado.BAJA
+      ? {
+          backgroundColor: "#f3f4f6",
+          borderColor: "#9ca3af",
+          opacity: 0.8,
+        }
+      : {};
+
   const handlePress = () => {
     if (esPendiente && selectedRole !== Rol.ALUMNO) {
       if (selectedRole === Rol.PROFESOR && onEditPendingCourse) {
@@ -121,6 +138,41 @@ const CourseItem = ({
     }
   };
 
+  // ✅ NUEVO: Determinar si mostrar botones de acción
+  const mostrarBotonesAccion =
+    (selectedRole === Rol.ADMINISTRADOR || selectedRole === Rol.OFICINA) &&
+    !esCursoAlumno(course); // Solo para Curso, no CursoAlumno
+
+  // ✅ NUEVO: Texto del botón de pago según tipo de curso
+  const getTextoPago = () => {
+    if (course.tipoCurso === TipoCurso.ALQUILER) {
+      return "Alquiler"; // Profesor paga al instituto
+    } else {
+      return "Comisión"; // Instituto paga al profesor
+    }
+  };
+
+  // ✅ NUEVO: Handlers de botones
+  const handleRegistrarPago = (e: any) => {
+    e.stopPropagation(); // Evitar que abra el curso
+    setShowRegistrarPagoModal(true);
+  };
+
+  const handleDarDeBaja = (e: any) => {
+    e.stopPropagation(); // Evitar que abra el curso
+    setShowBajaModal(true);
+  };
+
+  const confirmarBaja = async (cursoId: number) => {
+    if (onDarDeBaja) {
+      onDarDeBaja(cursoId);
+    }
+  };
+
+  if (!course || !usuario) {
+    return null;
+  }
+
   return (
     <>
       <TouchableOpacity
@@ -133,6 +185,7 @@ const CourseItem = ({
             borderWidth: estilos.borderWidth,
           },
           estilosPendiente,
+          estilosBaja,
         ]}
         onPress={handlePress}
         activeOpacity={0.7}
@@ -159,6 +212,14 @@ const CourseItem = ({
               {/* Icono de advertencia para pendientes - SOLO NO ALUMNO */}
               {esPendiente && selectedRole !== Rol.ALUMNO && (
                 <Ionicons name="alert-circle" size={20} color="#f59e0b" />
+              )}
+
+              {/* Icono de deuda - SOLO ALUMNO */}
+              {tieneDeuda && selectedRole === Rol.ALUMNO && (
+                <View style={styles.deudaBadge}>
+                  <Ionicons name="warning" size={16} color="#ef4444" />
+                  <Text style={styles.deudaText}>DEUDA</Text>
+                </View>
               )}
             </View>
 
@@ -245,6 +306,61 @@ const CourseItem = ({
                 </Text>
               </View>
             )}
+
+            {/* ✅ FILA 3: Botones de Acción (solo Admin/Oficina) */}
+            {mostrarBotonesAccion &&
+              course.estadoAlta !== Estado.PENDIENTE &&
+              course.estadoAlta !== Estado.BAJA && (
+                <View style={styles.actionButtons}>
+                  {/* Botón Registrar Pago */}
+                  <TouchableOpacity
+                    style={[
+                      styles.actionButton,
+                      styles.pagoButton,
+                      {
+                        backgroundColor:
+                          course.tipoCurso === TipoCurso.ALQUILER
+                            ? "#dbeafe"
+                            : "#d1fae5",
+                      },
+                    ]}
+                    onPress={handleRegistrarPago}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name="cash"
+                      size={16}
+                      color={
+                        course.tipoCurso === TipoCurso.ALQUILER
+                          ? "#3b82f6"
+                          : "#10b981"
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.actionButtonText,
+                        {
+                          color:
+                            course.tipoCurso === TipoCurso.ALQUILER
+                              ? "#1e40af"
+                              : "#065f46",
+                        },
+                      ]}
+                    >
+                      {getTextoPago()}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Botón Dar de Baja */}
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.bajaButton]}
+                    onPress={handleDarDeBaja}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                  </TouchableOpacity>
+                </View>
+              )}
           </View>
         </View>
       </TouchableOpacity>
@@ -290,6 +406,22 @@ const CourseItem = ({
           </View>
         </View>
       </Modal>
+
+      <BajaTotalCurso
+        visible={showBajaModal}
+        onClose={() => setShowBajaModal(false)}
+        curso={course as Curso}
+        onConfirmar={async (cursoId: number) => confirmarBaja(cursoId)}
+      />
+
+      <RegistrarPagoCursoModal
+        visible={showRegistrarPagoModal}
+        onClose={() => {
+          setShowRegistrarPagoModal(false);
+        }}
+        curso={course as Curso}
+        usuarioId={usuario.id}
+      />
     </>
   );
 };
@@ -347,6 +479,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     flex: 1,
+  },
+  deudaBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#fee2e2",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#ef4444",
+  },
+  deudaText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#ef4444",
   },
   // Fila 2: Profesores
   profesoresRow: {
@@ -413,6 +561,38 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: "#374151",
+  },
+  actionButtons: {
+    flexDirection: "row",
+    gap: 6,
+    alignItems: "center",
+  },
+  actionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    ...Platform.select({
+      web: {
+        cursor: "pointer",
+      },
+    }),
+  },
+  pagoButton: {
+    // El backgroundColor se define dinámicamente
+    borderColor: "transparent",
+  },
+  actionButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  bajaButton: {
+    backgroundColor: "#fee2e2",
+    borderColor: "#fecaca",
+    paddingHorizontal: 8,
   },
   // Modal Styles
   modalOverlay: {

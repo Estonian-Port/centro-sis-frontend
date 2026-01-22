@@ -1,6 +1,6 @@
 // components/curso/AlumnoItem.tsx - REFACTORIZADO
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { use, useState } from "react";
 import {
   View,
   Text,
@@ -8,28 +8,28 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
-import { Inscripcion } from "@/model/model";
+import { Curso, Inscripcion } from "@/model/model";
 import { Tag } from "../ui/Tag";
 import { formatEstadoPago } from "@/model/model";
-import { pagoService } from "@/services/pago.service";
 import { inscripcionService } from "@/services/inscripcion.service";
 import { AlumnoDetailModal } from "./modals/AlumnoInscripcionModal";
 import { AsignarPuntosModal } from "./modals/AsignarPuntosModal";
 import { EditarBeneficioModal } from "./modals/EditarBeneficioModal";
 import { RegistrarPagoModal } from "./modals/RegistrarPagoModal";
 import { ConfirmarBajaModal } from "./modals/BajaAlumnoModal";
+import { estadoPagoToTagVariant } from "@/helper/funciones";
+import { pagoService } from "@/services/pago.service";
+import { useAuth } from "@/context/authContext";
 
 interface AlumnoItemProps {
   inscripcion: Inscripcion;
-  cursoNombre: string;
-  recargoPorcentaje: number;
+  curso: Curso;
   onRefresh: () => Promise<void>;
 }
 
 export const AlumnoItem: React.FC<AlumnoItemProps> = ({
   inscripcion,
-  cursoNombre,
-  recargoPorcentaje,
+  curso,
   onRefresh,
 }) => {
   // Estados de modales
@@ -38,22 +38,11 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
   const [showBeneficioModal, setShowBeneficioModal] = useState(false);
   const [showPagoModal, setShowPagoModal] = useState(false);
   const [showBajaModal, setShowBajaModal] = useState(false);
+  const { usuario } = useAuth();
 
   const alumno = inscripcion.alumno;
 
-  // Helper para obtener variant del tag según estado de pago
-  const getEstadoPagoVariant = (estado: string) => {
-    switch (estado) {
-      case "AL_DIA":
-        return "success";
-      case "ATRASADO":
-        return "warning";
-      case "PENDIENTE":
-        return "error";
-      default:
-        return "info";
-    }
-  };
+  if (!alumno || !usuario) return null;
 
   return (
     <>
@@ -86,7 +75,7 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         <View style={styles.cardRight}>
           <Tag
             label={formatEstadoPago(inscripcion.estadoPago)}
-            variant={getEstadoPagoVariant(inscripcion.estadoPago)}
+            variant={estadoPagoToTagVariant(inscripcion.estadoPago)}
           />
           <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
         </View>
@@ -97,6 +86,7 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         visible={showDetailModal}
         onClose={() => setShowDetailModal(false)}
         inscripcion={inscripcion}
+        curso={curso}
         onOpenRegistrarPago={() => {
           setShowDetailModal(false);
           setShowPagoModal(true);
@@ -144,7 +134,7 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         onGuardar={async (beneficio) => {
           await inscripcionService.actualizarBeneficio(
             inscripcion.id,
-            beneficio
+            beneficio,
           );
           await onRefresh();
           // Al guardar, NO reabre el detalle, va a la lista
@@ -158,20 +148,9 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
           setShowPagoModal(false);
           setShowDetailModal(true); // ← REABRE el detalle
         }}
-        alumno={inscripcion.alumno}
-        curso={cursoNombre}
-        tipoPago={inscripcion.tipoPagoElegido}
-        beneficio={inscripcion.beneficio}
-        recargoPorAtraso={recargoPorcentaje}
-        onRegistrar={async (data) => {
-          await pagoService.registrarPagoCurso({
-            inscripcionId: inscripcion.id,
-            fecha: data.fecha,
-            monto: inscripcion.tipoPagoElegido.monto,
-            retraso: data.aplicarRecargo,
-            beneficioAplicado: inscripcion.beneficio,
-            medioPago: data.medioPago,
-          });
+        usuarioId={usuario.id}
+        inscripcionId={inscripcion.id}
+        onSuccess={async () => {
           await onRefresh();
           // Al registrar, NO reabre el detalle, va a la lista
         }}
@@ -185,7 +164,7 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
           setShowDetailModal(true); // ← REABRE el detalle
         }}
         alumno={inscripcion.alumno}
-        curso={cursoNombre}
+        curso={curso.nombre}
         onConfirmar={async () => {
           await inscripcionService.eliminarInscripcion(inscripcion.id);
           await onRefresh();

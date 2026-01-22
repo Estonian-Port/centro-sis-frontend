@@ -1,14 +1,8 @@
-// app/(tabs)/pagos/realizados.tsx
-import { PagoItem } from "@/components/pagos/PagoItem";
-import { SearchBar } from "@/components/ui/SearchBar";
-import {
-  Pago,
-  pagoToDisplay,
-  TipoPagoConcepto,
-  Rol,
-} from "@/model/model";
+// app/(tabs)/accesos/mis-accesos.tsx
+import { MultiSelect, MultiSelectOption } from "@/components/ui/MultiSelect";
+import { Access } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -18,69 +12,26 @@ import {
   TouchableOpacity,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import { FilterOption } from "@/components/ui/FilterChip";
-import { MultiSelect, MultiSelectOption } from "@/components/ui/MultiSelect";
 import { useAuth } from "@/context/authContext";
-import { pagoService } from "@/services/pago.service";
+import { accesoService } from "@/services/acceso.service";
+import { AccesoItem } from "@/components/accesos/AccesoItem";
 
 type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
-export default function PagosRealizadosScreen() {
-  const { usuario, selectedRole } = useAuth();
-
-  const [pagos, setPagos] = useState<Pago[]>([]);
+export default function MisAccesosScreen() {
+  const { usuario } = useAuth();
+  
+  const [accesos, setAccesos] = useState<Access[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
 
-  // Filtros
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTipos, setSelectedTipos] = useState<TipoPagoConcepto[]>([]);
+  // Filtro
   const [selectedMeses, setSelectedMeses] = useState<Mes[]>([]);
 
   const PAGE_SIZE = 20;
-
-  // Determinar tipos de pago disponibles según rol
-  const tiposPagoDisponibles = useMemo((): FilterOption<TipoPagoConcepto>[] => {
-    if (!usuario) return [];
-
-    const roles = usuario.listaRol;
-    const isAdminOrOficina =
-      roles.includes(Rol.ADMINISTRADOR) || roles.includes(Rol.OFICINA);
-    const isProfesor = roles.includes(Rol.PROFESOR);
-    const isAlumno = roles.includes(Rol.ALUMNO);
-
-    if (isAdminOrOficina) {
-      // Admin/Oficina realiza COMISION a profesores
-      return [
-        {
-          value: TipoPagoConcepto.COMISION,
-          label: "Comisión",
-          color: "#8b5cf6",
-        },
-      ];
-    }
-
-    if (isProfesor) {
-      // Profesor realiza ALQUILER al instituto
-      return [
-        {
-          value: TipoPagoConcepto.ALQUILER,
-          label: "Alquiler",
-          color: "#10b981",
-        },
-      ];
-    }
-
-    if (isAlumno) {
-      // Alumnos solo pagan CURSO (sin chips, siempre CURSO)
-      return [];
-    }
-
-    return [];
-  }, [usuario]);
 
   const mesFilterOptions: MultiSelectOption<Mes>[] = [
     { value: 1, label: "Enero", color: "#3b82f6" },
@@ -99,12 +50,12 @@ export default function PagosRealizadosScreen() {
 
   useEffect(() => {
     if (usuario) {
-      fetchPagos(0);
+      fetchAccesos(0);
     }
-  }, [searchQuery, selectedTipos, selectedMeses, usuario]);
+  }, [selectedMeses, usuario]);
 
-  const fetchPagos = async (pageNum: number = 0) => {
-    if (!usuario || !selectedRole) return;
+  const fetchAccesos = async (pageNum: number = 0) => {
+    if (!usuario) return;
 
     if (pageNum === 0) {
       setLoading(true);
@@ -113,33 +64,29 @@ export default function PagosRealizadosScreen() {
     }
 
     try {
-      // ✅ Llamada real al backend con filtros
-      const response = await pagoService.getPagosRealizados(
-        usuario.id,
-        selectedRole,
-        {
-          page: pageNum,
-          size: PAGE_SIZE,
-          search: searchQuery || undefined,
-          meses: selectedMeses.length > 0 ? selectedMeses : undefined,
-        }
-      );
+      const response = await accesoService.getMisAccesos(usuario.id, {
+        page: pageNum,
+        size: PAGE_SIZE,
+        meses: selectedMeses.length > 0 ? selectedMeses : undefined,
+      });
 
       if (pageNum === 0) {
-        setPagos(response.content);
+        setAccesos(response.content);
       } else {
-        setPagos((prev) => [...prev, ...response.content]);
+        setAccesos((prev) => [...prev, ...response.content]);
       }
+
+      console.log("Fetched accesos:", response);
 
       setPage(response.page);
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
     } catch (error) {
-      console.error("Error fetching pagos:", error);
+      console.error("Error fetching accesos:", error);
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudieron cargar los pagos",
+        text2: "No se pudieron cargar los accesos",
         position: "bottom",
       });
     } finally {
@@ -150,14 +97,8 @@ export default function PagosRealizadosScreen() {
 
   const handleLoadMore = () => {
     if (page < totalPages - 1 && !loadingMore) {
-      fetchPagos(page + 1);
+      fetchAccesos(page + 1);
     }
-  };
-
-  const handleToggleTipo = (tipo: TipoPagoConcepto) => {
-    setSelectedTipos((prev) =>
-      prev.includes(tipo) ? prev.filter((t) => t !== tipo) : [...prev, tipo]
-    );
   };
 
   const handleToggleMes = (mes: Mes) => {
@@ -170,7 +111,7 @@ export default function PagosRealizadosScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.loadingText}>Cargando pagos...</Text>
+        <Text style={styles.loadingText}>Cargando accesos...</Text>
       </View>
     );
   }
@@ -181,70 +122,53 @@ export default function PagosRealizadosScreen() {
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
       >
+        {/* Header con contador */}
         <View style={styles.header}>
-          <Text style={styles.title}>Pagos Realizados</Text>
+          <Text style={styles.title}>Mis Accesos</Text>
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{totalElements}</Text>
           </View>
         </View>
 
-        <SearchBar
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Buscar por curso o destinatario..."
-          style={styles.searchBar}
-        />
+        {/* Filtros por Mes */}
+        <View style={styles.filterSection}>
+          <Text style={styles.filterLabel}>Filtrar por Mes:</Text>
+          <MultiSelect
+            options={mesFilterOptions}
+            selectedValues={selectedMeses}
+            onToggle={handleToggleMes}
+            placeholder="Seleccionar meses"
+          />
+        </View>
 
-        {/* Filtros en una línea (Admin/Profesor) */}
-        {tiposPagoDisponibles.length > 0 && (
-          <View style={styles.filtersRow}>
-            <Text style={styles.filterLabel}>Filtrar:</Text>
-
-            {/* Dropdown de Meses */}
-            <View style={styles.multiSelectContainer}>
-              <MultiSelect
-                options={mesFilterOptions}
-                selectedValues={selectedMeses}
-                onToggle={handleToggleMes}
-                placeholder="Meses"
-              />
-            </View>
-          </View>
-        )}
-
-        {/* Solo filtro de meses (Alumno) */}
-        {tiposPagoDisponibles.length === 0 && (
-          <View style={styles.filterSection}>
-            <Text style={styles.filterLabel}>Filtrar por Mes:</Text>
-            <MultiSelect
-              options={mesFilterOptions}
-              selectedValues={selectedMeses}
-              onToggle={handleToggleMes}
-              placeholder="Seleccionar meses"
-            />
-          </View>
-        )}
-
-        {pagos.length === 0 ? (
+        {/* Lista de Accesos */}
+        {accesos.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="card-outline" size={64} color="#d1d5db" />
-            <Text style={styles.emptyTitle}>No hay pagos realizados</Text>
+            <Ionicons
+              name={selectedMeses.length > 0 ? "search" : "log-in-outline"}
+              size={64}
+              color="#d1d5db"
+            />
+            <Text style={styles.emptyTitle}>
+              {selectedMeses.length > 0
+                ? "No se encontraron accesos"
+                : "No hay accesos registrados"}
+            </Text>
             <Text style={styles.emptyText}>
-              {searchQuery ||
-              selectedTipos.length > 0 ||
-              selectedMeses.length > 0
-                ? "No se encontraron pagos con ese criterio"
-                : "Los pagos que realices aparecerán aquí"}
+              {selectedMeses.length > 0
+                ? "Intenta con otros meses"
+                : "Tus accesos al centro aparecerán aquí"}
             </Text>
           </View>
         ) : (
           <>
-            <View style={styles.pagosList}>
-              {pagos.map((pago) => (
-                <PagoItem key={pago.id} pago={pagoToDisplay(pago)} />
+            <View style={styles.accesosList}>
+              {accesos.map((acc) => (
+                <AccesoItem key={acc.id} acceso={acc} />
               ))}
             </View>
 
+            {/* Botón Cargar Más */}
             {page < totalPages - 1 && (
               <TouchableOpacity
                 style={styles.loadMoreButton}
@@ -262,8 +186,10 @@ export default function PagosRealizadosScreen() {
               </TouchableOpacity>
             )}
 
+            {/* Indicador de página */}
             <Text style={styles.pageInfo}>
-              Página {page + 1} de {totalPages} • {totalElements} pagos totales
+              Página {page + 1} de {totalPages} • {totalElements} accesos
+              totales
             </Text>
           </>
         )}
@@ -315,30 +241,17 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#3b82f6",
   },
-  searchBar: {
-    marginBottom: 16,
-  },
-  filtersRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
+  filterSection: {
+    marginBottom: 12,
   },
   filterLabel: {
     fontSize: 13,
     fontWeight: "600",
     color: "#374151",
-    marginRight: 4,
+    marginBottom: 6,
   },
-  multiSelectContainer: {
-    flex: 1,
-  },
-  filterSection: {
-    marginBottom: 16,
-  },
-  pagosList: {
-    gap: 0,
+  accesosList: {
+    gap: 8,
   },
   loadMoreButton: {
     flexDirection: "row",

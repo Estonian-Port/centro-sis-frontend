@@ -1,7 +1,7 @@
 // app/curso/[cursoId]/_layout.tsx - FIXED
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter, Slot, usePathname } from "expo-router";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,10 +12,11 @@ import {
 import { COLORES } from "@/util/colores";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { cursoService } from "@/services/curso.service";
-import { Curso, EstadoCurso, formatEstadoCurso } from "@/model/model";
+import { Curso, formatEstadoCurso } from "@/model/model";
 import Toast from "react-native-toast-message";
 import { Tag } from "@/components/ui/Tag";
 import { estadoCursoToTagVariant } from "@/helper/funciones";
+import { CursoContext } from "@/context/cursoContext";
 
 export default function CursoLayout() {
   const { cursoId } = useLocalSearchParams();
@@ -37,10 +38,10 @@ export default function CursoLayout() {
     fetchCurso();
   }, [cursoId]);
 
-  const fetchCurso = async () => {
+  const fetchCurso = useCallback(async (showLoading = true) => {
     if (!cursoId) return;
 
-    setLoading(true);
+    if (showLoading) setLoading(true);
     try {
       const response = await cursoService.getById(Number(cursoId));
       setCurso(response);
@@ -53,9 +54,9 @@ export default function CursoLayout() {
         position: "bottom",
       });
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
-  };
+  }, [cursoId]);
 
   const handleTabChange = (tab: "alumnos" | "informacion" | "asistencias") => {
     // ← FIX: Usar replace en lugar de push para no agregar al historial
@@ -154,7 +155,9 @@ export default function CursoLayout() {
       </View>
 
       {/* Content */}
-      <Slot />
+      <CursoContext.Provider value={{ curso, fetchCurso }}>
+        <Slot />
+      </CursoContext.Provider>
     </SafeAreaView>
   );
 }

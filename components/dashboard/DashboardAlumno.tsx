@@ -18,7 +18,7 @@ const estadoFilterOptions: FilterOption<EstadoCurso>[] = [
 
 export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [vistaActual, setVistaActual] = useState<ViewMode>("calendario");
+  const [vistaActual, setVistaActual] = useState<ViewMode>("lista");
   const [filtrosEstado, setFiltrosEstado] = useState<EstadoCurso[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<CursoAlumno | null>(null);
   const [showModalDetailsCourse, setShowModalDetailsCourse] = useState(false);
@@ -83,7 +83,7 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
           <ViewToggle
             currentView={vistaActual}
             onViewChange={setVistaActual}
-            availableViews={["calendario", "lista"]}
+            availableViews={["lista", "calendario"]}
           />
 
           <FilterChips

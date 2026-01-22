@@ -3,7 +3,10 @@ import { useAuth } from "@/context/authContext";
 import { Rol } from "@/model/model";
 import { COLORES } from "@/util/colores";
 import { Ionicons } from "@expo/vector-icons";
-import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
+import {
+  DrawerContentScrollView,
+  DrawerItem,
+} from "@react-navigation/drawer";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -21,42 +24,6 @@ export const DrawerContent = (props: any) => {
   const { usuario, selectedRole, logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const menuItems = [
-    {
-      label: "Dashboard",
-      icon: "home-outline",
-      onPress: () => props.navigation.navigate("Dashboard"),
-    },
-    {
-      label: "Administración",
-      icon: "settings-outline",
-      onPress: () => props.navigation.navigate("Admin"),
-      roles: [Rol.ADMINISTRADOR],
-    },
-    {
-      label: "Ingresos",
-      icon: "log-in-outline",
-      onPress: () => props.navigation.navigate("Ingresos"),
-      // Sin 'roles' = visible para todos
-    },
-    {
-      label: "Pagos",
-      icon: "card-outline",
-      onPress: () => props.navigation.navigate("Pagos"),
-      // Sin 'roles' = visible para todos
-    },
-    {
-      label: "Perfil",
-      icon: "person-outline",
-      onPress: () => props.navigation.navigate("Profile"),
-    },
-  ];
-
-  const filteredItems = menuItems.filter((item) => {
-    if (!item.roles) return true;
-    return selectedRole && item.roles.includes(selectedRole);
-  });
-
   const handleLogout = () => {
     setShowLogoutModal(true);
   };
@@ -65,7 +32,6 @@ export const DrawerContent = (props: any) => {
     setShowLogoutModal(false);
     try {
       await logout();
-      // Redirigir a login después de logout
       router.replace("/login");
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
@@ -75,6 +41,51 @@ export const DrawerContent = (props: any) => {
   const cancelLogout = () => {
     setShowLogoutModal(false);
   };
+
+  // ✅ Definir items del menú con sus permisos
+  const menuItems = [
+    {
+      label: "Dashboard",
+      icon: "home-outline",
+      route: "/(tabs)",
+      roles: null, // null = visible para todos
+    },
+    {
+      label: "Administración",
+      icon: "settings-outline",
+      route: "/(tabs)/admin",
+      roles: [Rol.ADMINISTRADOR, Rol.OFICINA], // Solo para admin y oficina
+    },
+    {
+      label: "Accesos",
+      icon: "log-in-outline",
+      route: "/(tabs)/accesos",
+      roles: null, // Visible para todos
+    },
+    {
+      label: "Pagos",
+      icon: "card-outline",
+      route: "/(tabs)/pagos",
+      roles: null, // Visible para todos
+    },
+    {
+      label: "Perfil",
+      icon: "person-outline",
+      route: "/(tabs)/profile",
+      roles: null, // Visible para todos
+    },
+  ];
+
+  // ✅ Filtrar items según el rol del usuario
+  const visibleItems = menuItems.filter((item) => {
+    // Si no tiene restricción de roles, siempre visible
+    if (!item.roles) return true;
+    // Si tiene restricción, verificar que el usuario tenga el rol
+    return selectedRole && item.roles.includes(selectedRole);
+  });
+
+  // ✅ Obtener la ruta activa actual
+  const activeRoute = props.state?.routes[props.state?.index]?.name;
 
   return (
     <>
@@ -88,18 +99,28 @@ export const DrawerContent = (props: any) => {
             {selectedRole ? ROLE_LABELS[selectedRole] : "Sin rol"}
           </Text>
         </View>
+        
+        {/* ✅ Renderizar items filtrados manualmente */}
         <View style={styles.menu}>
-          {filteredItems.map((item, index) => (
+          {visibleItems.map((item, index) => (
             <DrawerItem
-              key={index}
+              key={item.route}
               label={item.label}
               icon={({ color, size }) => (
-                <Ionicons name={item.icon as any} color={color} size={size} />
+                <Ionicons name={item.icon as any} size={size} color={color} />
               )}
-              onPress={item.onPress}
+              focused={activeRoute === item.route.split('/').pop()}
+              onPress={() => {
+                router.push(item.route as any);
+                // Cerrar el drawer después de navegar
+                if (props.navigation?.closeDrawer) {
+                  props.navigation.closeDrawer();
+                }
+              }}
             />
           ))}
         </View>
+        
         <View style={styles.footer}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#ef4444" />

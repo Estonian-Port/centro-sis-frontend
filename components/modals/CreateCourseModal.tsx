@@ -1,4 +1,3 @@
-// components/modals/CreateCourseModal.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React, { useState, useMemo, useEffect } from "react";
@@ -30,7 +29,8 @@ import { TimePickerModal } from "../pickers/TimePicker";
 import { usuarioService } from "@/services/usuario.service";
 import { cursoService } from "@/services/curso.service";
 import Toast from "react-native-toast-message";
-import { DatePicker } from "../pickers/DataPicker";
+import { DatePicker } from "../pickers/DatePicker";
+import { CuotasCalculadas } from "../pagos/CuotasCalculadas";
 
 interface FormValues {
   nombre: string;
@@ -38,10 +38,8 @@ interface FormValues {
   fechaFin: string;
   profesoresId: number[];
   montoAlquiler?: number;
-  cuotasAlquiler?: number;
   horarios?: HorarioDto[];
   tipoPago?: TipoPago[];
-  cuotasMensual?: number;
   recargo?: number | null;
   comisionProfesor?: number | null;
 }
@@ -52,6 +50,22 @@ interface CreateCourseModalProps {
 }
 
 type Modalidad = "ALQUILER" | "COMISION";
+
+const calcularCuotas = (fechaInicio: string, fechaFin: string): number => {
+  if (!fechaInicio || !fechaFin) return 0;
+
+  const inicio = new Date(fechaInicio);
+  const fin = new Date(fechaFin);
+
+  const inicioAnio = inicio.getFullYear();
+  const inicioMes = inicio.getMonth();
+  const finAnio = fin.getFullYear();
+  const finMes = fin.getMonth();
+
+  const meses = (finAnio - inicioAnio) * 12 + (finMes - inicioMes) + 1;
+
+  return Math.max(1, meses);
+};
 
 // Validación personalizada para horarios
 const validarHorarios = (horarios: any[]): boolean => {
@@ -89,7 +103,7 @@ const getValidationSchema = (modalidad: Modalidad): any => {
           const { fechaInicio } = this.parent;
           if (!fechaInicio || !value) return true;
           return new Date(value) > new Date(fechaInicio);
-        }
+        },
       ),
     profesoresId: yup
       .array()
@@ -105,11 +119,7 @@ const getValidationSchema = (modalidad: Modalidad): any => {
         .number()
         .positive("El monto debe ser mayor a 0")
         .required("El monto de alquiler es requerido"),
-      cuotasAlquiler: yup
-        .number()
-        .positive("La cantidad debe ser mayor a 0")
-        .integer("Debe ser un número entero")
-        .required("La cantidad de cuotas es requerida"),
+      // ✅ ELIMINADO: validación de cuotasAlquiler
     });
   } else {
     return yup.object().shape({
@@ -130,7 +140,7 @@ const getValidationSchema = (modalidad: Modalidad): any => {
               .string()
               .matches(/^\d{2}:\d{2}$/, "Formato inválido (HH:mm)")
               .required("La hora de fin es requerida"),
-          })
+          }),
         )
         .min(1, "Debe agregar al menos un horario")
         .test(
@@ -139,7 +149,7 @@ const getValidationSchema = (modalidad: Modalidad): any => {
           (value) => {
             if (!value) return false;
             return validarHorarios(value);
-          }
+          },
         )
         .required(),
       tipoPago: yup
@@ -158,7 +168,7 @@ const getValidationSchema = (modalidad: Modalidad): any => {
               .number()
               .positive("Las cuotas deben ser mayor a 0")
               .required("Las cuotas son requeridas"),
-          })
+          }),
         )
         .min(1, "Debe agregar al menos un tipo de pago")
         .max(2, "Solo puede agregar pago mensual y/o total")
@@ -167,14 +177,14 @@ const getValidationSchema = (modalidad: Modalidad): any => {
         .number()
         .nullable()
         .transform((value, originalValue) =>
-          originalValue === "" ? null : value
+          originalValue === "" ? null : value,
         )
         .min(0, "El recargo no puede ser negativo"),
       comisionProfesor: yup
         .number()
         .nullable()
         .transform((value, originalValue) =>
-          originalValue === "" ? null : value
+          originalValue === "" ? null : value,
         )
         .min(0, "La comisión no puede ser negativa")
         .max(100, "La comisión no puede ser mayor al 100%"),
@@ -237,7 +247,6 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
       fechaFin: "",
       profesoresId: [],
       montoAlquiler: undefined,
-      cuotasAlquiler: undefined,
       horarios: [
         {
           dia: DayOfWeek.MONDAY,
@@ -246,7 +255,6 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
         },
       ],
       tipoPago: [],
-      cuotasMensual: undefined,
       recargo: null,
       comisionProfesor: null,
     },
@@ -256,8 +264,12 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   const tiposPago = watch("tipoPago") || [];
   const fechaInicio = watch("fechaInicio");
   const fechaFin = watch("fechaFin");
-  const cuotasAlquiler = watch("cuotasAlquiler");
-  const cuotasMensual = watch("cuotasMensual");
+
+  // ✅ Calcular cuotas automáticamente
+  const cuotasCalculadas = useMemo(
+    () => calcularCuotas(fechaInicio, fechaFin),
+    [fechaInicio, fechaFin],
+  );
 
   // Búsqueda con debounce
   useEffect(() => {
@@ -271,11 +283,11 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
       try {
         const results = await usuarioService.searchByRol(
           searchQuery,
-          "PROFESOR"
+          "PROFESOR",
         );
         // Filtrar los que ya están seleccionados
         const filtered = results.filter(
-          (r) => !profesoresSeleccionados.some((p) => p.id === r.id)
+          (r) => !profesoresSeleccionados.some((p) => p.id === r.id),
         );
         setSearchResults(filtered);
       } catch (error) {
@@ -309,20 +321,8 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
     return { totalDias, meses, diasRestantes };
   }, [fechaInicio, fechaFin]);
 
-  // Calcular cantidad de cuotas sugerida (se actualiza automáticamente)
-  useEffect(() => {
-    if (duracion && modalidad === "ALQUILER") {
-      const cuotasSugeridas = Math.ceil(duracion.totalDias / 30);
-      setValue("cuotasAlquiler", cuotasSugeridas);
-    }
-  }, [duracion, modalidad]);
-
-  useEffect(() => {
-    if (duracion && tieneTipoPago(PagoType.MENSUAL)) {
-      const cuotasSugeridas = Math.ceil(duracion.totalDias / 30);
-      setValue("cuotasMensual", cuotasSugeridas);
-    }
-  }, [duracion, tiposPago]);
+  // ✅ ELIMINADO: useEffect que actualizaba cuotasAlquiler y cuotasMensual
+  // Ya no es necesario porque se calcula en tiempo real
 
   // Verificar si un tipo de pago está seleccionado
   const tieneTipoPago = (tipo: PagoType): boolean => {
@@ -340,7 +340,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
     setProfesoresSeleccionados(nuevosProfs);
     setValue(
       "profesoresId",
-      nuevosProfs.map((p) => p.id)
+      nuevosProfs.map((p) => p.id),
     );
     setSearchQuery("");
     setSearchResults([]);
@@ -348,12 +348,12 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
 
   const handleEliminarProfesor = (profesorId: number): void => {
     const nuevosProfs = profesoresSeleccionados.filter(
-      (p) => p.id !== profesorId
+      (p) => p.id !== profesorId,
     );
     setProfesoresSeleccionados(nuevosProfs);
     setValue(
       "profesoresId",
-      nuevosProfs.map((p) => p.id)
+      nuevosProfs.map((p) => p.id),
     );
   };
 
@@ -371,26 +371,21 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   const removeHorario = (index: number): void => {
     setValue(
       "horarios",
-      horarios.filter((_, i) => i !== index)
+      horarios.filter((_, i) => i !== index),
     );
   };
 
   const updateHorario = (
     index: number,
     field: keyof HorarioDto,
-    value: string | DayOfWeek
+    value: string | DayOfWeek,
   ): void => {
     const newHorarios = [...horarios];
     (newHorarios[index][field] as any) = value;
     setValue("horarios", newHorarios);
   };
 
-  const updateCuotasTipoPago = (cuotas: number): void => {
-    const newTiposPago = tiposPago.map((tp) =>
-      tp.tipo === PagoType.MENSUAL ? { ...tp, cuotas } : tp
-    );
-    setValue("tipoPago", newTiposPago);
-  };
+  // ✅ ELIMINADO: updateCuotasTipoPago (ya no es necesario)
 
   const toggleTipoPago = (tipo: PagoType): void => {
     const tieneActualmente = tieneTipoPago(tipo);
@@ -398,28 +393,18 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
     if (tieneActualmente) {
       setValue(
         "tipoPago",
-        tiposPago.filter((tp) => tp.tipo !== tipo)
+        tiposPago.filter((tp) => tp.tipo !== tipo),
       );
-      if (tipo === PagoType.MENSUAL) {
-        setValue("cuotasMensual", undefined);
-      }
     } else {
-      const cuotas =
-        tipo === PagoType.MENSUAL
-          ? duracion
-            ? Math.ceil(duracion.totalDias / 30)
-            : 1
-          : 1;
+      // ✅ Las cuotas se calculan automáticamente según las fechas
+      const cuotas = tipo === PagoType.MENSUAL ? cuotasCalculadas : 1;
       setValue("tipoPago", [...tiposPago, { tipo, monto: 0, cuotas }]);
-      if (tipo === PagoType.MENSUAL && duracion) {
-        setValue("cuotasMensual", Math.ceil(duracion.totalDias / 30));
-      }
     }
   };
 
   const updateMontoTipoPago = (tipo: PagoType, monto: number): void => {
     const newTiposPago = tiposPago.map((tp) =>
-      tp.tipo === tipo ? { ...tp, monto } : tp
+      tp.tipo === tipo ? { ...tp, monto } : tp,
     );
     setValue("tipoPago", newTiposPago);
   };
@@ -471,22 +456,25 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
           id: 0,
           nombre: data.nombre,
           montoAlquiler: data.montoAlquiler || 0,
-          cuotasAlquiler: data.cuotasAlquiler || 1,
+          cuotasAlquiler: cuotasCalculadas, // ✅ Usar valor calculado
           profesoresId: data.profesoresId,
           fechaInicio: data.fechaInicio,
           fechaFin: data.fechaFin,
         };
         await crearCursoAlquiler(requestData);
       } else {
+        // ✅ Actualizar cuotas del tipo pago MENSUAL antes de enviar
+        const tiposPagoConCuotas = (data.tipoPago || []).map((tp) => ({
+          tipo: tp.tipo,
+          monto: tp.monto,
+          cuotas: tp.tipo === PagoType.MENSUAL ? cuotasCalculadas : 1,
+        }));
+
         requestData = {
           id: 0,
           nombre: data.nombre,
           horarios: data.horarios || [],
-          tipoPago: (data.tipoPago || []).map((tp) => ({
-            tipo: tp.tipo,
-            monto: tp.monto,
-            cuotas: tp.tipo === PagoType.MENSUAL ? data.cuotasMensual || 1 : 1,
-          })),
+          tipoPago: tiposPagoConCuotas, // ✅ Usar cuotas calculadas
           recargo: data.recargo || null,
           comisionProfesor: data.comisionProfesor || null,
           profesoresId: data.profesoresId,
@@ -522,16 +510,13 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
         },
       ]);
       setValue("tipoPago", []);
-      setValue("cuotasMensual", undefined);
       setValue("recargo", null);
       setValue("comisionProfesor", null);
       setValue("montoAlquiler", undefined);
-      if (duracion) {
-        setValue("cuotasAlquiler", Math.ceil(duracion.totalDias / 30));
-      }
+      // ✅ ELIMINADO: setValue("cuotasAlquiler", ...)
     } else {
       setValue("montoAlquiler", undefined);
-      setValue("cuotasAlquiler", undefined);
+      // ✅ ELIMINADO: setValue("cuotasAlquiler", ...)
       setValue("horarios", [
         {
           dia: DayOfWeek.MONDAY,
@@ -791,51 +776,37 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                   </Text>
                 </View>
 
-                <View style={styles.row}>
-                  <View style={styles.flex2}>
-                    <Controller
-                      control={control}
-                      name="montoAlquiler"
-                      render={({ field: { onChange, value } }) => (
-                        <Input
-                          label="Monto Mensual ($) *"
-                          value={value?.toString() || ""}
-                          onChangeText={(text) =>
-                            onChange(text ? parseFloat(text) : undefined)
-                          }
-                          keyboardType="numeric"
-                          placeholder="10000"
-                          error={errors.montoAlquiler?.message}
-                        />
-                      )}
+                <Controller
+                  control={control}
+                  name="montoAlquiler"
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      label="Monto Mensual ($) *"
+                      value={value?.toString() || ""}
+                      onChangeText={(text) =>
+                        onChange(text ? parseFloat(text) : undefined)
+                      }
+                      keyboardType="numeric"
+                      placeholder="10000"
+                      error={errors.montoAlquiler?.message}
                     />
-                  </View>
-                  <View style={styles.flex1}>
-                    <Controller
-                      control={control}
-                      name="cuotasAlquiler"
-                      render={({ field: { onChange, value } }) => (
-                        <Input
-                          label="Cuotas *"
-                          value={value?.toString() || ""}
-                          onChangeText={(text) =>
-                            onChange(text ? parseInt(text, 10) : undefined)
-                          }
-                          keyboardType="numeric"
-                          placeholder="3"
-                          error={errors.cuotasAlquiler?.message}
-                        />
-                      )}
-                    />
-                  </View>
-                </View>
+                  )}
+                />
+
+                {/* ✅ Componente CuotasCalculadas para Alquiler */}
+                <CuotasCalculadas
+                  fechaInicio={fechaInicio ? new Date(fechaInicio) : null}
+                  fechaFin={fechaFin ? new Date(fechaFin) : null}
+                  label="Cuotas de alquiler"
+                  helpText="El profesor debe pagar esta cantidad de cuotas al instituto"
+                />
 
                 {/* Total de alquiler */}
-                {watch("montoAlquiler") && cuotasAlquiler && (
+                {watch("montoAlquiler") && cuotasCalculadas > 0 && (
                   <Text style={styles.totalInfo}>
                     Total de alquiler: $
                     {(
-                      (watch("montoAlquiler") || 0) * cuotasAlquiler
+                      (watch("montoAlquiler") || 0) * cuotasCalculadas
                     ).toLocaleString()}
                   </Text>
                 )}
@@ -1017,57 +988,38 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
 
                     {tieneTipoPago(PagoType.MENSUAL) && (
                       <View style={styles.tipoPagoInput}>
-                        <View style={styles.row}>
-                          <View style={styles.flex2}>
-                            <Input
-                              label="Monto por cuota ($) *"
-                              value={
-                                getMontoTipoPago(
-                                  PagoType.MENSUAL
-                                )?.toString() || ""
-                              }
-                              onChangeText={(text) =>
-                                updateMontoTipoPago(
-                                  PagoType.MENSUAL,
-                                  parseFloat(text) || 0
-                                )
-                              }
-                              keyboardType="numeric"
-                              placeholder="10000"
-                            />
-                          </View>
-                          <View style={styles.flex1}>
-                            <Controller
-                              control={control}
-                              name="cuotasMensual"
-                              render={({ field: { onChange, value } }) => (
-                                <Input
-                                  label="Cuotas *"
-                                  value={value?.toString() || ""}
-                                  onChangeText={(text) => {
-                                    const newValue = text
-                                      ? parseInt(text, 10)
-                                      : undefined;
-                                    onChange(newValue);
-                                    if (newValue) {
-                                      updateCuotasTipoPago(newValue);
-                                    }
-                                  }}
-                                  keyboardType="numeric"
-                                  placeholder="3"
-                                  error={errors.cuotasMensual?.message}
-                                />
-                              )}
-                            />
-                          </View>
-                        </View>
-                        {cuotasMensual &&
+                        <Input
+                          label="Monto por cuota ($) *"
+                          value={
+                            getMontoTipoPago(PagoType.MENSUAL)?.toString() || ""
+                          }
+                          onChangeText={(text) =>
+                            updateMontoTipoPago(
+                              PagoType.MENSUAL,
+                              parseFloat(text) || 0,
+                            )
+                          }
+                          keyboardType="numeric"
+                          placeholder="10000"
+                        />
+
+                        {/* ✅ Componente CuotasCalculadas para Pago Mensual */}
+                        <CuotasCalculadas
+                          fechaInicio={
+                            fechaInicio ? new Date(fechaInicio) : null
+                          }
+                          fechaFin={fechaFin ? new Date(fechaFin) : null}
+                          label="Cuotas del curso"
+                          helpText="Los alumnos pagarán esta cantidad de cuotas"
+                        />
+
+                        {cuotasCalculadas > 0 &&
                           getMontoTipoPago(PagoType.MENSUAL) > 0 && (
                             <Text style={styles.totalInfo}>
                               Total: $
                               {(
                                 getMontoTipoPago(PagoType.MENSUAL) *
-                                cuotasMensual
+                                cuotasCalculadas
                               ).toLocaleString()}
                             </Text>
                           )}
@@ -1118,7 +1070,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                           onChangeText={(text) =>
                             updateMontoTipoPago(
                               PagoType.TOTAL,
-                              parseFloat(text) || 0
+                              parseFloat(text) || 0,
                             )
                           }
                           keyboardType="numeric"
@@ -1204,7 +1156,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
             updateHorario(
               showTimePicker.horarioIndex,
               showTimePicker.field,
-              time
+              time,
             );
           }
         }}
@@ -1291,12 +1243,6 @@ const styles = StyleSheet.create({
   },
   halfWidth: {
     flex: 1,
-  },
-  flex1: {
-    flex: 1,
-  },
-  flex2: {
-    flex: 2,
   },
   inputLabel: {
     fontSize: 13,

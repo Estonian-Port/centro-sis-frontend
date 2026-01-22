@@ -1,10 +1,11 @@
 import api from "@/helper/auth.interceptor";
 import {
   Curso,
+  Horario,
   nuevoCursoAlquilerAdmin,
   nuevoCursoAlquilerProfesor,
   nuevoCursoComision,
-  TipoPago
+  TipoPago,
 } from "@/model/model";
 
 const CURSO = "/curso";
@@ -15,7 +16,9 @@ class CursoService {
     return response.data.data;
   };
 
-  altaCursoAlquiler = async (nuevoCurso: nuevoCursoAlquilerAdmin): Promise<any> => {
+  altaCursoAlquiler = async (
+    nuevoCurso: nuevoCursoAlquilerAdmin,
+  ): Promise<any> => {
     console.log("Nuevo curso alquiler service", nuevoCurso);
     const response = await api.post(`${CURSO}/alta-alquiler`, nuevoCurso);
     return response.data;
@@ -33,50 +36,76 @@ class CursoService {
 
   updateProfesores = async (
     cursoId: number,
-    profesoresIds: number[]
+    profesoresIds: number[],
   ): Promise<any> => {
-    const response = await api.put(`${CURSO}/${cursoId}/profesores`, {
+    const response = await api.put(
+      `${CURSO}/${cursoId}/profesores`,
       profesoresIds,
-    });
+    );
     return response.data;
   };
 
-  updateNombre = async (cursoId: number, nuevoNombre: string): Promise<any> => {
-    const response = await api.put(`${CURSO}/${cursoId}/nombre`, {
-      nuevoNombre,
-    });
+  updateNombre = async (
+    cursoId: number,
+    nuevoNombre: string,
+  ): Promise<Curso> => {
+    const response = await api.put(
+      `${CURSO}/${cursoId}/nombre?nuevoNombre=${nuevoNombre}`,
+    );
     return response.data;
   };
 
-  updateHorarios = async (cursoId: number, horarios: any[]): Promise<any> => {
-    const response = await api.put(`${CURSO}/${cursoId}/horarios`, {
-      horarios,
-    });
+  updateHorarios = async (
+    cursoId: number,
+    horarios: Horario[],
+  ): Promise<Curso> => {
+    const response = await api.put(`${CURSO}/${cursoId}/horarios`, horarios);
     return response.data;
   };
 
   updateModalidadesPago = async (
     cursoId: number,
-    modalidades: TipoPago[]
+    modalidades: TipoPago[],
   ): Promise<any> => {
-    const response = await api.put(`${CURSO}/${cursoId}/modalidades-pago`, {
+    const response = await api.put(
+      `${CURSO}/${cursoId}/modalidades-pago`,
       modalidades,
-    });
-    return response.data;
-  };
-
-  tomarAsistenciaAutomatica = async (cursoId: number): Promise<any> => {
-    const response = await api.post(
-      `${CURSO}/${cursoId}/tomar-asistencia-automatica`
     );
     return response.data;
   };
 
-  completarCursoAlquiler = async (curso: nuevoCursoAlquilerProfesor): Promise<Curso> => {
-    console.log("Completar curso alquiler service", curso);
-    const response = await api.post(`${CURSO}/${curso.id}/finalizar-alta-alquiler`, curso);
+  tomarAsistenciaAutomatica = async (
+    cursoId: number,
+    usuarioId: number,
+    fecha: string,
+  ): Promise<any> => {
+    const response = await api.post(
+      `${CURSO}/${cursoId}/tomar-asistencia-automatica/${usuarioId}?fecha=${fecha}`,
+    );
     return response.data;
   };
+
+  obtenerPartesAsistencias = async (cursoId: number): Promise<any> => {
+    const response = await api.get(`${CURSO}/${cursoId}/partes-asistencia`);
+    return response.data;
+  };
+
+  completarCursoAlquiler = async (
+    curso: nuevoCursoAlquilerProfesor,
+  ): Promise<Curso> => {
+    console.log("Completar curso alquiler service", curso);
+    const response = await api.post(
+      `${CURSO}/${curso.id}/finalizar-alta-alquiler`,
+      curso,
+    );
+    return response.data;
+  };
+
+  bajaCurso = async (cursoId: number): Promise<any> => {
+    const response = await api.delete(`${CURSO}/baja/${cursoId}`);
+    return response.data;
+  };
+
 }
 
 export const cursoService = new CursoService();

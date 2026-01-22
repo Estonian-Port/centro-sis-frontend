@@ -67,7 +67,7 @@ class UsuarioService {
 
   searchByRol = async (
     query: string,
-    rol: "ALUMNO" | "PROFESOR",
+    rol: "ALUMNO" | "PROFESOR" | "ADMIN" | "OFICINA",
     cursoId?: number
   ): Promise<Usuario[]> => {
     try {
@@ -77,6 +77,25 @@ class UsuarioService {
 
       const response = await api.get(`${USER}/search-by-rol`, {
         params: { q: query, rol , cursoId },
+      });
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Error al buscar usuarios"
+      );
+    }
+  };
+
+    search = async (
+    query: string,
+  ): Promise<Usuario[]> => {
+    try {
+      if (query.length < 2) {
+        return [];
+      }
+
+      const response = await api.get(`${USER}/search`, {
+        params: { q: query },
       });
       return response.data.data;
     } catch (error: any) {

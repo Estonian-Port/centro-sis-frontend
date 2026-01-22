@@ -18,6 +18,7 @@ import { Input } from "../ui/Input";
 import { NuevoUsuario } from "@/model/model";
 import { usuarioService } from "@/services/usuario.service";
 import Toast from "react-native-toast-message";
+import { useAuth } from "@/context/authContext";
 
 const schema = yup.object().shape({
   email: yup.string().email("Email inválido").required("El email es requerido"),
@@ -59,6 +60,9 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       roles: [],
     },
   });
+  const {selectedRole} = useAuth();
+
+  const roles = selectedRole === "ADMINISTRADOR" ? availableRoles : availableRoles.filter(r => r.id !== "ADMINISTRADOR");
 
   const selectedRoles = watch("roles");
 
@@ -129,7 +133,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
             <View style={styles.rolesSection}>
               <Text style={styles.rolesLabel}>Roles</Text>
-              {availableRoles.map((role) => (
+              {roles.map((role) => (
                 <TouchableOpacity
                   key={role.id}
                   style={[

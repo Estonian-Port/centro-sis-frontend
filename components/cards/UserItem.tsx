@@ -5,7 +5,7 @@ import {
   StyleSheet,
   Platform,
 } from "react-native";
-import { Estado, Usuario } from "@/model/model";
+import { Estado, Rol, Usuario } from "@/model/model";
 import { estadoUsuarioToTagVariant, rolToTagVariant } from "@/helper/funciones";
 import { COLORES } from "@/util/colores";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,9 +25,8 @@ const UserItem = ({
   handleUserDetails: (user: Usuario) => void;
   onRefresh: () => void;
 }) => {
-  const { usuario } = useAuth();
+  const { usuario, selectedRole } = useAuth();
   const [modalBajaVisible, setModalBajaVisible] = useState(false);
-
 
   return (
     <TouchableOpacity
@@ -61,11 +60,15 @@ const UserItem = ({
           />
         </View>
 
-        {user.estado !== Estado.BAJA && (
-          <TouchableOpacity onPress={() => setModalBajaVisible(true)}>
-            <Ionicons name={"trash-outline"} size={20} color={COLORES.error} />
-          </TouchableOpacity>
-        )}
+        {user.estado !== Estado.BAJA &&
+          !(
+            selectedRole === "OFICINA" &&
+            (user.listaRol.includes(Rol.OFICINA) || user.listaRol.includes(Rol.ADMINISTRADOR))
+          ) && (
+            <TouchableOpacity onPress={() => setModalBajaVisible(true)}>
+              <Ionicons name={"trash-outline"} size={20} color={COLORES.error} />
+            </TouchableOpacity>
+          )}
 
         <BajaTotalUsuario
           visible={modalBajaVisible}

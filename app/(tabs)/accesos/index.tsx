@@ -1,19 +1,17 @@
-// app/(tabs)/pagos/index.tsx
+// app/(tabs)/accesos/index.tsx
 import { useRouter } from "expo-router";
-import { useAuth } from "@/context/authContext";
 import { useEffect } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 
-export default function PagosIndex() {
-  const { selectedRole } = useAuth();
+export default function AccesosIndex() {
   const router = useRouter();
-  
-  useEffect(() => {
-    // Alumno va directo a Realizados, otros van a Recibidos
-    const defaultTab = selectedRole === "ALUMNO" ? "realizados" : "recibidos";
-    router.replace(`/pagos/${defaultTab}`);
-  }, [selectedRole]);
 
+  useEffect(() => {
+    // Redirigir inmediatamente sin delay
+    router.replace("/accesos/mis-accesos");
+  }, []);
+
+  // Mostrar un loader mientras se hace la redirección
   return (
     <View style={styles.container}>
       <ActivityIndicator size="large" color="#3b82f6" />

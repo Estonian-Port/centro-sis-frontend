@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/context/authContext";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { router } from "expo-router";
-import React, { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   StyleSheet,
@@ -19,7 +19,7 @@ import * as yup from "yup";
 import Toast from "react-native-toast-message";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { DatePicker } from "@/components/pickers/DataPicker";
+import { DatePicker } from "@/components/pickers/DatePicker";
 import { COLORES } from "@/util/colores";
 import { LinearGradient } from "expo-linear-gradient";
 

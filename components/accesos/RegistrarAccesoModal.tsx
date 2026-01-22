@@ -1,4 +1,4 @@
-// components/ingresos/RegistrarIngresoModal.tsx
+// components/accesos/RegistrarAccesoModal.tsx
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -14,7 +14,9 @@ import {
 } from "react-native";
 import { Button } from "../ui/Button";
 import Toast from "react-native-toast-message";
-import { ingresoService } from "@/services/ingresos.service";
+import { useAuth } from "@/context/authContext";
+import { accesoService } from "@/services/acceso.service";
+import { usuarioService } from "@/services/usuario.service";
 
 interface Usuario {
   id: number;
@@ -24,13 +26,13 @@ interface Usuario {
   email: string;
 }
 
-interface RegistrarIngresoModalProps {
+interface RegistrarAccesoModalProps {
   visible: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export const RegistrarIngresoModal: React.FC<RegistrarIngresoModalProps> = ({
+export const RegistrarAccesoModal: React.FC<RegistrarAccesoModalProps> = ({
   visible,
   onClose,
   onSuccess,
@@ -40,6 +42,7 @@ export const RegistrarIngresoModal: React.FC<RegistrarIngresoModalProps> = ({
   const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null);
   const [searching, setSearching] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const { usuario } = useAuth();
 
   // Debounced search
   const [searchTimeout, setSearchTimeout] = useState<number | null>(
@@ -59,7 +62,7 @@ export const RegistrarIngresoModal: React.FC<RegistrarIngresoModalProps> = ({
     const timeout = setTimeout(async () => {
       setSearching(true);
       try {
-        const results = await ingresoService.buscarUsuarios(query);
+        const results = await usuarioService.search(query);
         setSearchResults(results.slice(0, 10));
       } catch (error) {
         console.error("Error buscando usuarios:", error);
@@ -84,25 +87,25 @@ export const RegistrarIngresoModal: React.FC<RegistrarIngresoModalProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (!selectedUsuario) return;
+    if (!selectedUsuario || !usuario) return;
 
     setSubmitting(true);
     try {
-      await ingresoService.registrarIngresoManual(selectedUsuario.id);
+      await accesoService.registrarAccesoManual(usuario.id, selectedUsuario.id);
       Toast.show({
         type: "success",
-        text1: "Ingreso registrado",
-        text2: `Ingreso de ${selectedUsuario.nombre} ${selectedUsuario.apellido} registrado correctamente`,
+        text1: "Acceso registrado",
+        text2: `Acceso de ${selectedUsuario.nombre} ${selectedUsuario.apellido} registrado correctamente`,
         position: "bottom",
       });
       onSuccess();
       handleClose();
     } catch (error) {
-      console.error("Error registrando ingreso:", error);
+      console.error("Error registrando acceso:", error);
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo registrar el ingreso",
+        text2: "No se pudo registrar el acceso",
         position: "bottom",
       });
     } finally {
@@ -121,14 +124,14 @@ export const RegistrarIngresoModal: React.FC<RegistrarIngresoModalProps> = ({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Registrar Ingreso Manual</Text>
+            <Text style={styles.title}>Registrar Acceso Manual</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
               <Ionicons name="close" size={24} color="#6b7280" />
             </TouchableOpacity>
@@ -249,7 +252,7 @@ export const RegistrarIngresoModal: React.FC<RegistrarIngresoModalProps> = ({
               style={styles.button}
             />
             <Button
-              title="Registrar Ingreso"
+              title="Registrar Acceso"
               variant="primary"
               onPress={handleSubmit}
               disabled={!selectedUsuario || submitting}

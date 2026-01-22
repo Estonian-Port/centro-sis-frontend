@@ -31,7 +31,7 @@ export const DashboardProfesor = ({
   onRefresh: () => void;
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [vistaActual, setVistaActual] = useState<ViewMode>("calendario");
+  const [vistaActual, setVistaActual] = useState<ViewMode>("lista");
   const [filtrosEstado, setFiltrosEstado] = useState<EstadoCurso[]>([]);
   const [cursoFormVisible, setCursoFormVisible] = useState(false);
   const [cursoPendienteSeleccionado, setCursoPendienteSeleccionado] = useState<Curso | null>(null);
@@ -90,11 +90,13 @@ export const DashboardProfesor = ({
       Toast.show({
         type: "success",
         text1: "Curso completado exitosamente",
+        position: "bottom",
       });
     } catch (error) {
       Toast.show({
         type: "error",
         text1: "Error al completar el curso",
+        position: "bottom",
       });
     }
   };
@@ -125,7 +127,7 @@ export const DashboardProfesor = ({
           <ViewToggle
             currentView={vistaActual}
             onViewChange={setVistaActual}
-            availableViews={["calendario", "lista"]}
+            availableViews={["lista", "calendario"]}
           />
 
           <FilterChips
@@ -149,7 +151,7 @@ export const DashboardProfesor = ({
           </View>
         ) : (
           <CalendarioSemanal
-            cursos={filteredCourses}
+            cursos={filteredCourses as any}
             onCursoPress={handleViewCourseDetails}
           />
         )}

@@ -10,17 +10,23 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
-import { EstadoPago, Inscripcion } from "@/model/model";
+import { Curso, Estado, EstadoCurso, EstadoPago, Inscripcion, Rol, TipoCurso } from "@/model/model";
 import { formatEstadoPago } from "@/model/model";
 import { COLORES } from "@/util/colores";
 import { Tag } from "@/components/ui/Tag";
 import { Button } from "@/components/ui/Button";
-import { estadoPagoToTagVariant, estadoToTagVariant, estadoUsuarioToTagVariant } from "@/helper/funciones";
+import {
+  estadoPagoToTagVariant,
+  estadoToTagVariant,
+  estadoUsuarioToTagVariant,
+} from "@/helper/funciones";
+import { useAuth } from "@/context/authContext";
 
 interface AlumnoDetailModalProps {
   visible: boolean;
   onClose: () => void;
   inscripcion: Inscripcion;
+  curso: Curso;
   onOpenRegistrarPago: () => void;
   onOpenAsignarPuntos: () => void;
   onOpenEditarBeneficio: () => void;
@@ -31,18 +37,43 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
   visible,
   onClose,
   inscripcion,
+  curso,
   onOpenRegistrarPago,
   onOpenAsignarPuntos,
   onOpenEditarBeneficio,
   onDarDeBaja,
 }) => {
+  const { selectedRole } = useAuth();
   const alumno = inscripcion.alumno;
+
+  const evaluarPorRol =
+    (curso?.tipoCurso === TipoCurso.COMISION &&
+      selectedRole !== null &&
+      (selectedRole === Rol.ADMINISTRADOR || selectedRole === Rol.OFICINA)) ||
+    (curso?.tipoCurso === TipoCurso.ALQUILER &&
+      selectedRole !== null &&
+      (selectedRole === Rol.ADMINISTRADOR || selectedRole === Rol.PROFESOR));
+
+  const puedeEditarPagos = curso?.estadoAlta === Estado.ACTIVO && evaluarPorRol && inscripcion.estadoPago !== EstadoPago.PAGO_COMPLETO;
+
+  const puedeEditarBeneficio = curso?.estadoAlta === Estado.ACTIVO && evaluarPorRol;
+
+  const puedeDarDeBaja =
+    evaluarPorRol &&
+    curso?.estadoAlta === Estado.ACTIVO &&
+    (curso?.estado === EstadoCurso.EN_CURSO || curso?.estado === EstadoCurso.POR_COMENZAR);
+
+  const puedeEditarPuntos =
+    selectedRole !== null &&
+    (selectedRole === Rol.ADMINISTRADOR || selectedRole === Rol.PROFESOR) &&
+    curso?.estadoAlta === Estado.ACTIVO &&
+    curso?.estado === EstadoCurso.EN_CURSO;
 
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
@@ -80,7 +111,10 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                 <InfoRow label="DNI" value={alumno.dni || "N/A"} />
                 <InfoRow label="Celular" value={alumno.celular || "N/A"} />
                 <InfoRow label="Email" value={alumno.email} />
-                <InfoRow label="Fecha de nacimiento" value={alumno.fechaNacimiento} />
+                <InfoRow
+                  label="Fecha de nacimiento"
+                  value={alumno.fechaNacimiento}
+                />
                 <InfoRow
                   label="Fecha Inscripción"
                   value={
@@ -141,12 +175,14 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                         ? `${inscripcion.beneficio}% de descuento`
                         : "0%"}
                     </Text>
+                    {puedeEditarBeneficio && (
                     <TouchableOpacity
                       onPress={onOpenEditarBeneficio}
                       style={styles.editButton}
                     >
                       <Ionicons name="pencil" size={16} color="#3b82f6" />
                     </TouchableOpacity>
+                    )}
                   </View>
                 </View>
               </View>
@@ -158,6 +194,7 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                 <Text style={styles.sectionTitle}>
                   Pagos Realizados ({inscripcion.pagosRealizados?.length || 0})
                 </Text>
+                {puedeEditarPagos && (
                 <TouchableOpacity
                   onPress={onOpenRegistrarPago}
                   style={styles.sectionActionButton}
@@ -169,6 +206,7 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                   />
                   <Text style={styles.sectionActionText}>Registrar Pago</Text>
                 </TouchableOpacity>
+                )}
               </View>
               {inscripcion.pagosRealizados &&
               inscripcion.pagosRealizados.length > 0 ? (
@@ -187,7 +225,7 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                         </View>
                       </View>
                       <Text style={styles.pagoTipo}>
-                        {pago.inscripcion.tipoPagoSeleccionado.tipo}
+                        {inscripcion.tipoPagoElegido.tipo}
                       </Text>
                     </View>
                   ))}
@@ -206,6 +244,7 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
             <View style={styles.section}>
               <View style={styles.sectionHeaderWithAction}>
                 <Text style={styles.sectionTitle}>Sistema de Recompensas</Text>
+                {puedeEditarPuntos && (
                 <TouchableOpacity
                   onPress={onOpenAsignarPuntos}
                   style={styles.sectionActionButton}
@@ -217,6 +256,7 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                     Asignar Puntos
                   </Text>
                 </TouchableOpacity>
+                )}
               </View>
               <View style={styles.puntosContainer}>
                 <Ionicons name="star" size={32} color="#f59e0b" />
@@ -227,6 +267,7 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
             </View>
 
             {/* Dar de Baja */}
+            {puedeDarDeBaja && (
             <View style={styles.section}>
               <Button
                 title="Dar de Baja del Curso"
@@ -238,6 +279,7 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                 style={{ width: "100%", borderColor: "#ef4444" }}
               />
             </View>
+            )}
           </ScrollView>
         </View>
       </View>

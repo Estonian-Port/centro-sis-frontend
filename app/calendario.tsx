@@ -122,7 +122,7 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
     if (selectedRole === "ALUMNO") {
       if (
         "estadoPago" in curso &&
-        (curso.estadoPago === "MOROSO" || curso.estadoPago === "ATRASADO")
+        (curso.estadoPago === "ATRASADO")
       ) {
         return COLORES.rojo;
       } else {

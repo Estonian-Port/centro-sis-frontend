@@ -19,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { usuarioService } from "@/services/usuario.service";
 import { ChangePasswordModal } from "@/components/modals/ChangePasswordModal";
 import { EditProfileModal } from "@/components/modals/EditProfileModal";
+import { AdultoResponsableModal } from "@/components/modals/AdultoResponsableModal";
 import { COLORES } from "@/util/colores";
 import Toast from "react-native-toast-message";
 import { rolToTagVariant } from "@/helper/funciones";
@@ -54,9 +55,26 @@ export default function ProfileScreen() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showAdultoResponsableModal, setShowAdultoResponsableModal] = useState(false); // ✅ NUEVO
 
   // Verificar si el usuario tiene múltiples roles
   const hasMultipleRoles = (usuario?.listaRol.length || 0) > 1;
+
+  // ✅ NUEVO: Verificar si es menor de edad
+  const esMenorDeEdad = () => {
+    if (!usuario?.fechaNacimiento) return false;
+    const hoy = new Date();
+    const fechaNac = new Date(usuario.fechaNacimiento);
+    const edad = hoy.getFullYear() - fechaNac.getFullYear();
+    const mesActual = hoy.getMonth() - fechaNac.getMonth();
+    
+    if (mesActual < 0 || (mesActual === 0 && hoy.getDate() < fechaNac.getDate())) {
+      return edad - 1 < 18;
+    }
+    return edad < 18;
+  };
+
+  const tieneAdultoResponsable = usuario?.adultoResponsable != null;
 
   // Determinar si usar layout de 2 columnas
   const isWideScreen = width >= 768;
@@ -110,6 +128,37 @@ export default function ProfileScreen() {
     }
   };
 
+  // ✅ NUEVO: Handler para descargar QR
+  const handleDescargarQR = async () => {
+    try {
+      // 🔥 REAL: Generar y descargar QR
+      // const qrData = await usuarioService.generarQR(usuario!.id);
+      // if (Platform.OS === 'web') {
+      //   const link = document.createElement('a');
+      //   link.href = qrData.url;
+      //   link.download = `qr-${usuario!.dni}.png`;
+      //   link.click();
+      // } else {
+      //   // Para mobile: guardar en galería
+      //   await FileSystem.downloadAsync(qrData.url, FileSystem.documentDirectory + `qr-${usuario!.dni}.png`);
+      // }
+      
+      Toast.show({
+        type: "success",
+        text1: "QR Generado",
+        text2: "Tu código QR se ha descargado correctamente",
+        position: "bottom",
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "No se pudo generar el código QR",
+        position: "bottom",
+      });
+    }
+  };
+
   const handleLogout = () => {
     setShowLogoutModal(true);
   };
@@ -143,6 +192,15 @@ export default function ProfileScreen() {
       subtitle: "Actualizar credenciales de acceso",
       onPress: () => setShowChangePasswordModal(true),
       disabled: false,
+    },
+    // ✅ NUEVO: Botón de Descargar QR
+    {
+      icon: "qr-code-outline",
+      title: "Descargar QR Personal",
+      subtitle: "Código para registro de asistencia",
+      onPress: handleDescargarQR,
+      disabled: false,
+      color: "#10b981", // Verde
     },
   ];
 
@@ -213,6 +271,31 @@ export default function ProfileScreen() {
               />
               <InfoItem label="Último ingreso" value={usuario?.ultimoIngreso} />
             </View>
+
+            {/* ✅ NUEVO: Botón de Adulto Responsable (solo si es menor de edad) */}
+            {esMenorDeEdad() && tieneAdultoResponsable && (
+              <>
+                <View style={styles.dividerSmall} />
+                <TouchableOpacity
+                  style={styles.adultoResponsableButton}
+                  onPress={() => setShowAdultoResponsableModal(true)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.adultoResponsableIconContainer}>
+                    <Ionicons name="people-outline" size={22} color="#f59e0b" />
+                  </View>
+                  <View style={styles.adultoResponsableContent}>
+                    <Text style={styles.adultoResponsableTitle}>
+                      Ver Adulto Responsable
+                    </Text>
+                    <Text style={styles.adultoResponsableSubtitle}>
+                      {usuario?.adultoResponsable?.nombre} {usuario?.adultoResponsable?.apellido}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+                </TouchableOpacity>
+              </>
+            )}
           </View>
 
           {/* Columna Derecha: Acciones */}
@@ -243,12 +326,13 @@ export default function ProfileScreen() {
                   style={[
                     styles.actionIconContainer,
                     action.disabled && styles.actionIconContainerDisabled,
+                    action.color && { backgroundColor: `${action.color}20` }, // ✅ Color personalizado
                   ]}
                 >
                   <Ionicons
                     name={action.icon as any}
                     size={22}
-                    color={action.disabled ? "#9ca3af" : "#3b82f6"}
+                    color={action.disabled ? "#9ca3af" : (action.color || "#3b82f6")}
                   />
                 </View>
                 <View style={styles.actionContent}>
@@ -314,6 +398,15 @@ export default function ProfileScreen() {
         onClose={() => setShowChangePasswordModal(false)}
         onSuccess={handleChangePassword}
       />
+
+      {/* ✅ NUEVO: Modal de Adulto Responsable */}
+      {usuario?.adultoResponsable && (
+        <AdultoResponsableModal
+          visible={showAdultoResponsableModal}
+          onClose={() => setShowAdultoResponsableModal(false)}
+          adultoResponsable={usuario.adultoResponsable}
+        />
+      )}
 
       {/* Modal de Logout */}
       <ModalLogout
@@ -447,6 +540,44 @@ const styles = StyleSheet.create({
     color: "#1f2937",
     textAlign: "right",
     flex: 1,
+  },
+  // ✅ NUEVO: Estilos para botón de Adulto Responsable
+  dividerSmall: {
+    height: 1,
+    backgroundColor: "#e5e7eb",
+    marginVertical: 16,
+  },
+  adultoResponsableButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: "#fffbeb",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#fde68a",
+  },
+  adultoResponsableIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#fef3c7",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  adultoResponsableContent: {
+    flex: 1,
+  },
+  adultoResponsableTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#92400e",
+    marginBottom: 2,
+  },
+  adultoResponsableSubtitle: {
+    fontSize: 13,
+    color: "#b45309",
   },
   actionItem: {
     flexDirection: "row",

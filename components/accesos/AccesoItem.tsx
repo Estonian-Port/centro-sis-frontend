@@ -1,16 +1,16 @@
-// components/ingresos/IngresoItem.tsx
+// components/accesos/AccesoItem.tsx
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
 import { Access } from "@/model/model";
 
-interface IngresoItemProps {
-  ingreso: Access;
+interface AccesoItemProps {
+  acceso: Access;
   showUserInfo?: boolean; // Solo para admin
 }
 
-export const IngresoItem: React.FC<IngresoItemProps> = ({
-  ingreso,
+export const AccesoItem: React.FC<AccesoItemProps> = ({
+  acceso,
   showUserInfo = false,
 }) => {
   const formatFecha = (fecha: string) => {
@@ -38,8 +38,8 @@ export const IngresoItem: React.FC<IngresoItemProps> = ({
           <Ionicons name="log-in-outline" size={24} color="#10b981" />
         </View>
         <View style={styles.dateTimeContainer}>
-          <Text style={styles.fecha}>{formatFecha(ingreso.fecha)}</Text>
-          <Text style={styles.hora}>{formatHora(ingreso.fecha)}</Text>
+          <Text style={styles.fecha}>{formatFecha(acceso.fechaHora)}</Text>
+          <Text style={styles.hora}>{formatHora(acceso.fechaHora)}</Text>
         </View>
       </View>
 
@@ -47,9 +47,9 @@ export const IngresoItem: React.FC<IngresoItemProps> = ({
       {showUserInfo && (
         <View style={styles.userInfo}>
           <Text style={styles.userName}>
-            {ingreso.usuario.nombre} {ingreso.usuario.apellido}
+            {acceso.usuarioNombre} {acceso.usuarioApellido}
           </Text>
-          <Text style={styles.userDni}>DNI: {ingreso.usuario.dni}</Text>
+          <Text style={styles.userDni}>DNI: {acceso.usuarioDni}</Text>
         </View>
       )}
     </View>

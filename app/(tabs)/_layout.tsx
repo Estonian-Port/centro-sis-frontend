@@ -1,122 +1,136 @@
 import { useAuth } from "@/context/authContext";
 import { Rol } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
-import { createDrawerNavigator } from "@react-navigation/drawer";
+import { Drawer } from "expo-router/drawer";
 import { Tabs } from "expo-router";
 import { useEffect, useState } from "react";
-import { Platform } from "react-native";
+import { Platform, View } from "react-native";
 import { RoleSelectionModal } from "../../components/modals/RoleSelectionModal";
 import { DrawerContent } from "../../components/navigation/DrawerContent";
-import AdminScreen from "./admin";
-import HomeScreen from "./index";
-import IngresosScreen from "./ingresos";
-import PagosScreen from "./pagos";
-import ProfileScreen from "./profile";
+import { CustomDrawerHeader } from "../../components/navigation/CustomDrawerHeader";
 
-const Drawer = createDrawerNavigator();
-
-function DrawerNavigator() {
-  const { selectedRole } = useAuth();
-
-  return (
-    <Drawer.Navigator
-      drawerContent={(props: any) => <DrawerContent {...props} />}
-      screenOptions={{
-        headerShown: true,
-        drawerStyle: {
-          width: 280,
-        },
-      }}
-    >
-      <Drawer.Screen
-        name="drawer-dashboard"
-        component={HomeScreen}
-        options={{
-          title: "Dashboard",
-        }}
-      />
-
-      {selectedRole === "ADMINISTRADOR" && (
-        <Drawer.Screen
-          name="drawer-admin"
-          component={AdminScreen}
-          options={{
-            title: "Administración",
-          }}
-        />
-      )}
-
-      <Drawer.Screen
-        name="drawer-ingresos"
-        component={IngresosScreen}
-        options={{
-          title: "Ingresos",
-        }}
-      />
-
-      <Drawer.Screen
-        name="drawer-pagos"
-        component={PagosScreen}
-        options={{
-          title: "Pagos",
-        }}
-      />
-
-      <Drawer.Screen
-        name="drawer-profile"
-        component={ProfileScreen}
-        options={{
-          title: "Perfil",
-        }}
-      />
-    </Drawer.Navigator>
-  );
-}
-
-export default function TabLayout() {
-  const { usuario, selectedRole, setSelectedRole, hasMultipleRoles } =
-    useAuth();
+// ✅ Wrapper que maneja el modal sin interferir con el layout
+function DrawerWithModal({ children }: { children: React.ReactNode }) {
+  const { usuario, selectedRole, setSelectedRole, hasMultipleRoles } = useAuth();
   const [showRoleModal, setShowRoleModal] = useState(false);
-  const [hasInitialized, setHasInitialized] = useState(false); // ✅ NUEVO
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   useEffect(() => {
-    // ✅ Solo ejecutar una vez cuando el usuario cambia
     if (!usuario || hasInitialized) return;
 
     if (hasMultipleRoles() && !selectedRole) {
-      // Usuario con múltiples roles y sin rol seleccionado
       setShowRoleModal(true);
     } else if (!selectedRole && usuario.listaRol.length > 0) {
-      // Usuario con un solo rol o ningún rol seleccionado
       setSelectedRole(usuario.listaRol[0]);
     }
 
-    setHasInitialized(true); // ✅ Marcar como inicializado
-  }, [usuario]); // ✅ Solo depende de usuario
+    setHasInitialized(true);
+  }, [usuario]);
 
   const handleRoleSelection = (role: Rol) => {
     setSelectedRole(role);
     setShowRoleModal(false);
   };
 
-  // Para web, usa el Drawer
+  return (
+    <View style={{ flex: 1 }}>
+      {children}
+      <RoleSelectionModal
+        visible={showRoleModal}
+        roles={usuario?.listaRol || []}
+        onSelectRole={handleRoleSelection}
+      />
+    </View>
+  );
+}
+
+export default function TabLayout() {
+  const { selectedRole } = useAuth();
+  const isAdminOrOficina = selectedRole === Rol.ADMINISTRADOR || selectedRole === Rol.OFICINA;
+
+  // Para web, usa el Drawer de expo-router
   if (Platform.OS === "web") {
     return (
-      <>
-        <DrawerNavigator />
-        <RoleSelectionModal
-          visible={showRoleModal}
-          roles={usuario?.listaRol || []}
-          onSelectRole={handleRoleSelection}
-        />
-      </>
+      <DrawerWithModal>
+        <Drawer
+          key={selectedRole || 'no-role'}
+          drawerContent={(props) => <DrawerContent {...props} />}
+          screenOptions={{
+            headerShown: false,
+            drawerStyle: {
+              width: 280,
+            },
+          }}
+        >
+          <Drawer.Screen
+            name="index"
+            options={{
+              headerShown: true,
+              header: () => <CustomDrawerHeader title="Dashboard" />,
+              drawerLabel: "Dashboard",
+              drawerIcon: ({ color, size }) => (
+                <Ionicons name="home-outline" size={size} color={color} />
+              ),
+            }}
+          />
+
+          {isAdminOrOficina && (
+            <Drawer.Screen
+              name="admin"
+              options={{
+                headerShown: true,
+                header: () => <CustomDrawerHeader title="Administración" />,
+                drawerLabel: "Administración",
+                drawerIcon: ({ color, size }) => (
+                  <Ionicons name="settings-outline" size={size} color={color} />
+                ),
+              }}
+            />
+          )}
+
+          <Drawer.Screen
+            name="accesos"
+            options={{
+              headerShown: false,
+              drawerLabel: "Accesos",
+              drawerIcon: ({ color, size }) => (
+                <Ionicons name="log-in-outline" size={size} color={color} />
+              ),
+            }}
+          />
+
+          <Drawer.Screen
+            name="pagos"
+            options={{
+              headerShown: false,
+              drawerLabel: "Pagos",
+              drawerIcon: ({ color, size }) => (
+                <Ionicons name="card-outline" size={size} color={color} />
+              ),
+            }}
+          />
+
+          <Drawer.Screen
+            name="profile"
+            options={{
+              headerShown: true,
+              header: () => <CustomDrawerHeader title="Perfil" />,
+              drawerLabel: "Perfil",
+              drawerIcon: ({ color, size }) => (
+                <Ionicons name="person-outline" size={size} color={color} />
+              ),
+            }}
+          />
+        </Drawer>
+      </DrawerWithModal>
     );
   }
 
   // Para móvil, usa Tabs
   return (
-    <>
+    <DrawerWithModal>
       <Tabs
+        key={selectedRole || 'no-role'}
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: "#3b82f6",
@@ -132,7 +146,7 @@ export default function TabLayout() {
           }}
         />
 
-        {selectedRole === Rol.ADMINISTRADOR && (
+        {isAdminOrOficina && (
           <Tabs.Screen
             name="admin"
             options={{
@@ -145,9 +159,9 @@ export default function TabLayout() {
         )}
 
         <Tabs.Screen
-          name="ingresos"
+          name="accesos"
           options={{
-            title: "Ingresos",
+            title: "Accesos",
             tabBarIcon: ({ size, color }) => (
               <Ionicons name="log-in-outline" size={size} color={color} />
             ),
@@ -174,12 +188,6 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-
-      <RoleSelectionModal
-        visible={showRoleModal}
-        roles={usuario?.listaRol || []}
-        onSelectRole={handleRoleSelection}
-      />
-    </>
+    </DrawerWithModal>
   );
 }

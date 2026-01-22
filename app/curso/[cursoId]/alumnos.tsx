@@ -19,11 +19,13 @@ import {
 import Toast from "react-native-toast-message";
 import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
 import { TIPOGRAFIA } from "@/util/tipografia";
+import { useAuth } from "@/context/authContext";
 
 export default function AlumnosTab() {
   const { cursoId } = useLocalSearchParams();
   const [curso, setCurso] = useState<Curso | null>(null);
   const [loading, setLoading] = useState(true);
+  const { selectedRole } = useAuth();
 
   // Estados de búsqueda y filtros
   const [searchQuery, setSearchQuery] = useState("");
@@ -134,9 +136,18 @@ export default function AlumnosTab() {
     setShowModificarBeneficioModal(true);
   };
 
+  const evaluarPorRol =
+    (curso?.tipoCurso === "COMISION" &&
+      selectedRole !== null &&
+      (selectedRole === "ADMINISTRADOR" || selectedRole === "OFICINA")) ||
+    (curso?.tipoCurso === "ALQUILER" &&
+      selectedRole !== null &&
+      (selectedRole === "ADMINISTRADOR" || selectedRole === "PROFESOR"));
+
   // Verificar si se puede agregar alumnos (solo EN_CURSO o POR_COMENZAR)
   const canAddAlumnos =
-    curso?.estado === "EN_CURSO" || curso?.estado === "POR_COMENZAR";
+    (curso?.estado === "EN_CURSO" || curso?.estado === "POR_COMENZAR") &&
+    evaluarPorRol;
 
   if (loading) {
     return (
@@ -234,9 +245,8 @@ export default function AlumnosTab() {
               <AlumnoItem
                 key={inscripcion.id}
                 inscripcion={inscripcion}
+                curso={curso}
                 onRefresh={fetchCurso}
-                cursoNombre={curso.nombre}
-                recargoPorcentaje={curso.recargoPorAtraso}
               />
             ))}
           </View>
@@ -253,12 +263,6 @@ export default function AlumnosTab() {
           setShowAddModal(false);
         }}
       />
-
-      {/* TODO: Modales de acciones */}
-      {/* <RegistrarPagoModal ... /> */}
-      {/* <AsignarPuntosModal ... /> */}
-      {/* <DarDeBajaModal ... /> */}
-      {/* <ModificarBeneficioModal ... /> */}
     </View>
   );
 }

@@ -6,7 +6,6 @@ import {
   Text,
   TouchableOpacity,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Curso,
   EstadoCurso,
@@ -73,7 +72,7 @@ const estadoAltaFilterOptions: FilterOption<Estado>[] = [
 export default function AdminScreen() {
   const [activeTab, setActiveTab] = useState<"users" | "courses">("users");
   const [searchQuery, setSearchQuery] = useState("");
-  const [vistaActual, setVistaActual] = useState<ViewMode>("calendario");
+  const [vistaActual, setVistaActual] = useState<ViewMode>("lista");
 
   // Filtros para USUARIOS
   const [filtrosRol, setFiltrosRol] = useState<Rol[]>([]);
@@ -100,21 +99,34 @@ export default function AdminScreen() {
   const [selectedPendingCourse, setSelectedPendingCourse] =
     useState<Curso | null>(null);
 
-  // Cargar datos
+  // ✅ Cargar datos SOLO si el usuario existe
   useEffect(() => {
+    // ✅ Validar que el usuario existe antes de cargar datos
+    if (!usuario) {
+      console.log('[AdminScreen] Usuario no disponible, saltando carga de datos');
+      return;
+    }
+
     if (activeTab === "users") {
       fetchUsers();
     } else {
       fetchCourses();
     }
-  }, [activeTab]);
+  }, [activeTab, usuario]); // ✅ Agregar usuario como dependencia
 
   const fetchUsers = async () => {
+    // ✅ Double-check: no cargar si no hay usuario
+    if (!usuario) {
+      console.log('[fetchUsers] Usuario no disponible');
+      return;
+    }
+
     setLoading(true);
     try {
-      const data = await usuarioService.getAllUsuarios(usuario!.id);
+      const data = await usuarioService.getAllUsuarios(usuario.id);
       setUsers(data);
     } catch (error) {
+      console.error('[fetchUsers] Error:', error);
       Toast.show({
         type: "error",
         text1: "Error",
@@ -126,11 +138,18 @@ export default function AdminScreen() {
   };
 
   const fetchCourses = async () => {
+    // ✅ Validar usuario antes de cargar cursos
+    if (!usuario) {
+      console.log('[fetchCourses] Usuario no disponible');
+      return;
+    }
+
     setLoading(true);
     try {
       const data = await cursoService.getAllCursos();
       setCourses(data);
     } catch (error) {
+      console.error('[fetchCourses] Error:', error);
       Toast.show({
         type: "error",
         text1: "Error",
@@ -158,6 +177,45 @@ export default function AdminScreen() {
   const handleEditPendingCourse = (course: Curso) => {
     setSelectedPendingCourse(course);
     setShowEditCourseModal(true);
+  };
+
+  const bajaCurso = async (cursoId: number) => {
+    try {
+      await cursoService.bajaCurso(cursoId);
+      fetchCourses();
+      Toast.show({
+        type: "success",
+        text1: "Curso dado de baja",
+        text2: `El curso ha sido dado de baja del sistema.`,
+        position: "bottom",
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "No se pudo dar de baja el curso.",
+        position: "bottom",
+      });
+    }
+  };
+
+  const registrarPago = async (curso: any) => {
+    try {
+      //await cursoService.registrarPagoCurso(curso.id);
+      Toast.show({
+        type: "success",
+        text1: "Pago registrado",
+        text2: `El pago del curso ${curso.nombre} ha sido registrado.`,
+        position: "bottom",
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "No se pudo registrar el pago del curso.",
+        position: "bottom",
+      });
+    }
   };
 
   const altaUsuario = async (nuevoUsuario: NuevoUsuario) => {
@@ -301,8 +359,12 @@ export default function AdminScreen() {
   const contadorFiltrosCursos =
     filtrosEstadoCurso.length + filtrosEstadoAlta.length;
 
+  if (!usuario) {
+    return null;
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}> {/* ✅ Cambiado de SafeAreaView a View */}
       {/* Header con tabs */}
       <View style={styles.header}>
         <Text style={styles.title}>Administración</Text>
@@ -366,7 +428,7 @@ export default function AdminScreen() {
           <ViewToggle
             currentView={vistaActual}
             onViewChange={setVistaActual}
-            availableViews={["calendario", "lista"]}
+            availableViews={["lista", "calendario"]}
           />
         )}
 
@@ -519,6 +581,8 @@ export default function AdminScreen() {
                       course={curso}
                       handleCourseDetails={handleViewCourseDetails}
                       onEditPendingCourse={handleEditPendingCourse}
+                      onRegistrarPago={registrarPago}
+                      onDarDeBaja={(cursoId: number) => bajaCurso(cursoId)}
                     />
                   ))
                 ) : (
@@ -577,7 +641,7 @@ export default function AdminScreen() {
               try {
                 await usuarioService.reenviarInvitacion(
                   selectedUser.id,
-                  usuario!.id
+                  usuario.id // ✅ Ya validamos que usuario existe arriba
                 );
               } catch (error) {
                 console.error("Error reenviando mail de invitación:", error);
@@ -586,7 +650,7 @@ export default function AdminScreen() {
           />
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -707,5 +771,6 @@ const styles = StyleSheet.create({
   title: {
     ...TIPOGRAFIA.titleL,
     color: COLORES.textPrimary,
-    marginBottom: 8,},
+    marginBottom: 8,
+  },
 });

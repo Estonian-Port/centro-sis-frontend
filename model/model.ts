@@ -22,7 +22,7 @@ export enum EstadoPago {
   PENDIENTE = "PENDIENTE",
   AL_DIA = "AL DIA",
   ATRASADO = "ATRASADO",
-  MOROSO = "MOROSO",
+  PAGO_COMPLETO = "PAGO COMPLETO",
 }
 
 export const formatEstadoPago = (estado?: string) => {
@@ -31,7 +31,7 @@ export const formatEstadoPago = (estado?: string) => {
     PENDIENTE: "PENDIENTE",
     AL_DIA: "AL DÍA",
     ATRASADO: "ATRASADO",
-    MOROSO: "MOROSO",
+    PAGO_COMPLETO: "PAGO COMPLETO",
   };
   if (map[estado]) return map[estado];
   return estado
@@ -71,6 +71,7 @@ export interface Usuario {
   primerLogin: boolean;
   listaRol: Rol[];
   ultimoIngreso?: string;
+  adultoResponsable?: AdultoResponsable;
 }
 
 export interface UsuarioDetails extends Usuario {
@@ -142,7 +143,7 @@ export interface CursoAlumno extends Curso {
   fechaInscripcion: string;
   porcentajeAsistencia: number;
   beneficio: number;
-  pagosRealizados: PagoCurso[];
+  pagosRealizados: PagoDTO[];
   puntos: number;
 }
 
@@ -157,7 +158,7 @@ export interface Inscripcion {
   curso: Curso;
   tipoPagoElegido: TipoPago;
   fechaInscripcion: string;
-  pagosRealizados: PagoCurso[];
+  pagosRealizados: PagoDTO[];
   estadoPago: EstadoPago;
   beneficio: number;
   puntos: number;
@@ -214,8 +215,12 @@ export interface Horario {
 
 export interface Access {
   id: number;
-  usuario: Usuario;
-  fecha: string;
+  usuarioId: number;
+  usuarioNombre: string;
+  usuarioApellido: string;
+  usuarioDni: string;
+  fechaHora: string
+  tipoAcceso: string;
 }
 
 export interface AuthResponse {
@@ -279,117 +284,110 @@ export interface NuevaInscripcion {
   beneficio: number;
 }
 
-// model/pago.model.ts - Agregar al archivo model.ts existente
-
-export enum TipoPagoConcepto {
-  CURSO = "CURSO",           // Alumno paga inscripción
-  ALQUILER = "ALQUILER",     // Profesor paga al instituto
-  COMISION = "COMISION",     // Instituto paga a profesor
+export interface UsuarioSimple {
+  id: number;
+  nombre: string;
+  apellido: string;
 }
 
-export interface PagoBase {
+export interface ParteAsistencia {
+  id: number;
+  fecha: string;
+  totalAlumnos: number;
+  totalPresentes: number;
+  totalAusentes: number;
+  presentes: UsuarioSimple[];
+  ausentes: UsuarioSimple[];
+  porcentajeAsistencia: number;
+  tomadoPor: UsuarioSimple;
+}
+
+// model/pago.model.ts - Agregar al archivo model.ts existente
+
+// =============================================
+// Pago.types.ts - ACTUALIZADO
+// =============================================
+
+export enum TipoPagoConcepto {
+  CURSO = "CURSO",
+  ALQUILER = "ALQUILER",
+  COMISION = "COMISION",
+}
+
+// ✅ DTO que viene del backend (flat, sin objetos anidados)
+export interface PagoDTO {
   id: number;
   monto: number;
   fecha: string;
   fechaBaja?: string | null;
   observaciones?: string | null;
   tipo: TipoPagoConcepto;
+  
+  // Curso
+  cursoId: number;
+  cursoNombre: string;
+  
+  // Usuario que PAGA
+  usuarioPagaId?: number | null;
+  usuarioPagaNombre?: string | null;
+  usuarioPagaApellido?: string | null;
+  
+  // Usuario que RECIBE
+  usuarioRecibeId?: number | null;
+  usuarioRecibeNombre?: string | null;
+  usuarioRecibeApellido?: string | null;
+  
+  // Específico de PagoCurso
+  inscripcionId?: number | null;
+  retraso?: boolean | null;
+  beneficioAplicado?: number | null;
 }
 
-// Pago de Alumno por Curso
-export interface PagoCurso extends PagoBase {
-  tipo: TipoPagoConcepto.CURSO;
-  inscripcion: {
-    id: number;
-    alumno: Usuario;
-    curso: Curso;
-    tipoPagoSeleccionado: TipoPago;
-  };
-  retraso: boolean;
-  beneficioAplicado: number;
-}
+// ✅ Alias para mantener compatibilidad
+export type Pago = PagoDTO;
 
-// Pago de Profesor al Instituto (Alquiler)
-export interface PagoAlquiler extends PagoBase {
-  tipo: TipoPagoConcepto.ALQUILER;
-  curso: Curso;
-  profesor: Usuario;
-}
-
-// Pago del Instituto a Profesor (Comisión)
-export interface PagoComision extends PagoBase {
-  tipo: TipoPagoConcepto.COMISION;
-  curso: Curso;
-  profesor: Usuario;
-}
-
-// Union type para todos los pagos
-export type Pago = PagoCurso | PagoAlquiler | PagoComision;
-
-// Helper para obtener info unificada de cualquier tipo de pago
+// ✅ Helper para mostrar en UI (igual que antes pero adaptado)
 export interface PagoDisplay {
   id: number;
   monto: number;
   fecha: string;
   concepto: TipoPagoConcepto;
   curso: string;
-  usuarioPago: string;      // Quien pagó
-  usuarioRecibe: string;    // Quien recibió
-  medioPago?: string;        // NUEVO: Efectivo, Transferencia, Tarjeta
+  usuarioPago: string;
+  usuarioRecibe: string;
   retraso?: boolean;
   beneficio?: number;
   estaActivo: boolean;
 }
 
-// Función helper para convertir cualquier Pago a PagoDisplay
-export function pagoToDisplay(pago: Pago): PagoDisplay {
+// ✅ Función helper para convertir PagoDTO a PagoDisplay
+export function pagoToDisplay(pago: PagoDTO): PagoDisplay {
   const estaActivo = !pago.fechaBaja;
 
-  switch (pago.tipo) {
-    case TipoPagoConcepto.CURSO:
-      return {
-        id: pago.id,
-        monto: pago.monto,
-        fecha: pago.fecha,
-        concepto: TipoPagoConcepto.CURSO,
-        curso: pago.inscripcion.curso.nombre,
-        usuarioPago: `${pago.inscripcion.alumno.nombre} ${pago.inscripcion.alumno.apellido}`,
-        usuarioRecibe: "Instituto",
-        medioPago: "Efectivo", // Por defecto, debería venir del backend
-        retraso: pago.retraso,
-        beneficio: pago.beneficioAplicado,
-        estaActivo,
-      };
+  // Construir nombres completos
+  const usuarioPaga = pago.usuarioPagaNombre 
+    ? `${pago.usuarioPagaNombre} ${pago.usuarioPagaApellido || ''}`.trim()
+    : "Instituto";
+    
+  const usuarioRecibe = pago.usuarioRecibeNombre
+    ? `${pago.usuarioRecibeNombre} ${pago.usuarioRecibeApellido || ''}`.trim()
+    : "Instituto";
 
-    case TipoPagoConcepto.ALQUILER:
-      return {
-        id: pago.id,
-        monto: pago.monto,
-        fecha: pago.fecha,
-        concepto: TipoPagoConcepto.ALQUILER,
-        curso: pago.curso.nombre,
-        usuarioPago: `${pago.profesor.nombre} ${pago.profesor.apellido}`,
-        usuarioRecibe: "Instituto",
-        medioPago: "Transferencia",
-        estaActivo,
-      };
-
-    case TipoPagoConcepto.COMISION:
-      return {
-        id: pago.id,
-        monto: pago.monto,
-        fecha: pago.fecha,
-        concepto: TipoPagoConcepto.COMISION,
-        curso: pago.curso.nombre,
-        usuarioPago: "Instituto",
-        usuarioRecibe: `${pago.profesor.nombre} ${pago.profesor.apellido}`,
-        medioPago: "Transferencia",
-        estaActivo,
-      };
-  }
+  return {
+    id: pago.id,
+    monto: pago.monto,
+    fecha: pago.fecha,
+    concepto: pago.tipo,
+    curso: pago.cursoNombre,
+    usuarioPago: usuarioPaga,
+    usuarioRecibe: usuarioRecibe,
+    retraso: pago.retraso ?? undefined,
+    beneficio: pago.beneficioAplicado ?? undefined,
+    estaActivo,
+  };
 }
 
-// Helper para formatear concepto
+// ✅ Helper para formatear concepto (sin cambios)
 export function formatConcepto(concepto: TipoPagoConcepto): string {
   const map: Record<TipoPagoConcepto, string> = {
     [TipoPagoConcepto.CURSO]: "Cursada",
@@ -397,4 +395,77 @@ export function formatConcepto(concepto: TipoPagoConcepto): string {
     [TipoPagoConcepto.COMISION]: "Comisión",
   };
   return map[concepto];
+}
+
+// ✅ Helper para obtener el color según el tipo
+export function getConceptoColor(concepto: TipoPagoConcepto): string {
+  const map: Record<TipoPagoConcepto, string> = {
+    [TipoPagoConcepto.CURSO]: "#4CAF50",      // Verde
+    [TipoPagoConcepto.ALQUILER]: "#FF9800",   // Naranja
+    [TipoPagoConcepto.COMISION]: "#2196F3",   // Azul
+  };
+  return map[concepto];
+}
+
+export interface PagoPreviewRequest {
+  inscripcionId: number;
+  aplicarRecargo: boolean;
+}
+
+export interface PagoPreview {
+  inscripcionId: number;
+  alumnoNombre: string;
+  cursoNombre: string;
+  montoPorCuota: number;
+  beneficio: number;
+  descuento: number;
+  recargoPorcentaje: number;
+  recargo: number;
+  montoFinal: number;
+  aplicaRecargo: boolean;
+  cuotasPagadas: number;
+  cuotasTotales: number;
+  cuotasEsperadas: number;
+  cuotasAtrasadas: number;
+  puedeRegistrar: boolean;
+}
+
+export interface RegistrarPagoCursoRequest {
+  inscripcionId: number;
+  aplicarRecargo: boolean;
+}
+
+export interface PagoFilters {
+  page?: number;
+  size?: number;
+  search?: string;
+  tipos?: TipoPagoConcepto[];
+  meses?: number[];
+}
+
+// ✅ Preview types
+export interface PagoAlquilerPreview {
+  cursoId: number;
+  cursoNombre: string;
+  profesores: string[];
+  montoPorCuota: number;
+  totalCuotas: number;
+  cuotasPagadas: number[];
+  cuotasPendientes: number[];
+  puedeRegistrar: boolean;
+}
+
+export interface PagoComisionPreview {
+  cursoId: number;
+  cursoNombre: string;
+  profesorId: number;
+  profesorNombre: string;
+  porcentajeComision: number;
+  fechaInicio: string;
+  fechaFin: string;
+  diasPeriodo: number;
+  recaudacionPeriodo: number;
+  montoComision: number;
+  puedeRegistrar: boolean;
+  mensajeError?: string;
 }

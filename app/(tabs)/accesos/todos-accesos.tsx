@@ -1,11 +1,9 @@
-// app/(tabs)/ingresos/todos.tsx
-import { IngresoItem } from "@/components/ingresos/IngresoItem";
-import { RegistrarIngresoModal } from "@/components/ingresos/RegistrarIngresoModal";
+// app/(tabs)/accesos/todos.tsx
 import { SearchBar } from "@/components/ui/SearchBar";
 import { Button } from "@/components/ui/Button";
-import { Access, PaginatedResponse, Rol } from "@/model/model";
+import { Access, Rol } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -17,11 +15,17 @@ import {
 import Toast from "react-native-toast-message";
 import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
 import { MultiSelect, MultiSelectOption } from "@/components/ui/MultiSelect";
+import { useAuth } from "@/context/authContext";
+import { accesoService } from "@/services/acceso.service";
+import { AccesoItem } from "@/components/accesos/AccesoItem";
+import { RegistrarAccesoModal } from "@/components/accesos/RegistrarAccesoModal";
 
 type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
-export default function TodosIngresosScreen() {
-  const [ingresos, setIngresos] = useState<Access[]>([]);
+export default function TodosAccesosScreen() {
+  const { usuario } = useAuth();
+  
+  const [accesos, setAccesos] = useState<Access[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(0);
@@ -37,218 +41,6 @@ export default function TodosIngresosScreen() {
   const [showRegistrarModal, setShowRegistrarModal] = useState(false);
 
   const PAGE_SIZE = 20;
-
-  // 🎭 MOCK DATA - Eliminar cuando tengas backend
-  const MOCK_INGRESOS: Access[] = [
-    {
-      id: 1,
-      usuario: {
-        id: 1,
-        nombre: "Juan",
-        apellido: "Pérez",
-        dni: "12345678",
-        email: "juan@mail.com",
-        celular: "1122334455",
-        fechaNacimiento: "1990-05-15",
-        estado: "ACTIVO" as any,
-        primerLogin: false,
-        listaRol: ["ALUMNO" as any],
-      },
-      fecha: "2025-01-13T14:30:00",
-    },
-    {
-      id: 2,
-      usuario: {
-        id: 2,
-        nombre: "María",
-        apellido: "García",
-        dni: "87654321",
-        email: "maria@mail.com",
-        celular: "1155667788",
-        fechaNacimiento: "1985-03-22",
-        estado: "ACTIVO" as any,
-        primerLogin: false,
-        listaRol: ["PROFESOR" as any],
-      },
-      fecha: "2025-01-13T09:15:00",
-    },
-    {
-      id: 3,
-      usuario: {
-        id: 3,
-        nombre: "Carlos",
-        apellido: "López",
-        dni: "11223344",
-        email: "carlos@mail.com",
-        celular: "1199887766",
-        fechaNacimiento: "1995-11-08",
-        estado: "ACTIVO" as any,
-        primerLogin: false,
-        listaRol: ["ALUMNO" as any],
-      },
-      fecha: "2025-02-18T08:00:00",
-    },
-    {
-      id: 4,
-      usuario: {
-        id: 4,
-        nombre: "Ana",
-        apellido: "Martínez",
-        dni: "55667788",
-        email: "ana@mail.com",
-        celular: "1144556677",
-        fechaNacimiento: "1988-07-30",
-        estado: "ACTIVO" as any,
-        primerLogin: false,
-        listaRol: ["PROFESOR" as any],
-      },
-      fecha: "2025-03-12T16:45:00",
-    },
-    {
-      id: 5,
-      usuario: {
-        id: 5,
-        nombre: "Pedro",
-        apellido: "Sánchez",
-        dni: "99887766",
-        email: "pedro@mail.com",
-        celular: "1133445566",
-        fechaNacimiento: "1992-09-14",
-        estado: "ACTIVO" as any,
-        primerLogin: false,
-        listaRol: ["ALUMNO" as any],
-      },
-      fecha: "2025-04-20T14:20:00",
-    },
-    {
-      id: 6,
-      usuario: {
-        id: 6,
-        nombre: "Laura",
-        apellido: "Torres",
-        dni: "22334455",
-        email: "laura@mail.com",
-        celular: "1177889900",
-        fechaNacimiento: "1987-12-05",
-        estado: "ACTIVO" as any,
-        primerLogin: false,
-        listaRol: ["OFICINA" as any],
-      },
-      fecha: "2025-05-15T09:00:00",
-    },
-    {
-      id: 7,
-      usuario: {
-        id: 7,
-        nombre: "Diego",
-        apellido: "Fernández",
-        dni: "66778899",
-        email: "diego@mail.com",
-        celular: "1166778899",
-        fechaNacimiento: "1993-02-28",
-        estado: "ACTIVO" as any,
-        primerLogin: false,
-        listaRol: ["ALUMNO" as any],
-      },
-      fecha: "2025-06-22T15:30:00",
-    },
-    {
-      id: 8,
-      usuario: {
-        id: 8,
-        nombre: "Sofia",
-        apellido: "Ruiz",
-        dni: "44556677",
-        email: "sofia@mail.com",
-        celular: "1188990011",
-        fechaNacimiento: "1991-04-17",
-        estado: "ACTIVO" as any,
-        primerLogin: false,
-        listaRol: ["PROFESOR" as any],
-      },
-      fecha: "2025-07-10T10:15:00",
-    },
-    {
-      id: 9,
-      usuario: {
-        id: 9,
-        nombre: "Roberto",
-        apellido: "Gómez",
-        dni: "33445566",
-        email: "roberto@mail.com",
-        celular: "1155443322",
-        fechaNacimiento: "1989-06-25",
-        estado: "ACTIVO" as any,
-        primerLogin: false,
-        listaRol: ["ALUMNO" as any],
-      },
-      fecha: "2025-08-05T13:00:00",
-    },
-    {
-      id: 10,
-      usuario: {
-        id: 10,
-        nombre: "Valentina",
-        apellido: "Morales",
-        dni: "77889900",
-        email: "valentina@mail.com",
-        celular: "1166554433",
-        fechaNacimiento: "1994-10-12",
-        estado: "ACTIVO" as any,
-        primerLogin: false,
-        listaRol: ["PROFESOR" as any],
-      },
-      fecha: "2025-09-18T11:30:00",
-    },
-    {
-      id: 11,
-      usuario: {
-        id: 11,
-        nombre: "Martín",
-        apellido: "Silva",
-        dni: "88990011",
-        email: "martin@mail.com",
-        celular: "1177665544",
-        fechaNacimiento: "1986-08-03",
-        estado: "ACTIVO" as any,
-        primerLogin: false,
-        listaRol: ["ALUMNO" as any],
-      },
-      fecha: "2025-10-25T14:45:00",
-    },
-    {
-      id: 12,
-      usuario: {
-        id: 12,
-        nombre: "Carolina",
-        apellido: "Ramírez",
-        dni: "99001122",
-        email: "carolina@mail.com",
-        celular: "1188776655",
-        fechaNacimiento: "1990-01-19",
-        estado: "ACTIVO" as any,
-        primerLogin: false,
-        listaRol: ["OFICINA" as any],
-      },
-      fecha: "2025-11-08T09:20:00",
-    },
-    {
-      id: 13,
-      usuario: {
-        id: 13,
-        nombre: "Federico",
-        apellido: "Castro",
-        dni: "00112233",
-        email: "federico@mail.com",
-        celular: "1199887766",
-        fechaNacimiento: "1992-12-31",
-        estado: "ACTIVO" as any,
-        primerLogin: false,
-        listaRol: ["ALUMNO" as any],
-      },
-      fecha: "2025-12-15T16:00:00",
-    },
-  ];
 
   const rolFilterOptions: FilterOption<Rol>[] = [
     { value: Rol.ALUMNO, label: "Alumno", color: "#3b82f6" },
@@ -273,10 +65,14 @@ export default function TodosIngresosScreen() {
   ];
 
   useEffect(() => {
-    fetchIngresos(0);
-  }, [searchQuery, selectedRoles, selectedMeses]);
+    if (usuario) {
+      fetchAccesos(0);
+    }
+  }, [searchQuery, selectedRoles, selectedMeses, usuario]);
 
-  const fetchIngresos = async (pageNum: number = 0) => {
+  const fetchAccesos = async (pageNum: number = 0) => {
+    if (!usuario) return;
+
     if (pageNum === 0) {
       setLoading(true);
     } else {
@@ -284,76 +80,29 @@ export default function TodosIngresosScreen() {
     }
 
     try {
-      // 🎭 MOCK - Simular llamada API
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // 🎭 MOCK - Filtrar datos localmente
-      let filtered = [...MOCK_INGRESOS];
-
-      // Filtrar por búsqueda
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        filtered = filtered.filter((ingreso) => {
-          const nombreCompleto =
-            `${ingreso.usuario.nombre} ${ingreso.usuario.apellido}`.toLowerCase();
-          const dni = ingreso.usuario.dni.toLowerCase();
-          return nombreCompleto.includes(query) || dni.includes(query);
-        });
-      }
-
-      // Filtrar por roles
-      if (selectedRoles.length > 0) {
-        filtered = filtered.filter((ingreso) =>
-          selectedRoles.some((rol) =>
-            ingreso.usuario.listaRol.includes(rol as any)
-          )
-        );
-      }
-
-      // Filtrar por meses
-      if (selectedMeses.length > 0) {
-        filtered = filtered.filter((ingreso) => {
-          const fechaIngreso = new Date(ingreso.fecha);
-          const mes = (fechaIngreso.getMonth() + 1) as Mes;
-          return selectedMeses.includes(mes);
-        });
-      }
-
-      const mockResponse: PaginatedResponse<Access> = {
-        content: filtered,
-        totalElements: filtered.length,
-        totalPages: 1,
-        page: 0,
-        size: 20,
-      };
-
-      // 🔥 REAL - Descomentar cuando tengas backend
-      // const response: PaginatedResponse<Access> =
-      //   await ingresoService.getTodosIngresos({
-      //     page: pageNum,
-      //     size: PAGE_SIZE,
-      //     search: searchQuery,
-      //     roles: selectedRoles,
-      //     meses: selectedMeses,
-      //   });
-
-      const response = mockResponse; // 🎭 MOCK
+      const response = await accesoService.getTodosAccesos(usuario.id, {
+        page: pageNum,
+        size: PAGE_SIZE,
+        search: searchQuery || undefined,
+        roles: selectedRoles.length > 0 ? selectedRoles : undefined,
+        meses: selectedMeses.length > 0 ? selectedMeses : undefined,
+      });
 
       if (pageNum === 0) {
-        setIngresos(response.content);
+        setAccesos(response.content);
       } else {
-        setIngresos((prev) => [...prev, ...response.content]);
+        setAccesos((prev) => [...prev, ...response.content]);
       }
 
       setPage(response.page);
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
     } catch (error) {
-      console.error("Error fetching ingresos:", error);
+      console.error("Error fetching accesos:", error);
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudieron cargar los ingresos",
+        text2: "No se pudieron cargar los accesos",
         position: "bottom",
       });
     } finally {
@@ -364,7 +113,7 @@ export default function TodosIngresosScreen() {
 
   const handleLoadMore = () => {
     if (page < totalPages - 1 && !loadingMore) {
-      fetchIngresos(page + 1);
+      fetchAccesos(page + 1);
     }
   };
 
@@ -380,11 +129,15 @@ export default function TodosIngresosScreen() {
     );
   };
 
+  const handleRegistrarSuccess = () => {
+    fetchAccesos(0);
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.loadingText}>Cargando ingresos...</Text>
+        <Text style={styles.loadingText}>Cargando accesos...</Text>
       </View>
     );
   }
@@ -398,13 +151,13 @@ export default function TodosIngresosScreen() {
         {/* Header con botón */}
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Text style={styles.title}>Todos los Ingresos</Text>
+            <Text style={styles.title}>Todos los Accesos</Text>
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{totalElements}</Text>
             </View>
           </View>
           <Button
-            title="Registrar Ingreso"
+            title="Registrar Acceso"
             variant="primary"
             size="small"
             onPress={() => setShowRegistrarModal(true)}
@@ -442,8 +195,8 @@ export default function TodosIngresosScreen() {
           </View>
         </View>
 
-        {/* Lista de Ingresos */}
-        {ingresos.length === 0 ? (
+        {/* Lista de Accesos */}
+        {accesos.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons
               name={
@@ -460,24 +213,24 @@ export default function TodosIngresosScreen() {
               {searchQuery ||
               selectedRoles.length > 0 ||
               selectedMeses.length > 0
-                ? "No se encontraron ingresos"
-                : "No hay ingresos registrados"}
+                ? "No se encontraron accesos"
+                : "No hay accesos registrados"}
             </Text>
             <Text style={styles.emptyText}>
               {searchQuery ||
               selectedRoles.length > 0 ||
               selectedMeses.length > 0
                 ? "Intenta con otros filtros de búsqueda"
-                : "Los ingresos aparecerán aquí"}
+                : "Los accesos aparecerán aquí"}
             </Text>
           </View>
         ) : (
           <>
-            <View style={styles.ingresosList}>
-              {ingresos.map((ingreso) => (
-                <IngresoItem
-                  key={ingreso.id}
-                  ingreso={ingreso}
+            <View style={styles.accesosList}>
+              {accesos.map((acc) => (
+                <AccesoItem
+                  key={acc.id}
+                  acceso={acc}
                   showUserInfo={true}
                 />
               ))}
@@ -503,18 +256,18 @@ export default function TodosIngresosScreen() {
 
             {/* Indicador de página */}
             <Text style={styles.pageInfo}>
-              Página {page + 1} de {totalPages} • {totalElements} ingresos
+              Página {page + 1} de {totalPages} • {totalElements} accesos
               totales
             </Text>
           </>
         )}
       </ScrollView>
 
-      {/* Modal Registrar Ingreso */}
-      <RegistrarIngresoModal
+      {/* Modal Registrar Acceso */}
+      <RegistrarAccesoModal
         visible={showRegistrarModal}
         onClose={() => setShowRegistrarModal(false)}
-        onSuccess={() => fetchIngresos(0)}
+        onSuccess={handleRegistrarSuccess}
       />
     </View>
   );
@@ -589,7 +342,7 @@ const styles = StyleSheet.create({
     minWidth: 500,
     maxWidth: 750,
   },
-  ingresosList: {
+  accesosList: {
     gap: 8,
   },
   loadMoreButton: {

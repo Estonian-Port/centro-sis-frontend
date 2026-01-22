@@ -1,4 +1,6 @@
 // components/curso/AsistenciaItem.tsx
+import { formatDateToDDMMYYYY } from "@/helper/funciones";
+import { ParteAsistencia } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -9,42 +11,16 @@ import {
   Platform,
 } from "react-native";
 
-interface Alumno {
-  id: number;
-  nombre: string;
-  apellido: string;
+
+
+interface ParteAsistenciaItemProps {
+  parte: ParteAsistencia;
 }
 
-interface Asistencia {
-  id: number;
-  fecha: string;
-  presentes: Alumno[];
-  ausentes: Alumno[];
-}
-
-interface AsistenciaItemProps {
-  asistencia: Asistencia;
-}
-
-export const AsistenciaItem: React.FC<AsistenciaItemProps> = ({
-  asistencia,
+export const AsistenciaItem: React.FC<ParteAsistenciaItemProps> = ({
+  parte,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-
-  const totalAlumnos = asistencia.presentes.length + asistencia.ausentes.length;
-  const porcentajePresentes =
-    totalAlumnos > 0
-      ? Math.round((asistencia.presentes.length / totalAlumnos) * 100)
-      : 0;
-
-  const formatFecha = (fecha: string) => {
-    return new Date(fecha).toLocaleDateString("es-AR", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  };
 
   return (
     <View style={styles.container}>
@@ -60,10 +36,10 @@ export const AsistenciaItem: React.FC<AsistenciaItemProps> = ({
             <Ionicons name="calendar" size={20} color="#3b82f6" />
           </View>
           <View>
-            <Text style={styles.dateText}>{formatFecha(asistencia.fecha)}</Text>
+            <Text style={styles.dateText}>{formatDateToDDMMYYYY(parte.fecha)}</Text>
             <Text style={styles.statsText}>
-              {asistencia.presentes.length} presentes •{" "}
-              {asistencia.ausentes.length} ausentes
+              {parte.totalPresentes} presentes •{" "}
+              {parte.totalAusentes} ausentes
             </Text>
           </View>
         </View>
@@ -73,14 +49,16 @@ export const AsistenciaItem: React.FC<AsistenciaItemProps> = ({
           <View
             style={[
               styles.percentageBadge,
-              porcentajePresentes >= 80
+              parte.porcentajeAsistencia >= 80
                 ? styles.badgeGreen
-                : porcentajePresentes >= 50
+                : parte.porcentajeAsistencia >= 50
                 ? styles.badgeYellow
                 : styles.badgeRed,
             ]}
           >
-            <Text style={styles.percentageText}>{porcentajePresentes}%</Text>
+            <Text style={styles.percentageText}>
+              {parte.porcentajeAsistencia.toFixed(2)}%
+            </Text>
           </View>
           <Ionicons
             name={isExpanded ? "chevron-up" : "chevron-down"}
@@ -98,12 +76,12 @@ export const AsistenciaItem: React.FC<AsistenciaItemProps> = ({
             <View style={styles.sectionHeader}>
               <Ionicons name="checkmark-circle" size={20} color="#10b981" />
               <Text style={styles.sectionTitle}>
-                Presentes ({asistencia.presentes.length})
+                Presentes ({parte.totalPresentes})
               </Text>
             </View>
-            {asistencia.presentes.length > 0 ? (
+            {parte.presentes.length > 0 ? (
               <View style={styles.alumnosList}>
-                {asistencia.presentes.map((alumno) => (
+                {parte.presentes.map((alumno) => (
                   <View key={alumno.id} style={styles.alumnoItem}>
                     <View style={[styles.statusDot, styles.dotPresent]} />
                     <Text style={styles.alumnoName}>
@@ -122,12 +100,12 @@ export const AsistenciaItem: React.FC<AsistenciaItemProps> = ({
             <View style={styles.sectionHeader}>
               <Ionicons name="close-circle" size={20} color="#ef4444" />
               <Text style={styles.sectionTitle}>
-                Ausentes ({asistencia.ausentes.length})
+                Ausentes ({parte.totalAusentes})
               </Text>
             </View>
-            {asistencia.ausentes.length > 0 ? (
+            {parte.ausentes.length > 0 ? (
               <View style={styles.alumnosList}>
-                {asistencia.ausentes.map((alumno) => (
+                {parte.ausentes.map((alumno) => (
                   <View key={alumno.id} style={styles.alumnoItem}>
                     <View style={[styles.statusDot, styles.dotAbsent]} />
                     <Text style={styles.alumnoName}>

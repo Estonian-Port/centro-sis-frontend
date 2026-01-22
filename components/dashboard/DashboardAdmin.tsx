@@ -12,16 +12,20 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORES } from "@/util/colores";
 import { CreateUserModal } from "@/components/modals/CreateUserModal";
 import { TIPOGRAFIA } from "@/util/tipografia";
-import { Estadistica, NuevoUsuario } from "@/model/model";
+import { Estadistica, NuevoUsuario, Rol } from "@/model/model";
 import { usuarioService } from "@/services/usuario.service";
 import Toast from "react-native-toast-message";
 import { CreateCourseModal } from "@/components/modals/CreateCourseModal";
-import { useNavigation } from "expo-router";
+import { router, useNavigation } from "expo-router";
+import { cursoService } from "@/services/curso.service";
+import { useAuth } from "@/context/authContext";
 
 const DasboardAdmin = ({ estadisticas }: { estadisticas: Estadistica }) => {
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
-  const navigation = useNavigation();
+  const { selectedRole } = useAuth();
+  const isAdmin =
+    selectedRole === Rol.ADMINISTRADOR;
 
   const handleCrearUsuario = () => {
     setShowCreateUserModal(true);
@@ -32,8 +36,7 @@ const DasboardAdmin = ({ estadisticas }: { estadisticas: Estadistica }) => {
   };
 
   const handleGestionarUsuarios = () => {
-    // @ts-ignore - Navigation types
-    navigation.navigate("Admin");
+    router.push("/(tabs)/admin");
   };
 
   const altaUsuario = async (nuevoUsuario: NuevoUsuario) => {
@@ -70,14 +73,16 @@ const DasboardAdmin = ({ estadisticas }: { estadisticas: Estadistica }) => {
           </Card>
           <Card style={styles.statCard}>
             <Text style={styles.statNumber}>{estadisticas.profesores}</Text>
-            <Text style={styles.statLabel}>Profesores</Text>
+            <Text style={styles.statLabel}>Profesores Activos</Text>
           </Card>
+          {isAdmin && (
           <Card style={styles.statCard}>
             <Text style={styles.statNumber}>
               ${estadisticas.ingresosMensuales}
             </Text>
             <Text style={styles.statLabel}>Ingresos Mes</Text>
           </Card>
+          )}
         </View>
         <Card>
           <Text style={styles.cardTitle}>Acciones Rápidas</Text>

@@ -1,41 +1,52 @@
 // app/(tabs)/pagos/_layout.tsx
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, Slot } from "expo-router";
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter, Slot, usePathname } from "expo-router";
+import { useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { COLORES } from "@/util/colores";
 import { useAuth } from "@/context/authContext";
+import { CustomDrawerHeader } from "@/components/navigation/CustomDrawerHeader";
 
 export default function PagosLayout() {
   const router = useRouter();
+  const pathname = usePathname();
   const { selectedRole } = useAuth();
-  const [activeTab, setActiveTab] = useState<"recibidos" | "realizados">("recibidos");
+  const [activeTab, setActiveTab] = useState<"recibidos" | "realizados">(
+    "recibidos",
+  );
 
-  // Alumno solo ve "Realizados"
   const isAlumno = selectedRole === "ALUMNO";
+
+  useEffect(() => {
+    if (pathname.includes("realizados")) {
+      setActiveTab("realizados");
+    } else if (pathname.includes("recibidos")) {
+      setActiveTab("recibidos");
+    }
+  }, [pathname]);
 
   const handleTabChange = (tab: "recibidos" | "realizados") => {
     setActiveTab(tab);
     router.push(`/pagos/${tab}`);
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Pagos</Text>
+  if (selectedRole == null) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.loadingText}>Cargando datos de usuario...</Text>
       </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* ✅ Header unificado */}
+      <CustomDrawerHeader title="Pagos" />
 
       {/* Tabs */}
-      <View style={styles.tabsContainer}>
-        {/* Solo muestra tab Recibidos si NO es alumno */}
-        {!isAlumno && (
+      {!isAlumno && (
+        <View style={styles.tabsContainer}>
+          {/* Solo muestra tab Recibidos si NO es alumno */}
           <TouchableOpacity
             style={[styles.tab, activeTab === "recibidos" && styles.activeTab]}
             onPress={() => handleTabChange("recibidos")}
@@ -54,35 +65,35 @@ export default function PagosLayout() {
               Recibidos
             </Text>
           </TouchableOpacity>
-        )}
 
-        <TouchableOpacity
-          style={[
-            styles.tab, 
-            activeTab === "realizados" && styles.activeTab,
-            isAlumno && styles.tabFullWidth
-          ]}
-          onPress={() => handleTabChange("realizados")}
-        >
-          <Ionicons
-            name="card-outline"
-            size={18}
-            color={activeTab === "realizados" ? "#ffffff" : "#6b7280"}
-          />
-          <Text
+          <TouchableOpacity
             style={[
-              styles.tabText,
-              activeTab === "realizados" && styles.activeTabText,
+              styles.tab,
+              activeTab === "realizados" && styles.activeTab,
+              isAlumno && styles.tabFullWidth,
             ]}
+            onPress={() => handleTabChange("realizados")}
           >
-            Realizados
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <Ionicons
+              name="card-outline"
+              size={18}
+              color={activeTab === "realizados" ? "#ffffff" : "#6b7280"}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "realizados" && styles.activeTabText,
+              ]}
+            >
+              Realizados
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Content */}
       <Slot />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -91,19 +102,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f9fafb",
   },
-  header: {
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+  centered: {
+    justifyContent: "center",
+    alignItems: "center",
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#1f2937",
+  loadingText: {
+    color: "#6b7280",
+    fontSize: 16,
   },
   tabsContainer: {
     backgroundColor: "#ffffff",
     paddingHorizontal: 20,
+    paddingTop: 12,
     paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",

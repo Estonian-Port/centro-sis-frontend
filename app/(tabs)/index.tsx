@@ -31,7 +31,7 @@ export default function HomeScreen() {
       );
       setCursosProfesor(listaCursos);
     }
-    if (selectedRole === Rol.ADMINISTRADOR) {
+    if (selectedRole === Rol.ADMINISTRADOR || selectedRole === Rol.OFICINA) {
       const stats = await administracionService.getEstadisticas();
       setStats(stats);
     }
@@ -54,6 +54,8 @@ export default function HomeScreen() {
       case Rol.OFICINA:
         return <DashboardAdmin estadisticas={stats} />;
       default:
+        // Log para depuración del valor de selectedRole y usuario
+        console.log('[DEBUG] selectedRole:', selectedRole, 'usuario:', usuario);
         return (
           <View style={styles.emptyState}>
             <Text>Selecciona un rol</Text>
