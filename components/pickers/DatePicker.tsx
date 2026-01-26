@@ -126,7 +126,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       <Modal
         visible={true}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowPicker(null)}
       >
         <Pressable

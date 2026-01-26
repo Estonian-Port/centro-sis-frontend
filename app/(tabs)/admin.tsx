@@ -33,6 +33,7 @@ import { router } from "expo-router";
 import { AvisoInvitacionModal } from "@/components/modals/AvisoInvitacionModal";
 import { Ionicons } from "@expo/vector-icons";
 import { TIPOGRAFIA } from "@/util/tipografia";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // ============================================
 // OPCIONES DE FILTROS
@@ -40,10 +41,11 @@ import { TIPOGRAFIA } from "@/util/tipografia";
 
 // Filtros de ROL
 const rolFilterOptions: FilterOption<Rol>[] = [
-  { value: Rol.ALUMNO, label: "Alumno", color: "#3b82f6" },
-  { value: Rol.PROFESOR, label: "Profesor", color: "#10b981" },
-  { value: Rol.ADMINISTRADOR, label: "Admin", color: "#8b5cf6" },
-  { value: Rol.OFICINA, label: "Oficina", color: "#f59e0b" },
+  { value: Rol.ALUMNO, label: "Alumno", color: "#3b82f6" },        
+  { value: Rol.PROFESOR, label: "Profesor", color: "#10b981" },    
+  { value: Rol.OFICINA, label: "Oficina", color: "#f59e0b" },      
+  { value: Rol.ADMINISTRADOR, label: "Admin", color: "#ef4444" },  
+  { value: Rol.PORTERIA, label: "Portería", color: "#6b7280" },    
 ];
 
 // Filtros de ESTADO DE USUARIO
@@ -364,8 +366,7 @@ export default function AdminScreen() {
   }
 
   return (
-    <View style={styles.container}> {/* ✅ Cambiado de SafeAreaView a View */}
-      {/* Header con tabs */}
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <Text style={styles.title}>Administración</Text>
         <View style={styles.tabContainer}>
@@ -626,6 +627,7 @@ export default function AdminScreen() {
               setSelectedUser(null);
             }}
             idUsuario={selectedUser.id}
+            fetchUsers={fetchUsers}
           />
         )}
 
@@ -650,7 +652,7 @@ export default function AdminScreen() {
           />
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -662,7 +664,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "#ffffff",
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",

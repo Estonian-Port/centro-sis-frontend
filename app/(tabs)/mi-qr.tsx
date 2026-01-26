@@ -13,6 +13,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/context/authContext";
 import { Stack } from "expo-router";
 import { QRData } from "@/model/model";
+import { CustomDrawerHeader } from "@/components/navigation/CustomDrawerHeader";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MiQRScreen() {
   const { usuario } = useAuth();
@@ -37,21 +39,8 @@ export default function MiQRScreen() {
   }
 
   return (
-    <>
-      {/* Header */}
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          title: "Mi Código QR",
-          headerStyle: {
-            backgroundColor: "#3b82f6",
-          },
-          headerTintColor: "#ffffff",
-          headerTitleStyle: {
-            fontWeight: "700",
-          },
-        }}
-      />
+ <SafeAreaView style={styles.container} edges={["top"]}>
+      <CustomDrawerHeader title="Mi Código QR" />
 
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         {/* Instrucción Principal */}
@@ -148,7 +137,7 @@ export default function MiQRScreen() {
           </Text>
         </View>
       </ScrollView>
-    </>
+    </SafeAreaView>
   );
 }
 

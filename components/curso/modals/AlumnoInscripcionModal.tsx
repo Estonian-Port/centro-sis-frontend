@@ -10,7 +10,15 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
-import { Curso, Estado, EstadoCurso, EstadoPago, Inscripcion, Rol, TipoCurso } from "@/model/model";
+import {
+  Curso,
+  Estado,
+  EstadoCurso,
+  EstadoPago,
+  Inscripcion,
+  Rol,
+  TipoCurso,
+} from "@/model/model";
 import { formatEstadoPago } from "@/model/model";
 import { COLORES } from "@/util/colores";
 import { Tag } from "@/components/ui/Tag";
@@ -54,14 +62,19 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
       selectedRole !== null &&
       (selectedRole === Rol.ADMINISTRADOR || selectedRole === Rol.PROFESOR));
 
-  const puedeEditarPagos = curso?.estadoAlta === Estado.ACTIVO && evaluarPorRol && inscripcion.estadoPago !== EstadoPago.PAGO_COMPLETO;
+  const puedeEditarPagos =
+    curso?.estadoAlta === Estado.ACTIVO &&
+    evaluarPorRol &&
+    inscripcion.estadoPago !== EstadoPago.PAGO_COMPLETO;
 
-  const puedeEditarBeneficio = curso?.estadoAlta === Estado.ACTIVO && evaluarPorRol;
+  const puedeEditarBeneficio =
+    curso?.estadoAlta === Estado.ACTIVO && evaluarPorRol;
 
   const puedeDarDeBaja =
     evaluarPorRol &&
     curso?.estadoAlta === Estado.ACTIVO &&
-    (curso?.estado === EstadoCurso.EN_CURSO || curso?.estado === EstadoCurso.POR_COMENZAR);
+    (curso?.estado === EstadoCurso.EN_CURSO ||
+      curso?.estado === EstadoCurso.POR_COMENZAR);
 
   const puedeEditarPuntos =
     selectedRole !== null &&
@@ -120,7 +133,7 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                   value={
                     inscripcion.fechaInscripcion
                       ? new Date(
-                          inscripcion.fechaInscripcion
+                          inscripcion.fechaInscripcion,
                         ).toLocaleDateString("es-AR")
                       : "N/A"
                   }
@@ -176,12 +189,12 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                         : "0%"}
                     </Text>
                     {puedeEditarBeneficio && (
-                    <TouchableOpacity
-                      onPress={onOpenEditarBeneficio}
-                      style={styles.editButton}
-                    >
-                      <Ionicons name="pencil" size={16} color="#3b82f6" />
-                    </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={onOpenEditarBeneficio}
+                        style={styles.editButton}
+                      >
+                        <Ionicons name="pencil" size={16} color="#3b82f6" />
+                      </TouchableOpacity>
                     )}
                   </View>
                 </View>
@@ -195,17 +208,17 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                   Pagos Realizados ({inscripcion.pagosRealizados?.length || 0})
                 </Text>
                 {puedeEditarPagos && (
-                <TouchableOpacity
-                  onPress={onOpenRegistrarPago}
-                  style={styles.sectionActionButton}
-                >
-                  <Ionicons
-                    name="add-circle"
-                    size={20}
-                    color={COLORES.violeta}
-                  />
-                  <Text style={styles.sectionActionText}>Registrar Pago</Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={onOpenRegistrarPago}
+                    style={styles.sectionActionButton}
+                  >
+                    <Ionicons
+                      name="add-circle"
+                      size={20}
+                      color={COLORES.violeta}
+                    />
+                    <Text style={styles.sectionActionText}>Registrar Pago</Text>
+                  </TouchableOpacity>
                 )}
               </View>
               {inscripcion.pagosRealizados &&
@@ -245,17 +258,17 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
               <View style={styles.sectionHeaderWithAction}>
                 <Text style={styles.sectionTitle}>Sistema de Recompensas</Text>
                 {puedeEditarPuntos && (
-                <TouchableOpacity
-                  onPress={onOpenAsignarPuntos}
-                  style={styles.sectionActionButton}
-                >
-                  <Ionicons name="add-circle" size={20} color="#f59e0b" />
-                  <Text
-                    style={[styles.sectionActionText, { color: "#f59e0b" }]}
+                  <TouchableOpacity
+                    onPress={onOpenAsignarPuntos}
+                    style={styles.sectionActionButton}
                   >
-                    Asignar Puntos
-                  </Text>
-                </TouchableOpacity>
+                    <Ionicons name="add-circle" size={20} color="#f59e0b" />
+                    <Text
+                      style={[styles.sectionActionText, { color: "#f59e0b" }]}
+                    >
+                      Asignar Puntos
+                    </Text>
+                  </TouchableOpacity>
                 )}
               </View>
               <View style={styles.puntosContainer}>
@@ -268,17 +281,17 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
 
             {/* Dar de Baja */}
             {puedeDarDeBaja && (
-            <View style={styles.section}>
-              <Button
-                title="Dar de Baja del Curso"
-                variant="outline"
-                onPress={() => {
-                  onClose();
-                  onDarDeBaja();
-                }}
-                style={{ width: "100%", borderColor: "#ef4444" }}
-              />
-            </View>
+              <View style={styles.section}>
+                <Button
+                  title="Dar de Baja del Curso"
+                  variant="outline"
+                  onPress={() => {
+                    onClose();
+                    onDarDeBaja();
+                  }}
+                  style={{ width: "100%", borderColor: "#ef4444" }}
+                />
+              </View>
             )}
           </ScrollView>
         </View>
@@ -319,13 +332,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    flex: 1,
-    maxHeight: Platform.OS === "web" ? ("85vh" as any) : undefined,
+    maxHeight: Platform.select({
+      web: "85vh" as any,
+      ios: "90%",
+      android: "90%",
+      default: "90%",
+    }),
     ...Platform.select({
       web: {
         borderRadius: 16,
         width: "100%",
         maxWidth: 600,
+      },
+      default: {
+        width: "100%",
       },
     }),
   },

@@ -20,16 +20,14 @@ import { useAuth } from "@/context/authContext";
 
 // Esquema de validación
 const schema = yup.object().shape({
-  passwordActual: yup
-    .string()
-    .required("La contraseña actual es requerida"),
+  passwordActual: yup.string().required("La contraseña actual es requerida"),
   nuevoPassword: yup
     .string()
     .required("La nueva contraseña es requerida")
     .min(8, "La contraseña debe tener al menos 8 caracteres")
     .matches(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      "Debe contener al menos una mayúscula, una minúscula y un número"
+      "Debe contener al menos una mayúscula, una minúscula y un número",
     ),
   confirmacionPassword: yup
     .string()
@@ -40,7 +38,7 @@ const schema = yup.object().shape({
 interface ChangePasswordModalProps {
   visible: boolean;
   onClose: () => void;
-  onSuccess: (usuario : UsuarioUpdatePassword) => Promise<void>;
+  onSuccess: (usuario: UsuarioUpdatePassword) => Promise<void>;
 }
 
 export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
@@ -136,8 +134,12 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                     error={errors.passwordActual?.message}
                     secureTextEntry={!showCurrentPassword}
                     leftIcon="lock-closed-outline"
-                    rightIcon={showCurrentPassword ? "eye-off-outline" : "eye-outline"}
-                    onRightIconPress={() => setShowCurrentPassword(!showCurrentPassword)}
+                    rightIcon={
+                      showCurrentPassword ? "eye-off-outline" : "eye-outline"
+                    }
+                    onRightIconPress={() =>
+                      setShowCurrentPassword(!showCurrentPassword)
+                    }
                   />
                 )}
               />
@@ -158,8 +160,12 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                       error={errors.nuevoPassword?.message}
                       secureTextEntry={!showNewPassword}
                       leftIcon="lock-closed-outline"
-                      rightIcon={showNewPassword ? "eye-off-outline" : "eye-outline"}
-                      onRightIconPress={() => setShowNewPassword(!showNewPassword)}
+                      rightIcon={
+                        showNewPassword ? "eye-off-outline" : "eye-outline"
+                      }
+                      onRightIconPress={() =>
+                        setShowNewPassword(!showNewPassword)
+                      }
                     />
                     {/* Indicador de fuerza */}
                     {passwordStrength && (
@@ -173,8 +179,8 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                                   passwordStrength.label === "Débil"
                                     ? "33%"
                                     : passwordStrength.label === "Media"
-                                    ? "66%"
-                                    : "100%",
+                                      ? "66%"
+                                      : "100%",
                                 backgroundColor: passwordStrength.color,
                               },
                             ]}
@@ -209,8 +215,12 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                     error={errors.confirmacionPassword?.message}
                     secureTextEntry={!showConfirmPassword}
                     leftIcon="lock-closed-outline"
-                    rightIcon={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
-                    onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    rightIcon={
+                      showConfirmPassword ? "eye-off-outline" : "eye-outline"
+                    }
+                    onRightIconPress={() =>
+                      setShowConfirmPassword(!showConfirmPassword)
+                    }
                   />
                 )}
               />
@@ -218,19 +228,29 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
 
             {/* Requisitos */}
             <View style={styles.requirementsContainer}>
-              <Text style={styles.requirementsTitle}>La contraseña debe contener:</Text>
+              <Text style={styles.requirementsTitle}>
+                La contraseña debe contener:
+              </Text>
               <View style={styles.requirement}>
                 <Ionicons
-                  name={newPassword.length >= 8 ? "checkmark-circle" : "ellipse-outline"}
+                  name={
+                    newPassword.length >= 8
+                      ? "checkmark-circle"
+                      : "ellipse-outline"
+                  }
                   size={16}
                   color={newPassword.length >= 8 ? "#10b981" : "#9ca3af"}
                 />
-                <Text style={styles.requirementText}>Al menos 8 caracteres</Text>
+                <Text style={styles.requirementText}>
+                  Al menos 8 caracteres
+                </Text>
               </View>
               <View style={styles.requirement}>
                 <Ionicons
                   name={
-                    /[A-Z]/.test(newPassword) ? "checkmark-circle" : "ellipse-outline"
+                    /[A-Z]/.test(newPassword)
+                      ? "checkmark-circle"
+                      : "ellipse-outline"
                   }
                   size={16}
                   color={/[A-Z]/.test(newPassword) ? "#10b981" : "#9ca3af"}
@@ -240,7 +260,9 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               <View style={styles.requirement}>
                 <Ionicons
                   name={
-                    /[a-z]/.test(newPassword) ? "checkmark-circle" : "ellipse-outline"
+                    /[a-z]/.test(newPassword)
+                      ? "checkmark-circle"
+                      : "ellipse-outline"
                   }
                   size={16}
                   color={/[a-z]/.test(newPassword) ? "#10b981" : "#9ca3af"}
@@ -249,7 +271,11 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               </View>
               <View style={styles.requirement}>
                 <Ionicons
-                  name={/\d/.test(newPassword) ? "checkmark-circle" : "ellipse-outline"}
+                  name={
+                    /\d/.test(newPassword)
+                      ? "checkmark-circle"
+                      : "ellipse-outline"
+                  }
                   size={16}
                   color={/\d/.test(newPassword) ? "#10b981" : "#9ca3af"}
                 />
@@ -294,10 +320,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: "100%",
     maxWidth: 500,
-    maxHeight: "90%",
+    height: 600,
     ...Platform.select({
       web: {
-        boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+        boxShadow:
+          "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
       },
       default: {
         shadowColor: "#000",

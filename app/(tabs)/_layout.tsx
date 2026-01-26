@@ -11,7 +11,8 @@ import { CustomDrawerHeader } from "../../components/navigation/CustomDrawerHead
 
 // ✅ Wrapper que maneja el modal sin interferir con el layout
 function DrawerWithModal({ children }: { children: React.ReactNode }) {
-  const { usuario, selectedRole, setSelectedRole, hasMultipleRoles } = useAuth();
+  const { usuario, selectedRole, setSelectedRole, hasMultipleRoles } =
+    useAuth();
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
 
@@ -46,7 +47,8 @@ function DrawerWithModal({ children }: { children: React.ReactNode }) {
 
 export default function TabLayout() {
   const { selectedRole } = useAuth();
-  const isAdminOrOficina = selectedRole === Rol.ADMINISTRADOR || selectedRole === Rol.OFICINA;
+  const isAdmin = selectedRole === Rol.ADMINISTRADOR;
+  const isOficina = selectedRole === Rol.OFICINA;
   const isPorteria = selectedRole === Rol.PORTERIA;
 
   // Para web, usa el Drawer de expo-router
@@ -54,7 +56,7 @@ export default function TabLayout() {
     return (
       <DrawerWithModal>
         <Drawer
-          key={selectedRole || 'no-role'}
+          key={selectedRole || "no-role"}
           drawerContent={(props) => <DrawerContent {...props} />}
           screenOptions={{
             headerShown: false,
@@ -75,7 +77,7 @@ export default function TabLayout() {
             }}
           />
 
-          {isAdminOrOficina && (
+          {(isAdmin || isOficina) && (
             <Drawer.Screen
               name="admin"
               options={{
@@ -89,7 +91,7 @@ export default function TabLayout() {
             />
           )}
 
-                    {isPorteria && (
+          {isPorteria && (
             <Drawer.Screen
               name="escanear-qr"
               options={{
@@ -145,7 +147,7 @@ export default function TabLayout() {
   return (
     <DrawerWithModal>
       <Tabs
-        key={selectedRole || 'no-role'}
+        key={`tabs-${selectedRole || "no-role"}`}
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: "#3b82f6",
@@ -161,17 +163,16 @@ export default function TabLayout() {
           }}
         />
 
-        {isAdminOrOficina && (
-          <Tabs.Screen
-            name="admin"
-            options={{
-              title: "Admin",
-              tabBarIcon: ({ size, color }) => (
-                <Ionicons name="settings-outline" size={size} color={color} />
-              ),
-            }}
-          />
-        )}
+        <Tabs.Screen
+          name="admin"
+          options={{
+            title: "Admin",
+            href: isAdmin || isOficina ? "/(tabs)/admin" : null,
+            tabBarIcon: ({ size, color }) => (
+              <Ionicons name="clipboard-outline" size={size} color={color} />
+            ),
+          }}
+        />
 
         <Tabs.Screen
           name="accesos"
@@ -187,6 +188,7 @@ export default function TabLayout() {
           name="pagos"
           options={{
             title: "Pagos",
+            href: !isPorteria ? "/(tabs)/admin" : null,
             tabBarIcon: ({ size, color }) => (
               <Ionicons name="card-outline" size={size} color={color} />
             ),
@@ -203,17 +205,18 @@ export default function TabLayout() {
           }}
         />
 
-                <Tabs.Screen
+        <Tabs.Screen
           name="escanear-qr"
           options={{
-            title: "Escanear QR",
+            title: "Escanear",
+            href: isPorteria ? "/(tabs)/escanear-qr" : null,
             tabBarIcon: ({ size, color }) => (
-              <Ionicons name="settings-outline" size={size} color={color} />
+              <Ionicons name="scan-outline" size={size} color={color} />
             ),
           }}
         />
 
-                <Tabs.Screen
+        <Tabs.Screen
           name="profile"
           options={{
             title: "Perfil",

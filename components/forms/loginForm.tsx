@@ -44,21 +44,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      // ✅ login() debe retornar el usuario actualizado
       const usuarioLogueado = await login(data.email, data.password);
-
-      console.log("Usuario logueado:", usuarioLogueado);
-      console.log("Primer login:", usuarioLogueado.primerLogin);
-
-      // ✅ Decidir redirección basado en el usuario retornado
       if (usuarioLogueado.primerLogin || usuarioLogueado.estado === "PENDIENTE") {
-        console.log("🔄 Primer login → /complete-profile");
         router.replace("/complete-profile");
       } else {
-        console.log("✅ Login completo → /(tabs)");
         router.replace("/(tabs)");
       }
-
       onSuccess?.();
     } catch (error) {
       console.error("Error en login:", error);

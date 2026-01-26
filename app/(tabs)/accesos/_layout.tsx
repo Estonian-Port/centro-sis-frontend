@@ -10,6 +10,7 @@ import {
 import { COLORES } from "@/util/colores";
 import { useAuth } from "@/context/authContext";
 import { CustomDrawerHeader } from "@/components/navigation/CustomDrawerHeader";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AccesosLayout() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function AccesosLayout() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       {/* ✅ Header unificado */}
       <CustomDrawerHeader title="Accesos" />
 
@@ -89,7 +90,7 @@ export default function AccesosLayout() {
 
       {/* Content */}
       <Slot />
-    </View>
+    </SafeAreaView>
   );
 }
 

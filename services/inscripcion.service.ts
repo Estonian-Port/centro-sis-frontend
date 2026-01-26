@@ -66,11 +66,10 @@ export const inscripcionService = {
     }
   },
 
-  asignarPuntos : async (inscripcionId: number, puntos: number) => {
+  asignarPuntos : async (inscripcionId: number, puntos: number, userId: number) => {
     try {
-      const response = await api.post(
-        `${INSC}/${inscripcionId}/asignar-puntos`,
-        { puntos }
+      const response = await api.put(
+        `${INSC}/${inscripcionId}/asignar-puntos/${userId}`, {puntos}
       );
       return response.data.data;
     } catch (error: any) {

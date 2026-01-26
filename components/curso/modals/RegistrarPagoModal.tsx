@@ -1,4 +1,4 @@
-// components/modals/RegistrarPagoModal.tsx
+// components/modals/RegistrarPagoModal.tsx - VERSIÓN SIMPLIFICADA
 import React, { useState, useEffect } from "react";
 import {
   Modal,
@@ -8,10 +8,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
+  Platform,
+  Dimensions,  // ✅ AGREGAR
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { pagoService } from "@/services/pago.service";
+
+// ✅ AGREGAR ESTA LÍNEA
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface PagoPreview {
   inscripcionId: number;
@@ -51,19 +56,17 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
 
-
-  // Sugerir recargo solo la primera vez que se abre el modal
   useEffect(() => {
     if (visible) {
-      setAplicarRecargo(false); // Reiniciar estado al abrir
+      setAplicarRecargo(false);
       setLoadingPreview(true);
-      pagoService.calcularPreviewPago(usuarioId, {
-        inscripcionId,
-        aplicarRecargo: false,
-      })
+      pagoService
+        .calcularPreviewPagoCurso(usuarioId, {
+          inscripcionId,
+          aplicarRecargo: false,
+        })
         .then((data) => {
           setPreview(data);
-          // Sugerir recargo solo la primera vez
           if (data.cuotasAtrasadas > 0) {
             setAplicarRecargo(true);
           }
@@ -84,14 +87,14 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
     }
   }, [visible, usuarioId, inscripcionId]);
 
-  // Recargar preview solo cuando cambia aplicarRecargo (no sugerir recargo aquí)
   useEffect(() => {
     if (visible && preview) {
       setLoadingPreview(true);
-      pagoService.calcularPreviewPago(usuarioId, {
-        inscripcionId,
-        aplicarRecargo,
-      })
+      pagoService
+        .calcularPreviewPagoCurso(usuarioId, {
+          inscripcionId,
+          aplicarRecargo,
+        })
         .then((data) => {
           setPreview(data);
         })
@@ -127,7 +130,7 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
         text2: `Pago de $${preview.montoFinal.toLocaleString("es-AR")} registrado`,
         position: "bottom",
       });
-      
+
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -170,25 +173,25 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
       onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.modal}>
-            {/* Header */}
-            <View style={styles.header}>
-              <View style={styles.iconContainer}>
-                <Ionicons name="card" size={24} color="#10b981" />
-              </View>
-              <Text style={styles.title}>Registrar Pago</Text>
-              <TouchableOpacity
-                onPress={handleClose}
-                style={styles.closeButton}
-              >
-                <Ionicons name="close" size={24} color="#6b7280" />
-              </TouchableOpacity>
+        {/* ✅ CAMBIO: Sin modalContainer intermedio */}
+        <View style={styles.modal}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="card" size={24} color="#10b981" />
             </View>
+            <Text style={styles.title}>Registrar Pago</Text>
+            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
 
+          {/* ScrollView */}
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={true}
+          >
             {/* Info del alumno y curso */}
             <View style={styles.infoSection}>
               <View style={styles.infoRow}>
@@ -258,7 +261,8 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.checkboxLabel}>
-                    Aplicar recargo por atraso ({preview.recargoPorcentaje.toFixed(0)}%)
+                    Aplicar recargo por atraso (
+                    {preview.recargoPorcentaje.toFixed(0)}%)
                   </Text>
                   {preview.cuotasAtrasadas > 0 && (
                     <Text style={styles.checkboxHint}>
@@ -312,36 +316,36 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
                 </Text>
               </View>
             </View>
+          </ScrollView>
 
-            {/* Buttons */}
-            <View style={styles.buttons}>
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={handleClose}
-                disabled={loading}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  styles.confirmButton,
-                  !preview.puedeRegistrar && styles.disabledButton,
-                ]}
-                onPress={handleRegistrar}
-                disabled={loading || !preview.puedeRegistrar}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#ffffff" />
-                ) : (
-                  <Text style={styles.confirmButtonText}>
-                    {preview.puedeRegistrar ? "Registrar Pago" : "Pagos Completos"}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
+          {/* Buttons */}
+          <View style={styles.buttons}>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={handleClose}
+              disabled={loading}
+            >
+              <Text style={styles.cancelButtonText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.button,
+                styles.confirmButton,
+                !preview.puedeRegistrar && styles.disabledButton,
+              ]}
+              onPress={handleRegistrar}
+              disabled={loading || !preview.puedeRegistrar}
+            >
+              {loading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={styles.confirmButtonText}>
+                  {preview.puedeRegistrar ? "Registrar Pago" : "Pagos Completos"}
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
-        </ScrollView>
+        </View>
       </View>
     </Modal>
   );
@@ -353,6 +357,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
+    padding: 20,
   },
   loadingContainer: {
     backgroundColor: "#ffffff",
@@ -366,23 +371,32 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     fontWeight: "500",
   },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
+  // ✅ CAMBIO CRÍTICO: modal directamente con height en píxeles
   modal: {
     backgroundColor: "#ffffff",
     borderRadius: 16,
+    overflow: "hidden",
     width: "100%",
     maxWidth: 500,
-    padding: 24,
+    height: Platform.select({
+      ios: SCREEN_HEIGHT * 0.80,  
+      android: SCREEN_HEIGHT * 0.85,
+      default: SCREEN_HEIGHT * 0.85,
+    }),
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    padding: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
   },
   iconContainer: {
     width: 40,
@@ -569,6 +583,11 @@ const styles = StyleSheet.create({
   buttons: {
     flexDirection: "row",
     gap: 12,
+    padding: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+    backgroundColor: "#ffffff",
   },
   button: {
     flex: 1,

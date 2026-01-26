@@ -6,6 +6,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { COLORES } from "@/util/colores";
 import { useAuth } from "@/context/authContext";
 import { CustomDrawerHeader } from "@/components/navigation/CustomDrawerHeader";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PagosLayout() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function PagosLayout() {
   }
 
   return (
-    <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={["top"]}>
       {/* ✅ Header unificado */}
       <CustomDrawerHeader title="Pagos" />
 
@@ -93,7 +94,7 @@ export default function PagosLayout() {
 
       {/* Content */}
       <Slot />
-    </View>
+    </SafeAreaView>
   );
 }
 

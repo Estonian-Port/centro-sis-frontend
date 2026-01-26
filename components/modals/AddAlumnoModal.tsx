@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: "100%",
     maxWidth: 600,
-    maxHeight: "90%",
+    height: 500,
     ...Platform.select({
       web: {
         boxShadow:

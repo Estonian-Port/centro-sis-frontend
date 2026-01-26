@@ -14,7 +14,6 @@ import { useState } from "react";
 import { BajaTotalUsuario } from "../modals/BajaTotalUsuario";
 import { usuarioService } from "@/services/usuario.service";
 import { useAuth } from "@/context/authContext";
-import { AvisoInvitacionModal } from "../modals/AvisoInvitacionModal";
 
 const UserItem = ({
   user,
@@ -28,6 +27,14 @@ const UserItem = ({
   const { usuario, selectedRole } = useAuth();
   const [modalBajaVisible, setModalBajaVisible] = useState(false);
 
+  const canDelete =
+    user.estado !== Estado.BAJA &&
+    !(
+      selectedRole === "OFICINA" &&
+      (user.listaRol.includes(Rol.OFICINA) ||
+        user.listaRol.includes(Rol.ADMINISTRADOR))
+    );
+
   return (
     <TouchableOpacity
       key={user.id}
@@ -37,53 +44,68 @@ const UserItem = ({
       onPress={() => handleUserDetails(user)}
       activeOpacity={0.7}
     >
-      <View style={styles.userMainInfo}>
-        {user.estado !== Estado.PENDIENTE && (
-          <Text style={styles.userName}>
-            {user.nombre} {user.apellido}
-          </Text>
-        )}
-        <Text style={styles.userEmail}>{user.email}</Text>
-      </View>
+      <View style={styles.content}>
+        {/* Fila superior: Nombre/Email + Icono borrar */}
+        <View style={styles.topRow}>
+          <View style={styles.userMainInfo}>
+            {user.estado !== Estado.PENDIENTE && (
+              <Text style={styles.userName}>
+                {user.nombre} {user.apellido}
+              </Text>
+            )}
+            <Text style={styles.userEmail}>{user.email}</Text>
+          </View>
 
-      <View style={styles.userMetaInfo}>
-        <View style={styles.tagsContainer}>
+          {/* Icono de borrar */}
+          {canDelete && (
+            <TouchableOpacity
+              onPress={() => setModalBajaVisible(true)}
+              style={styles.deleteButton}
+            >
+              <Ionicons
+                name={"trash-outline"}
+                size={20}
+                color={COLORES.error}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={styles.tagsRow}>
+          {/* Roles */}
           <View style={styles.rolesContainer}>
             {user.listaRol.map((rol) => (
-              <Tag key={rol} label={rol} variant={rolToTagVariant(rol)} />
+              <Tag
+                key={rol}
+                label={rol}
+                variant={rolToTagVariant(rol)}
+                size="small"  // ✅ Tags más chicos
+              />
             ))}
           </View>
 
+          {/* Estado */}
           <Tag
             label={user.estado}
             variant={estadoUsuarioToTagVariant(user.estado)}
+            size="small"  // ✅ Tag más chico
           />
         </View>
-
-        {user.estado !== Estado.BAJA &&
-          !(
-            selectedRole === "OFICINA" &&
-            (user.listaRol.includes(Rol.OFICINA) || user.listaRol.includes(Rol.ADMINISTRADOR))
-          ) && (
-            <TouchableOpacity onPress={() => setModalBajaVisible(true)}>
-              <Ionicons name={"trash-outline"} size={20} color={COLORES.error} />
-            </TouchableOpacity>
-          )}
-
-        <BajaTotalUsuario
-          visible={modalBajaVisible}
-          onClose={() => setModalBajaVisible(false)}
-          usuario={user}
-          onConfirmar={async () => {
-            try {
-              await usuarioService.bajaTotal(user.id, usuario!.id);
-              onRefresh();
-            } catch (error) {
-              console.error("Error dando de baja al usuario:", error);
-            }
-          }}
-        />
       </View>
+
+      <BajaTotalUsuario
+        visible={modalBajaVisible}
+        onClose={() => setModalBajaVisible(false)}
+        usuario={user}
+        onConfirmar={async () => {
+          try {
+            await usuarioService.bajaTotal(user.id, usuario!.id);
+            onRefresh();
+          } catch (error) {
+            console.error("Error dando de baja al usuario:", error);
+          }
+        }}
+      />
     </TouchableOpacity>
   );
 };
@@ -92,9 +114,6 @@ export default UserItem;
 
 const styles = StyleSheet.create({
   tableRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     backgroundColor: "#ffffff",
     borderRadius: 8,
     padding: 16,
@@ -109,9 +128,6 @@ const styles = StyleSheet.create({
     }),
   },
   tableRowBaja: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     backgroundColor: "#f3f4f6",
     borderRadius: 8,
     padding: 16,
@@ -126,6 +142,16 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  content: {
+    flex: 1,
+    gap: 12,
+  },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+  },
   userMainInfo: {
     flex: 1,
   },
@@ -139,19 +165,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#6b7280",
   },
-  userMetaInfo: {
+  deleteButton: {
+    padding: 4,
+  },
+  tagsRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
-    gap: 12,
+    gap: 6,
   },
   rolesContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    flexWrap: "wrap", 
     gap: 4,
-  },
-  tagsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
   },
 });

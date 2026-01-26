@@ -1,7 +1,7 @@
 import { useAuth } from "@/context/authContext";
 import { CursoAlumno, Curso, Rol, Estadistica } from "@/model/model";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StatusBar, StyleSheet, Text, View } from "react-native";
 import { administracionService } from "@/services/administracion.service";
 import { usuarioService } from "@/services/usuario.service";
 import { DashboardProfesor } from "@/components/dashboard/DashboardProfesor";
@@ -64,7 +64,17 @@ export default function HomeScreen() {
     }
   };
 
-  return renderContent();
+  return (
+    <>
+      {Platform.OS !== "web" && (
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor="#f9fafb"
+        />
+      )}
+      {renderContent()}
+    </>
+  );
 }
 
 const styles = StyleSheet.create({

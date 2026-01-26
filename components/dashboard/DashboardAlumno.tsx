@@ -1,3 +1,5 @@
+// components/dashboard/DashboardAlumno.tsx - LAYOUT MÓVIL ARREGLADO
+
 import { useState, useMemo } from "react";
 import { View, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -9,7 +11,6 @@ import { SearchBar } from "@/components/ui/SearchBar";
 import { CourseDetailModal } from "@/components/modals/CourseDetailsModal";
 import CalendarioSemanal from "@/app/calendario";
 
-// Definir opciones de filtro por estado
 const estadoFilterOptions: FilterOption<EstadoCurso>[] = [
   { value: EstadoCurso.POR_COMENZAR, label: "Por Comenzar", color: "#3b82f6" },
   { value: EstadoCurso.EN_CURSO, label: "En Curso", color: "#10b981" },
@@ -23,7 +24,6 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
   const [selectedCourse, setSelectedCourse] = useState<CursoAlumno | null>(null);
   const [showModalDetailsCourse, setShowModalDetailsCourse] = useState(false);
 
-  // Toggle filtro de estado
   const toggleFiltroEstado = (estado: EstadoCurso) => {
     setFiltrosEstado((prev) =>
       prev.includes(estado)
@@ -32,11 +32,9 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
     );
   };
 
-  // Cursos filtrados
   const filteredCourses = useMemo(() => {
     let filtered = cursos;
 
-    // Filtrar por búsqueda
     if (searchQuery) {
       filtered = filtered.filter(
         (course) =>
@@ -47,7 +45,6 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
       );
     }
 
-    // Filtrar por estado
     if (filtrosEstado.length > 0) {
       filtered = filtered.filter((course) =>
         filtrosEstado.includes(course.estado)
@@ -72,12 +69,13 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
           </Text>
         </View>
 
-        {/* Controls: Búsqueda + Toggle de vista + Chip de filtros */}
-        <View style={styles.controls}>
+        {/* ✅ NUEVO LAYOUT: Búsqueda + Toggle arriba */}
+        <View style={styles.topControls}>
           <SearchBar
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Buscar cursos..."
+            style={styles.searchBar}
           />
 
           <ViewToggle
@@ -85,13 +83,22 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
             onViewChange={setVistaActual}
             availableViews={["lista", "calendario"]}
           />
+        </View>
 
+        {/* ✅ NUEVO: Filtros en ScrollView horizontal */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filtersScrollContent}
+          style={styles.filtersScroll}
+        >
           <FilterChips
             options={estadoFilterOptions}
             selectedValues={filtrosEstado}
             onToggle={toggleFiltroEstado}
+            style={styles.filterChips}
           />
-        </View>
+        </ScrollView>
 
         {/* Vista de lista o calendario */}
         {vistaActual === "lista" ? (
@@ -145,21 +152,41 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     marginLeft: 8,
   },
-  controls: {
+  // ✅ NUEVO: Controls superiores (búsqueda + toggle)
+  topControls: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     backgroundColor: "#ffffff",
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
-    borderRadius: 8,
-    marginHorizontal: 12,
-    marginBottom: 16,
+  },
+  searchBar: {
+    flex: 1,  // ✅ Ocupa el espacio disponible
+  },
+  // ✅ NUEVO: Scroll horizontal para filtros
+  filtersScroll: {
+    backgroundColor: "#ffffff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  filtersScrollContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  filterChips: {
+    paddingHorizontal: 0,
+    backgroundColor: "transparent",
+    marginBottom: 0,
   },
   listView: {
     paddingHorizontal: 12,
     gap: 12,
+    marginTop: 12,
   },
 });

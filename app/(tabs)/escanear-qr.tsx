@@ -59,7 +59,7 @@ export default function EscanearQRScreen() {
         type: "error",
         text1: "❌ Error",
         text2: error?.response?.data?.message || "QR inválido",
-        position: "top",
+        position: "bottom",
         visibilityTime: 4000,
       });
     } finally {
@@ -207,33 +207,45 @@ export default function EscanearQRScreen() {
             onBarcodeScanned={processing ? undefined : handleBarCodeScanned}
             barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
           >
-            <View style={styles.overlay}>
-              {/* Header */}
-              <View style={styles.scannerHeader}>
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => setScanning(false)}
-                  disabled={processing}
-                >
-                  <Ionicons name="close" size={32} color="#ffffff" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Marco */}
-              <View style={styles.scanArea}>
-                <View style={styles.scanFrame} />
-                <Text style={styles.scanText}>
-                  {processing ? "Procesando..." : "Apuntá al QR"}
-                </Text>
-              </View>
-
-              <View style={styles.scannerFooter} />
-            </View>
+            <View style={styles.overlay}>{/* Header, scanArea, etc */}</View>
           </CameraView>
         </View>
       </Modal>
-      // ============================================= // Modal de Éxito CON
-      ALERTA DE PAGOS // =============================================
+      // ✅ DESPUÉS (overlay fuera con posicionamiento absoluto):
+      <Modal visible={scanning} animationType="slide">
+        <View style={styles.scannerContainer}>
+          <CameraView
+            style={styles.camera}
+            facing="back"
+            onBarcodeScanned={processing ? undefined : handleBarCodeScanned}
+            barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+          />
+
+          {/* ✅ Overlay fuera de CameraView */}
+          <View style={styles.overlay}>
+            {/* Header */}
+            <View style={styles.scannerHeader}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setScanning(false)}
+                disabled={processing}
+              >
+                <Ionicons name="close" size={32} color="#ffffff" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Marco */}
+            <View style={styles.scanArea}>
+              <View style={styles.scanFrame} />
+              <Text style={styles.scanText}>
+                {processing ? "Procesando..." : "Apuntá al QR"}
+              </Text>
+            </View>
+
+            <View style={styles.scannerFooter} />
+          </View>
+        </View>
+      </Modal>
       <Modal visible={showSuccess} transparent animationType="fade">
         <View style={styles.successOverlay}>
           <View
@@ -424,17 +436,24 @@ const styles = StyleSheet.create({
   },
   scannerContainer: {
     flex: 1,
+    position: "relative",
   },
   camera: {
     flex: 1,
   },
   overlay: {
-    flex: 1,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
+    pointerEvents: "box-none",
   },
   scannerHeader: {
     padding: 20,
     alignItems: "flex-end",
+    pointerEvents: "auto",
   },
   closeButton: {
     width: 48,
@@ -448,6 +467,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    pointerEvents: "none",
   },
   scanFrame: {
     width: 280,
@@ -464,6 +484,7 @@ const styles = StyleSheet.create({
   },
   scannerFooter: {
     height: 100,
+    pointerEvents: "none",
   },
   loadingText: {
     marginTop: 12,

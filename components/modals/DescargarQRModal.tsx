@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     width: "100%",
     maxWidth: 450,
-    maxHeight: "90%", // ✅ Limitar altura
+    height: 600,
   },
   header: {
     flexDirection: "row",

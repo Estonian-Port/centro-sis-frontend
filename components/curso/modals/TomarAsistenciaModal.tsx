@@ -209,14 +209,13 @@ export const TomarAsistenciaModal: React.FC<TomarAsistenciaModalProps> = ({
                 ]}
               >
                 {usarOtraFecha && (
-                  <Ionicons name="checkmark" size={16} color="#fff" />
+                  <Ionicons name="checkmark" size={12} color="#fff" />
                 )}
               </View>
               <Text style={styles.checkboxLabel}>Elegir fecha manualmente</Text>
             </TouchableOpacity>
           </View>
 
-          {/* ✅ Error (solo si hay) */}
           {error && (
             <View style={styles.errorAlert}>
               <Ionicons name="alert-circle" size={18} color="#dc2626" />
@@ -266,6 +265,7 @@ const styles = StyleSheet.create({
     maxWidth: 450,
     padding: 24,
     alignItems: "center",
+    height: 380,
   },
   iconContainer: {
     width: 80,
@@ -358,7 +358,6 @@ const styles = StyleSheet.create({
     color: "#dc2626",
     fontWeight: "500",
   },
-  // ✅ Info simplificada (sin caja de colores)
   infoText: {
     fontSize: 13,
     color: "#6b7280",

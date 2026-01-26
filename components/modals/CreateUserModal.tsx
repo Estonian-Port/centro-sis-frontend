@@ -1,23 +1,22 @@
+// components/modals/CreateUserModal.tsx - SOLUCIÓN SIMPLE
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
-  Alert,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  Platform,
 } from "react-native";
 import * as yup from "yup";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Input } from "../ui/Input";
 import { NuevoUsuario } from "@/model/model";
-import { usuarioService } from "@/services/usuario.service";
-import Toast from "react-native-toast-message";
 import { useAuth } from "@/context/authContext";
 
 const schema = yup.object().shape({
@@ -60,9 +59,12 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       roles: [],
     },
   });
-  const {selectedRole} = useAuth();
+  const { selectedRole } = useAuth();
 
-  const roles = selectedRole === "ADMINISTRADOR" ? availableRoles : availableRoles.filter(r => r.id !== "ADMINISTRADOR");
+  const roles =
+    selectedRole === "ADMINISTRADOR"
+      ? availableRoles
+      : availableRoles.filter((r) => r.id !== "ADMINISTRADOR");
 
   const selectedRoles = watch("roles");
 
@@ -72,25 +74,6 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       ? currentRoles.filter((r) => r !== roleId)
       : [...currentRoles, roleId];
     setValue("roles", newRoles);
-  };
-
-  const invitacionNuevoUsuario = async (nuevoUsuario: NuevoUsuario) => {
-    try {
-      const response = await usuarioService.altaUsuario(nuevoUsuario);
-      Toast.show({
-        type: "success",
-        text1: "Invitación enviada",
-        text2: `La invitación ha sido enviada a ${nuevoUsuario.email}.`,
-        position: "bottom",
-      });
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "No se pudo crear el usuario.",
-        position: "bottom",
-      });
-    }
   };
 
   const onSubmit = async (data: NuevoUsuario) => {
@@ -108,6 +91,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.modal}>
+          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Crear Usuario</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
@@ -115,7 +99,12 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.content}>
+          {/* Content - ScrollView */}
+          <ScrollView
+            style={styles.content}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={true}
+          >
             <Controller
               control={control}
               name="email"
@@ -181,6 +170,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
             </Card>
           </ScrollView>
 
+          {/* Footer */}
           <View style={styles.footer}>
             <Button
               title="Cancelar"
@@ -214,7 +204,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: "100%",
     maxWidth: 500,
-    maxHeight: "90%",
+    height: Platform.select({
+      ios: 500,  
+      android: 550,  
+      default: 500,
+    }),
   },
   header: {
     flexDirection: "row",
@@ -233,7 +227,10 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   content: {
-    flex: 1,
+    // ✅ Ocupa el espacio disponible
+    flexGrow: 1,
+  },
+  contentContainer: {
     padding: 20,
   },
   rolesSection: {

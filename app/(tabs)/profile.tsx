@@ -55,12 +55,13 @@ const getRoleConfig = (roleName: Rol) => {
 };
 
 export default function ProfileScreen() {
-  const { usuario, logout, setUsuario } = useAuth();
+  const { usuario, selectedRole, logout, setUsuario } = useAuth();
   const { width } = useWindowDimensions();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showAdultoResponsableModal, setShowAdultoResponsableModal] = useState(false); // ✅ NUEVO
+  const [showAdultoResponsableModal, setShowAdultoResponsableModal] =
+    useState(false); // ✅ NUEVO
   const [showDescargarQR, setShowDescargarQR] = useState(false); // ✅ NUEVO
   // Verificar si el usuario tiene múltiples roles
   const hasMultipleRoles = (usuario?.listaRol.length || 0) > 1;
@@ -72,8 +73,11 @@ export default function ProfileScreen() {
     const fechaNac = new Date(usuario.fechaNacimiento);
     const edad = hoy.getFullYear() - fechaNac.getFullYear();
     const mesActual = hoy.getMonth() - fechaNac.getMonth();
-    
-    if (mesActual < 0 || (mesActual === 0 && hoy.getDate() < fechaNac.getDate())) {
+
+    if (
+      mesActual < 0 ||
+      (mesActual === 0 && hoy.getDate() < fechaNac.getDate())
+    ) {
       return edad - 1 < 18;
     }
     return edad < 18;
@@ -98,7 +102,7 @@ export default function ProfileScreen() {
     try {
       const response = await usuarioService.updateProfile(
         usuario!.id,
-        userUpdate
+        userUpdate,
       );
       setUsuario(response);
       Toast.show({
@@ -167,19 +171,30 @@ export default function ProfileScreen() {
       onPress: () => setShowChangePasswordModal(true),
       disabled: false,
     },
-    // ✅ NUEVO: Botón de Descargar QR
     {
       icon: "qr-code-outline",
       title: "Descargar QR Personal",
       subtitle: "Código para registro de asistencia",
       onPress: () => setShowDescargarQR(true),
       disabled: false,
-      color: "#10b981", // Verde
+      color: COLORES.verde,
     },
+    ...(selectedRole === Rol.ADMINISTRADOR
+      ? [
+          {
+            icon: "scan-outline",
+            title: "Escanear QR",
+            subtitle: "Registrar acceso de usuarios",
+            onPress: () => router.push("/(tabs)/escanear-qr"),
+            disabled: false,
+            color: COLORES.rojo,
+          },
+        ]
+      : []),
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       {/* Header con info del usuario */}
       <View style={styles.header}>
         <Text style={styles.userName}>
@@ -263,7 +278,8 @@ export default function ProfileScreen() {
                       Ver Adulto Responsable
                     </Text>
                     <Text style={styles.adultoResponsableSubtitle}>
-                      {usuario?.adultoResponsable?.nombre} {usuario?.adultoResponsable?.apellido}
+                      {usuario?.adultoResponsable?.nombre}{" "}
+                      {usuario?.adultoResponsable?.apellido}
                     </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
@@ -306,7 +322,9 @@ export default function ProfileScreen() {
                   <Ionicons
                     name={action.icon as any}
                     size={22}
-                    color={action.disabled ? "#9ca3af" : (action.color || "#3b82f6")}
+                    color={
+                      action.disabled ? "#9ca3af" : action.color || "#3b82f6"
+                    }
                   />
                 </View>
                 <View style={styles.actionContent}>
@@ -383,9 +401,9 @@ export default function ProfileScreen() {
       )}
 
       <DescargarQRModal
-  visible={showDescargarQR}
-  onClose={() => setShowDescargarQR(false)}
-/>
+        visible={showDescargarQR}
+        onClose={() => setShowDescargarQR(false)}
+      />
 
       {/* Modal de Logout */}
       <ModalLogout
@@ -460,7 +478,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    padding: 16,
+    padding: 0,
   },
   contentContainerWide: {
     paddingHorizontal: 32,
@@ -471,6 +489,7 @@ const styles = StyleSheet.create({
   },
   gridContainer: {
     gap: 16,
+    padding: 16,
   },
   gridTwoColumns: {
     flexDirection: "row",

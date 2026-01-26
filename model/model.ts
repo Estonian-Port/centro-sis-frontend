@@ -21,9 +21,9 @@ export enum EstadoCurso {
 
 export enum EstadoPago {
   PENDIENTE = "PENDIENTE",
-  AL_DIA = "AL DIA",
+  AL_DIA = "AL_DIA",
   ATRASADO = "ATRASADO",
-  PAGO_COMPLETO = "PAGO COMPLETO",
+  PAGO_COMPLETO = "PAGO_COMPLETO",
 }
 
 export const formatEstadoPago = (estado?: string) => {

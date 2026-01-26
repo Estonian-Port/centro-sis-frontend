@@ -1,7 +1,14 @@
+// components/dashboard/DashboardProfesor.tsx - LAYOUT MÓVIL ARREGLADO
+
 import { useState, useMemo } from "react";
 import { View, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Curso, Estado, EstadoCurso, nuevoCursoAlquilerProfesor } from "@/model/model";
+import {
+  Curso,
+  Estado,
+  EstadoCurso,
+  nuevoCursoAlquilerProfesor,
+} from "@/model/model";
 import CourseItem from "@/components/cards/CourseItem";
 import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
 import { ViewMode, ViewToggle } from "@/components/ui/ViewToggle";
@@ -16,7 +23,6 @@ import { cursoService } from "@/services/curso.service";
 import Toast from "react-native-toast-message";
 import { CursoFormModal } from "../modals/CursoFormModal";
 
-// Definir opciones de filtro por estado
 const estadoFilterOptions: FilterOption<EstadoCurso>[] = [
   { value: EstadoCurso.POR_COMENZAR, label: "Por Comenzar", color: "#3b82f6" },
   { value: EstadoCurso.EN_CURSO, label: "En Curso", color: "#10b981" },
@@ -34,36 +40,33 @@ export const DashboardProfesor = ({
   const [vistaActual, setVistaActual] = useState<ViewMode>("lista");
   const [filtrosEstado, setFiltrosEstado] = useState<EstadoCurso[]>([]);
   const [cursoFormVisible, setCursoFormVisible] = useState(false);
-  const [cursoPendienteSeleccionado, setCursoPendienteSeleccionado] = useState<Curso | null>(null);
+  const [cursoPendienteSeleccionado, setCursoPendienteSeleccionado] =
+    useState<Curso | null>(null);
 
-  // Toggle filtro de estado
   const toggleFiltroEstado = (estado: EstadoCurso) => {
     setFiltrosEstado((prev) =>
       prev.includes(estado)
         ? prev.filter((e) => e !== estado)
-        : [...prev, estado]
+        : [...prev, estado],
     );
   };
 
-  // Cursos filtrados
   const filteredCourses = useMemo(() => {
     let filtered = cursos;
 
-    // Filtrar por búsqueda
     if (searchQuery) {
       filtered = filtered.filter(
         (course) =>
           course.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
           course.profesores.some((p) =>
-            p.nombre.toLowerCase().includes(searchQuery.toLowerCase())
-          )
+            p.nombre.toLowerCase().includes(searchQuery.toLowerCase()),
+          ),
       );
     }
 
-    // Filtrar por estado
     if (filtrosEstado.length > 0) {
       filtered = filtered.filter((course) =>
-        filtrosEstado.includes(course.estado)
+        filtrosEstado.includes(course.estado),
       );
     }
 
@@ -72,11 +75,9 @@ export const DashboardProfesor = ({
 
   const handleViewCourseDetails = (course: Curso) => {
     if (course.estadoAlta === Estado.PENDIENTE) {
-      // Guardar el curso pendiente y abrir modal
       setCursoPendienteSeleccionado(course);
       setCursoFormVisible(true);
     } else {
-      // Ir al panel del curso
       router.push(`/curso/${course.id}/alumnos`);
     }
   };
@@ -116,12 +117,13 @@ export const DashboardProfesor = ({
           </Text>
         </View>
 
-        {/* Controls: Búsqueda + Toggle de vista + Chip de filtros */}
-        <View style={styles.controls}>
+        {/* ✅ NUEVO LAYOUT: Búsqueda + Toggle arriba */}
+        <View style={styles.topControls}>
           <SearchBar
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Buscar cursos..."
+            style={styles.searchBar}
           />
 
           <ViewToggle
@@ -129,13 +131,22 @@ export const DashboardProfesor = ({
             onViewChange={setVistaActual}
             availableViews={["lista", "calendario"]}
           />
+        </View>
 
+        {/* ✅ NUEVO: Filtros en ScrollView horizontal */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filtersScrollContent}
+          style={styles.filtersScroll}
+        >
           <FilterChips
             options={estadoFilterOptions}
             selectedValues={filtrosEstado}
             onToggle={toggleFiltroEstado}
+            style={styles.filterChips}
           />
-        </View>
+        </ScrollView>
 
         {/* Vista de lista o calendario */}
         {vistaActual === "lista" ? (
@@ -163,7 +174,7 @@ export const DashboardProfesor = ({
               <StatRow
                 number={cursos.reduce(
                   (sum, curso) => sum + curso.alumnosInscriptos.length,
-                  0
+                  0,
                 )}
                 label="Alumnos"
               />
@@ -174,7 +185,6 @@ export const DashboardProfesor = ({
         </View>
       </SafeAreaView>
 
-      {/* MODAL ÚNICO - Fuera del map */}
       {cursoPendienteSeleccionado && (
         <CursoFormModal
           visible={cursoFormVisible}
@@ -209,18 +219,39 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     marginLeft: 8,
   },
-  controls: {
+  // ✅ NUEVO: Controls superiores (búsqueda + toggle)
+  topControls: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     backgroundColor: "#ffffff",
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
-    borderRadius: 8,
-    marginHorizontal: 12,
   },
+  searchBar: {
+    flex: 1, // ✅ Ocupa el espacio disponible
+  },
+  // ✅ NUEVO: Scroll horizontal para filtros
+  filtersScroll: {
+    backgroundColor: "#ffffff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  filtersScrollContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  filterChips: {
+    paddingHorizontal: 0,
+    backgroundColor: "transparent",
+    marginBottom: 0,
+  },
+  // ✅ ELIMINAR: controls (ya no se usa)
   listView: {
     paddingHorizontal: 12,
     gap: 12,

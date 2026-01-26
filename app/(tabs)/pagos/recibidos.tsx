@@ -1,12 +1,7 @@
 // app/(tabs)/pagos/recibidos.tsx
 import { PagoItem } from "@/components/pagos/PagoItem";
 import { SearchBar } from "@/components/ui/SearchBar";
-import {
-  Pago,
-  pagoToDisplay,
-  TipoPagoConcepto,
-  Rol
-} from "@/model/model";
+import { Pago, pagoToDisplay, TipoPagoConcepto, Rol } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState, useMemo } from "react";
 import {
@@ -27,14 +22,14 @@ type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export default function PagosRecibidosScreen() {
   const { usuario, selectedRole } = useAuth();
-  
+
   const [pagos, setPagos] = useState<Pago[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  
+
   // Filtros
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTipos, setSelectedTipos] = useState<TipoPagoConcepto[]>([]);
@@ -47,14 +42,19 @@ export default function PagosRecibidosScreen() {
     if (!usuario) return [];
 
     const roles = usuario.listaRol;
-    const isAdminOrOficina = roles.includes(Rol.ADMINISTRADOR) || roles.includes(Rol.OFICINA);
+    const isAdminOrOficina =
+      roles.includes(Rol.ADMINISTRADOR) || roles.includes(Rol.OFICINA);
     const isProfesor = roles.includes(Rol.PROFESOR);
 
     if (isAdminOrOficina) {
       // Admin/Oficina ve CURSO (alumnos) y ALQUILER (profesores)
       return [
         { value: TipoPagoConcepto.CURSO, label: "Cursos", color: "#3b82f6" },
-        { value: TipoPagoConcepto.ALQUILER, label: "Alquiler", color: "#10b981" },
+        {
+          value: TipoPagoConcepto.ALQUILER,
+          label: "Alquiler",
+          color: "#10b981",
+        },
       ];
     }
 
@@ -62,7 +62,11 @@ export default function PagosRecibidosScreen() {
       // Profesor ve CURSO (alumnos de sus cursos alquiler) y COMISION (del instituto)
       return [
         { value: TipoPagoConcepto.CURSO, label: "Cursos", color: "#3b82f6" },
-        { value: TipoPagoConcepto.COMISION, label: "Comisión", color: "#8b5cf6" },
+        {
+          value: TipoPagoConcepto.COMISION,
+          label: "Comisión",
+          color: "#8b5cf6",
+        },
       ];
     }
 
@@ -111,7 +115,7 @@ export default function PagosRecibidosScreen() {
           search: searchQuery || undefined,
           tipos: selectedTipos.length > 0 ? selectedTipos : undefined,
           meses: selectedMeses.length > 0 ? selectedMeses : undefined,
-        }
+        },
       );
 
       if (pageNum === 0) {
@@ -145,13 +149,13 @@ export default function PagosRecibidosScreen() {
 
   const handleToggleTipo = (tipo: TipoPagoConcepto) => {
     setSelectedTipos((prev) =>
-      prev.includes(tipo) ? prev.filter((t) => t !== tipo) : [...prev, tipo]
+      prev.includes(tipo) ? prev.filter((t) => t !== tipo) : [...prev, tipo],
     );
   };
 
   const handleToggleMes = (mes: Mes) => {
     setSelectedMeses((prev) =>
-      prev.includes(mes) ? prev.filter((m) => m !== mes) : [...prev, mes]
+      prev.includes(mes) ? prev.filter((m) => m !== mes) : [...prev, mes],
     );
   };
 
@@ -188,8 +192,12 @@ export default function PagosRecibidosScreen() {
 
         {/* Filtros en una línea */}
         {tiposPagoDisponibles.length > 0 && (
-          <View style={styles.filtersRow}>
-            
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filtersScrollContent}
+            style={styles.filtersScroll}
+          >
             {/* Chips de Tipo */}
             <View style={styles.filterChipsContainer}>
               <FilterChips
@@ -200,6 +208,9 @@ export default function PagosRecibidosScreen() {
               />
             </View>
 
+            {/* Separador */}
+            <View style={styles.filterSeparator} />
+
             {/* Dropdown de Meses */}
             <View style={styles.multiSelectContainer}>
               <MultiSelect
@@ -209,7 +220,7 @@ export default function PagosRecibidosScreen() {
                 placeholder="Meses"
               />
             </View>
-          </View>
+          </ScrollView>
         )}
 
         {/* Si es alumno, solo muestra filtro de meses */}
@@ -231,7 +242,9 @@ export default function PagosRecibidosScreen() {
             <Ionicons name="wallet-outline" size={64} color="#d1d5db" />
             <Text style={styles.emptyTitle}>No hay pagos recibidos</Text>
             <Text style={styles.emptyText}>
-              {searchQuery || selectedTipos.length > 0 || selectedMeses.length > 0
+              {searchQuery ||
+              selectedTipos.length > 0 ||
+              selectedMeses.length > 0
                 ? "No se encontraron pagos con ese criterio"
                 : "Los pagos recibidos aparecerán aquí"}
             </Text>
@@ -318,30 +331,6 @@ const styles = StyleSheet.create({
   searchBar: {
     marginBottom: 16,
   },
-  filtersRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
-  },
-  filterLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#374151",
-    marginRight: 4,
-  },
-  filterChipsContainer: {
-    flex: 1,
-  },
-  filterChips: {
-    paddingHorizontal: 0,
-    backgroundColor: "transparent",
-    marginBottom: 0,
-  },
-  multiSelectContainer: {
-    flex: 1,
-  },
   filterSection: {
     marginBottom: 16,
   },
@@ -390,5 +379,37 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6b7280",
     textAlign: "center",
+  },
+  filtersScroll: {
+    marginBottom: 16,
+  },
+  filtersScrollContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 0,
+  },
+  filterLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#374151",
+    marginRight: 8,
+  },
+  filterSeparator: {
+    width: 1,
+    height: 32,
+    backgroundColor: "#e5e7eb",
+  },
+    filterChipsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  filterChips: {
+    paddingHorizontal: 0,
+    backgroundColor: "transparent",
+    marginBottom: 0,
+  },
+  multiSelectContainer: {
+    minWidth: 120,  // ✅ Ancho fijo para que no se encime
   },
 });

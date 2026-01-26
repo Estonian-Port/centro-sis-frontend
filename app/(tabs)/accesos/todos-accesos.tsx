@@ -5,12 +5,12 @@ import { Acceso, Rol } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-    View,
-    Text,
-    ScrollView,
-    StyleSheet,
-    ActivityIndicator,
-    TouchableOpacity,
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
@@ -24,7 +24,7 @@ type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export default function TodosAccesosScreen() {
   const { usuario } = useAuth();
-  
+
   const [accesos, setAccesos] = useState<Acceso[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -119,13 +119,13 @@ export default function TodosAccesosScreen() {
 
   const handleToggleRol = (rol: Rol) => {
     setSelectedRoles((prev) =>
-      prev.includes(rol) ? prev.filter((r) => r !== rol) : [...prev, rol]
+      prev.includes(rol) ? prev.filter((r) => r !== rol) : [...prev, rol],
     );
   };
 
   const handleToggleMes = (mes: Mes) => {
     setSelectedMeses((prev) =>
-      prev.includes(mes) ? prev.filter((m) => m !== mes) : [...prev, mes]
+      prev.includes(mes) ? prev.filter((m) => m !== mes) : [...prev, mes],
     );
   };
 
@@ -173,7 +173,12 @@ export default function TodosAccesosScreen() {
         />
 
         {/* Filtros Combinados */}
-        <View style={styles.filtersRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filtersScrollContent}
+          style={styles.filtersScroll}
+        >
           {/* Chips de Rol */}
           <View style={styles.filterChipsContainer}>
             <FilterChips
@@ -184,6 +189,9 @@ export default function TodosAccesosScreen() {
             />
           </View>
 
+          {/* Separador visual */}
+          <View style={styles.filterSeparator} />
+
           {/* Dropdown de Meses */}
           <View style={styles.multiSelectContainer}>
             <MultiSelect
@@ -193,7 +201,7 @@ export default function TodosAccesosScreen() {
               placeholder="Meses"
             />
           </View>
-        </View>
+        </ScrollView>
 
         {/* Lista de Accesos */}
         {accesos.length === 0 ? (
@@ -228,11 +236,7 @@ export default function TodosAccesosScreen() {
           <>
             <View style={styles.accesosList}>
               {accesos.map((acc) => (
-                <AccesoItem
-                  key={acc.id}
-                  acceso={acc}
-                  showUserInfo={true}
-                />
+                <AccesoItem key={acc.id} acceso={acc} showUserInfo={true} />
               ))}
             </View>
 
@@ -322,26 +326,6 @@ const styles = StyleSheet.create({
   searchBar: {
     marginBottom: 16,
   },
-  filtersRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
-  },
-  filterChipsContainer: {
-    flex: 1,
-    minWidth: 200,
-  },
-  filterChips: {
-    paddingHorizontal: 0,
-    backgroundColor: "transparent",
-    marginBottom: 0,
-  },
-  multiSelectContainer: {
-    minWidth: 500,
-    maxWidth: 750,
-  },
   accesosList: {
     gap: 8,
   },
@@ -387,5 +371,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6b7280",
     textAlign: "center",
+  },
+  filtersScroll: {
+    marginBottom: 16,
+  },
+  filtersScrollContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 0,
+  },
+  filterSeparator: {
+    width: 1,
+    height: 32,
+    backgroundColor: "#e5e7eb",
+  },
+  filterChipsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  filterChips: {
+    paddingHorizontal: 0,
+    backgroundColor: "transparent",
+    marginBottom: 0,
+  },
+  multiSelectContainer: {
+    minWidth: 120, // ✅ Ancho fijo
   },
 });

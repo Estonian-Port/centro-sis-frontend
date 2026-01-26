@@ -52,32 +52,34 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         onPress={() => setShowDetailModal(true)}
         activeOpacity={0.7}
       >
-        {/* Alumno Info */}
-        <View style={styles.alumnoInfo}>
-          <View style={styles.alumnoAvatar}>
-            <Text style={styles.avatarText}>
-              {alumno.nombre[0]}
-              {alumno.apellido[0]}
-            </Text>
-          </View>
-          <View style={styles.alumnoDetails}>
-            <Text style={styles.alumnoName}>
-              {alumno.nombre} {alumno.apellido}
-            </Text>
-            <View style={styles.alumnoMeta}>
-              <Ionicons name="mail-outline" size={14} color="#6b7280" />
-              <Text style={styles.alumnoMetaText}>{alumno.email}</Text>
+        {/* Fila 1: Avatar + Info + Chevron */}
+        <View style={styles.topRow}>
+          <View style={styles.alumnoInfo}>
+            <View style={styles.alumnoAvatar}>
+              <Text style={styles.avatarText}>
+                {alumno.nombre[0]}
+                {alumno.apellido[0]}
+              </Text>
+            </View>
+            <View style={styles.alumnoDetails}>
+              <Text style={styles.alumnoName}>
+                {alumno.nombre} {alumno.apellido}
+              </Text>
+              <View style={styles.alumnoMeta}>
+                <Ionicons name="mail-outline" size={14} color="#6b7280" />
+                <Text style={styles.alumnoMetaText}>{alumno.email}</Text>
+              </View>
             </View>
           </View>
+          <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
         </View>
 
-        {/* Estado de Pago */}
-        <View style={styles.cardRight}>
+        {/* Fila 2: Tag de estado */}
+        <View style={styles.bottomRow}>
           <Tag
             label={formatEstadoPago(inscripcion.estadoPago)}
             variant={estadoPagoToTagVariant(inscripcion.estadoPago)}
           />
-          <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
         </View>
       </TouchableOpacity>
 
@@ -115,7 +117,7 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         alumno={inscripcion.alumno}
         puntosActuales={inscripcion.puntos}
         onAsignar={async (puntos) => {
-          await inscripcionService.asignarPuntos(inscripcion.id, puntos);
+          await inscripcionService.asignarPuntos(inscripcion.id, puntos, usuario.id);
           await onRefresh();
           // Al confirmar, NO reabre el detalle, va a la lista
         }}
@@ -177,15 +179,13 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: "#e5e7eb",
+    gap: 12,
     ...Platform.select({
       web: {
         boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
@@ -198,6 +198,11 @@ const styles = StyleSheet.create({
         elevation: 2,
       },
     }),
+  },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   alumnoInfo: {
     flexDirection: "row",
@@ -235,10 +240,10 @@ const styles = StyleSheet.create({
   alumnoMetaText: {
     fontSize: 13,
     color: "#6b7280",
+    flex: 1,
   },
-  cardRight: {
+  bottomRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
   },
 });

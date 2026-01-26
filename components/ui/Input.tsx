@@ -1,3 +1,8 @@
+// =============================================
+// SOLUCIÓN DEFINITIVA (La más confiable)
+// =============================================
+// Esta combina lo mejor de ambas soluciones
+
 import React from "react";
 import {
   View,
@@ -17,7 +22,7 @@ interface InputProps extends TextInputProps {
   rightIcon?: keyof typeof Ionicons.glyphMap;
   onRightIconPress?: () => void;
   containerStyle?: any;
-  labelStyle?: any;  // ✅ Agregado para estilos personalizados del label
+  labelStyle?: any;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -27,7 +32,7 @@ export const Input: React.FC<InputProps> = ({
   rightIcon,
   onRightIconPress,
   containerStyle,
-  labelStyle,  // ✅ Desestructurar
+  labelStyle,
   style,
   ...props
 }) => {
@@ -50,6 +55,7 @@ export const Input: React.FC<InputProps> = ({
             styles.input,
             leftIcon && styles.inputWithLeftIcon,
             rightIcon && styles.inputWithRightIcon,
+            Platform.OS === "ios" && styles.inputIOS,
             style,
           ]}
           placeholderTextColor="#9ca3af"
@@ -98,7 +104,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#d1d5db",
     borderRadius: 8,
-    overflow: "hidden",
+    // ✅ NO usar overflow: hidden (puede cortar)
+    height: 50,
   },
   inputContainerError: {
     borderColor: "#ef4444",
@@ -106,10 +113,21 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    paddingVertical: Platform.OS === "web" ? 12 : 14,
     paddingHorizontal: 16,
-    fontSize: 14,
+    fontSize: 16,
     color: "#1f2937",
+    height: 50,
+    textAlignVertical: "center",
+    paddingTop: 13,
+    paddingBottom: 13,
+    lineHeight: 22,
+  },
+  inputIOS: {
+    height: 50,
+    paddingTop: 0,
+    paddingBottom: 0,
+    lineHeight: 24,
+    textAlignVertical: "center",
   },
   inputWithLeftIcon: {
     paddingLeft: 8,

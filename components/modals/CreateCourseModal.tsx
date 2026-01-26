@@ -558,36 +558,36 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
             />
 
             {/* Fechas */}
-            <View style={styles.row}>
+            <View style={Platform.OS === "web" ? styles.row : styles.column}>
               <View style={styles.halfWidth}>
-                <Controller
-                  control={control}
-                  name="fechaInicio"
-                  render={({ field: { onChange, value } }) => (
-                    <DatePicker
-                      label="Fecha de Inicio"
-                      value={value}
-                      onChange={onChange}
-                      error={errors.fechaInicio?.message}
-                    />
-                  )}
+              <Controller
+                control={control}
+                name="fechaInicio"
+                render={({ field: { onChange, value } }) => (
+                <DatePicker
+                  label="Fecha de Inicio"
+                  value={value}
+                  onChange={onChange}
+                  error={errors.fechaInicio?.message}
                 />
+                )}
+              />
               </View>
 
               <View style={styles.halfWidth}>
-                <Controller
-                  control={control}
-                  name="fechaFin"
-                  render={({ field: { onChange, value } }) => (
-                    <DatePicker
-                      label="Fecha de Fin"
-                      value={value}
-                      onChange={onChange}
-                      error={errors.fechaFin?.message}
-                      maximumDate={new Date(2030, 11, 31)}
-                    />
-                  )}
+              <Controller
+                control={control}
+                name="fechaFin"
+                render={({ field: { onChange, value } }) => (
+                <DatePicker
+                  label="Fecha de Fin"
+                  value={value}
+                  onChange={onChange}
+                  error={errors.fechaFin?.message}
+                  maximumDate={new Date(2030, 11, 31)}
                 />
+                )}
+              />
               </View>
             </View>
 
@@ -1112,7 +1112,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                       name="comisionProfesor"
                       render={({ field: { onChange, value } }) => (
                         <Input
-                          label="Comisión Prof. (%)"
+                          label="Comisión Profresor (%)"
                           value={value?.toString() || ""}
                           onChangeText={(text) =>
                             onChange(text ? parseFloat(text) : null)
@@ -1184,29 +1184,29 @@ const styles = StyleSheet.create({
     padding: 20,
     zIndex: 1000,
   },
-  modal: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    width: "100%",
-    maxWidth: Platform.OS === "web" ? 700 : "100%",
-    maxHeight: "90%",
-    zIndex: 1001,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-      },
-      android: {
-        elevation: 5,
-      },
-      web: {
-        boxShadow:
-          "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-      },
-    }),
-  },
+modal: {
+  backgroundColor: "#ffffff",
+  borderRadius: 12,
+  width: "100%",
+  maxWidth: Platform.OS === "web" ? 700 : "100%",
+  height: 600,  
+  zIndex: 1001,
+  ...Platform.select({
+    ios: {
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+    },
+    android: {
+      elevation: 5,
+    },
+    web: {
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+    },
+  }),
+},
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1238,6 +1238,11 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: "row",
+    gap: 12,
+    marginBottom: 16,
+  },
+  column: {
+    flexDirection: "column",
     gap: 12,
     marginBottom: 16,
   },

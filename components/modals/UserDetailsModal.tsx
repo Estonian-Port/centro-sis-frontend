@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -26,12 +27,14 @@ interface UserDetailModalProps {
   visible: boolean;
   onClose: () => void;
   idUsuario: number;
+  fetchUsers: () => void;
 }
 
 export const UserDetailModal: React.FC<UserDetailModalProps> = ({
   visible,
   onClose,
   idUsuario,
+  fetchUsers
 }) => {
   const { usuario } = useAuth();
   const [user, setUsuario] = useState<UsuarioDetails | null>(null);
@@ -82,6 +85,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
         position: "bottom",
       });
       fetchUserDetails(); // Recargar los datos
+      fetchUsers()
       setShowRoleSelector(false);
     } catch (error) {
       Toast.show({
@@ -105,7 +109,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
 
   // Roles disponibles para asignar (los que no tiene)
   const rolesDisponibles = Object.values(Rol).filter(
-    (rol) => !user.listaRol.includes(rol)
+    (rol) => !user.listaRol.includes(rol),
   );
 
   const handleViewCourseDetails = (course: Curso) => {
@@ -256,7 +260,10 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
 
                   {user.cursosInscriptos && user.cursosInscriptos.length > 0 ? (
                     user.cursosInscriptos.map((curso) => (
-                      <TouchableOpacity key={curso.id} onPress={() => handleViewCourseDetails(curso)}>
+                      <TouchableOpacity
+                        key={curso.id}
+                        onPress={() => handleViewCourseDetails(curso)}
+                      >
                         <View style={styles.cursoItem}>
                           <View style={styles.cursoMainInfo}>
                             <View style={styles.cursoHeader}>
@@ -350,7 +357,10 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
 
                   {user.cursosDictados && user.cursosDictados.length > 0 ? (
                     user.cursosDictados.map((curso) => (
-                      <TouchableOpacity key={curso.id} onPress={() => handleViewCourseDetails(curso)}>
+                      <TouchableOpacity
+                        key={curso.id}
+                        onPress={() => handleViewCourseDetails(curso)}
+                      >
                         <View key={curso.id} style={styles.cursoDictadoItem}>
                           <View style={styles.cursoDictadoMain}>
                             <Ionicons
@@ -469,7 +479,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: "100%",
     maxWidth: 700,
-    maxHeight: "90%",
+    height: Platform.select({
+      ios: 650,
+      android: 700,
+      default: 650,
+    }),
   },
   header: {
     flexDirection: "row",

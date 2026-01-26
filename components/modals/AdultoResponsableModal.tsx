@@ -86,7 +86,10 @@ export const AdultoResponsableModal: React.FC<AdultoResponsableModalProps> = ({
                     value={`${adultoResponsable.nombre} ${adultoResponsable.apellido}`}
                   />
                   <InfoRow label="DNI" value={adultoResponsable.dni} />
-                  <InfoRow label="Relación" value={adultoResponsable.relacion} />
+                  <InfoRow
+                    label="Relación"
+                    value={adultoResponsable.relacion}
+                  />
                 </View>
               </View>
 
@@ -116,7 +119,12 @@ export const AdultoResponsableModal: React.FC<AdultoResponsableModalProps> = ({
                   onPress={handleCallPhone}
                   activeOpacity={0.7}
                 >
-                  <View style={[styles.quickActionIcon, { backgroundColor: "#dbeafe" }]}>
+                  <View
+                    style={[
+                      styles.quickActionIcon,
+                      { backgroundColor: "#dbeafe" },
+                    ]}
+                  >
                     <Ionicons name="call" size={24} color="#3b82f6" />
                   </View>
                   <Text style={styles.quickActionText}>Llamar</Text>
@@ -128,7 +136,12 @@ export const AdultoResponsableModal: React.FC<AdultoResponsableModalProps> = ({
                   onPress={handleWhatsApp}
                   activeOpacity={0.7}
                 >
-                  <View style={[styles.quickActionIcon, { backgroundColor: "#d1fae5" }]}>
+                  <View
+                    style={[
+                      styles.quickActionIcon,
+                      { backgroundColor: "#d1fae5" },
+                    ]}
+                  >
                     <Ionicons name="logo-whatsapp" size={24} color="#10b981" />
                   </View>
                   <Text style={styles.quickActionText}>WhatsApp</Text>
@@ -170,7 +183,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: "85%",
+    height: 600,
   },
   header: {
     flexDirection: "row",

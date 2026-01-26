@@ -70,6 +70,11 @@ export default function AlumnosTab() {
     { value: EstadoPago.AL_DIA, label: "Al día", color: "#10b981" },
     { value: EstadoPago.ATRASADO, label: "Atrasados", color: "#f59e0b" },
     { value: EstadoPago.PENDIENTE, label: "Pendientes", color: "#ef4444" },
+    {
+      value: EstadoPago.PAGO_COMPLETO,
+      label: "Pago Completo",
+      color: "#3b82f6",
+    },
   ];
 
   // Handler para toggle de filtros
@@ -77,7 +82,7 @@ export default function AlumnosTab() {
     setSelectedEstados((prev) =>
       prev.includes(estado)
         ? prev.filter((e) => e !== estado)
-        : [...prev, estado]
+        : [...prev, estado],
     );
   };
 
@@ -107,8 +112,9 @@ export default function AlumnosTab() {
 
     // Filtrar por estado de pago
     if (selectedEstados.length > 0) {
+      console.log("Filtrando por estados:", selectedEstados);
       filtered = filtered.filter((inscripcion) =>
-        selectedEstados.includes(inscripcion.estadoPago)
+        selectedEstados.includes(inscripcion.estadoPago),
       );
     }
 
@@ -180,15 +186,24 @@ export default function AlumnosTab() {
           placeholder="Buscar por nombre, apellido o DNI..."
           style={styles.searchBar}
         />
-
-        {/* Filtros */}
-        <FilterChips
-          options={filterOptions}
-          selectedValues={selectedEstados}
-          onToggle={handleToggleEstado}
-          style={styles.filterChips}
-        />
-
+        <View style={styles.filtersSection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filtersScrollContent}
+          >
+            {/* Filtros de Rol */}
+            <View style={styles.filterGroup}>
+              {/* Filtros */}
+              <FilterChips
+                options={filterOptions}
+                selectedValues={selectedEstados}
+                onToggle={handleToggleEstado}
+                style={styles.filterChips}
+              />
+            </View>
+          </ScrollView>
+        </View>
         {/* Header con título y botón */}
         <View style={styles.headerSection}>
           <Text style={styles.headerTitle}>
@@ -201,19 +216,6 @@ export default function AlumnosTab() {
             size="small"
             disabled={!canAddAlumnos}
           />
-        </View>
-
-        {/* Contador de Resultados */}
-        <View style={styles.resultsHeader}>
-          {(searchQuery || selectedEstados.length > 0) && (
-            <Text style={styles.resultsFiltered}>
-              (filtrado
-              {filteredInscripciones.length !== curso.inscripciones.length
-                ? ` de ${curso.inscripciones.length}`
-                : ""}
-              )
-            </Text>
-          )}
         </View>
 
         {/* Lista de Alumnos */}
@@ -311,16 +313,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     backgroundColor: "transparent",
   },
-  resultsHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    gap: 6,
-  },
-  resultsFiltered: {
-    fontSize: 14,
-    color: "#6b7280",
-  },
   alumnosList: {
     gap: 12,
   },
@@ -343,5 +335,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6b7280",
     textAlign: "center",
+  },
+  filtersSection: {
+    paddingHorizontal: 4,
+  },
+  filtersScrollContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  filterGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
 });
