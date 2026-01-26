@@ -11,14 +11,7 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Logo } from "../ui/Logo";
-
-// Configuración de labels de roles
-const ROLE_LABELS = {
-  [Rol.ALUMNO]: "Alumno",
-  [Rol.PROFESOR]: "Profesor",
-  [Rol.ADMINISTRADOR]: "Administrador",
-  [Rol.OFICINA]: "Oficina",
-} as const;
+import { getRolLabel } from "@/helper/funciones";
 
 export const DrawerContent = (props: any) => {
   const { usuario, selectedRole, logout } = useAuth();
@@ -56,6 +49,12 @@ export const DrawerContent = (props: any) => {
       route: "/(tabs)/admin",
       roles: [Rol.ADMINISTRADOR, Rol.OFICINA], // Solo para admin y oficina
     },
+                {
+      label: "Escanear QR",
+      icon: "scan-outline",
+      route: "/(tabs)/escanear-qr",
+      roles: [Rol.PORTERIA]
+    },
     {
       label: "Accesos",
       icon: "log-in-outline",
@@ -66,7 +65,7 @@ export const DrawerContent = (props: any) => {
       label: "Pagos",
       icon: "card-outline",
       route: "/(tabs)/pagos",
-      roles: null, // Visible para todos
+      roles: [Rol.ADMINISTRADOR, Rol.OFICINA, Rol.ALUMNO, Rol.PROFESOR],
     },
     {
       label: "Perfil",
@@ -74,6 +73,13 @@ export const DrawerContent = (props: any) => {
       route: "/(tabs)/profile",
       roles: null, // Visible para todos
     },
+        {
+      label: "Mi QR",
+      icon: "qr-code-outline",
+      route: "/(tabs)/mi-qr",
+      roles: null, // Visible para todos
+    },
+
   ];
 
   // ✅ Filtrar items según el rol del usuario
@@ -96,7 +102,7 @@ export const DrawerContent = (props: any) => {
             {usuario?.nombre} {usuario?.apellido}
           </Text>
           <Text style={styles.userRole}>
-            {selectedRole ? ROLE_LABELS[selectedRole] : "Sin rol"}
+            {selectedRole ? getRolLabel(selectedRole) : "Sin rol"}
           </Text>
         </View>
         

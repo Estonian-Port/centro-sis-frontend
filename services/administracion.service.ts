@@ -1,5 +1,5 @@
 import api from "@/helper/auth.interceptor";
-import { Access, Estadistica } from "@/model/model";
+import { Acceso, Estadistica } from "@/model/model";
 
 const ADMIN = "/administracion";
 
@@ -10,7 +10,7 @@ class AdministracionService {
   };
 
   // Registrar ingreso manual (admin)
-  registrarIngresoManual = async (adminId: number, usuarioId: number): Promise<Access> => {
+  registrarIngresoManual = async (adminId: number, usuarioId: number): Promise<Acceso> => {
     const response = await api.post(`/acceso/manual/${adminId}/${usuarioId}`);
     return response.data;
   };

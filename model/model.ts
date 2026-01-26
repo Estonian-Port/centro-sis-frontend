@@ -3,6 +3,7 @@ export enum Rol {
   PROFESOR = "PROFESOR",
   ADMINISTRADOR = "ADMINISTRADOR",
   OFICINA = "OFICINA",
+PORTERIA = "PORTERIA",
 }
 
 export enum Estado {
@@ -213,14 +214,38 @@ export interface Horario {
   horaFin: string;
 }
 
-export interface Access {
+export interface Acceso {
   id: number;
   usuarioId: number;
   usuarioNombre: string;
   usuarioApellido: string;
   usuarioDni: string;
-  fechaHora: string
-  tipoAcceso: string;
+  fechaHora: string;
+  tipoAcceso: "QR" | "MANUAL";
+  alertaPagos?: AlertaPagos;  // ✅ NUEVO
+}
+
+export interface QRData {
+  usuarioId: number;
+  timestamp?: number;  // ✅ Opcional para QR permanente
+  tipo: "PERMANENTE";
+}
+
+export interface EstadisticasAcceso {
+  totalHoy: number;
+  totalEstaSemana: number;
+  totalEsteMes: number;
+  promedioDiario: number;
+}
+
+export interface AlertaPagos {
+  tieneAtrasos: boolean;
+  cursosAtrasados: {
+    cursoNombre: string;
+    cuotasAtrasadas: number;
+    deudaPendiente: number;
+  }[];
+  mensaje: string;
 }
 
 export interface AuthResponse {

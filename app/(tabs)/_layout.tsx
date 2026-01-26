@@ -47,6 +47,7 @@ function DrawerWithModal({ children }: { children: React.ReactNode }) {
 export default function TabLayout() {
   const { selectedRole } = useAuth();
   const isAdminOrOficina = selectedRole === Rol.ADMINISTRADOR || selectedRole === Rol.OFICINA;
+  const isPorteria = selectedRole === Rol.PORTERIA;
 
   // Para web, usa el Drawer de expo-router
   if (Platform.OS === "web") {
@@ -81,6 +82,20 @@ export default function TabLayout() {
                 headerShown: true,
                 header: () => <CustomDrawerHeader title="Administración" />,
                 drawerLabel: "Administración",
+                drawerIcon: ({ color, size }) => (
+                  <Ionicons name="settings-outline" size={size} color={color} />
+                ),
+              }}
+            />
+          )}
+
+                    {isPorteria && (
+            <Drawer.Screen
+              name="escanear-qr"
+              options={{
+                headerShown: true,
+                header: () => <CustomDrawerHeader title="Escanear QR" />,
+                drawerLabel: "Escanear QR",
                 drawerIcon: ({ color, size }) => (
                   <Ionicons name="settings-outline" size={size} color={color} />
                 ),
@@ -179,6 +194,26 @@ export default function TabLayout() {
         />
 
         <Tabs.Screen
+          name="mi-qr"
+          options={{
+            title: "Mi QR",
+            tabBarIcon: ({ size, color }) => (
+              <Ionicons name="qr-code-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
+                <Tabs.Screen
+          name="escanear-qr"
+          options={{
+            title: "Escanear QR",
+            tabBarIcon: ({ size, color }) => (
+              <Ionicons name="settings-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
+                <Tabs.Screen
           name="profile"
           options={{
             title: "Perfil",

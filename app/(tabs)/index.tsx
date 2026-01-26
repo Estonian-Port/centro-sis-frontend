@@ -7,7 +7,7 @@ import { usuarioService } from "@/services/usuario.service";
 import { DashboardProfesor } from "@/components/dashboard/DashboardProfesor";
 import { DashboardAlumno } from "@/components/dashboard/DashboardAlumno";
 import DashboardAdmin from "@/components/dashboard/DashboardAdmin";
-import { router } from "expo-router";
+import DashboardPorteria from "@/components/dashboard/DashboardPorteria";
 
 export default function HomeScreen() {
   const { selectedRole, usuario } = useAuth();
@@ -27,7 +27,7 @@ export default function HomeScreen() {
     }
     if (usuario != null && selectedRole === Rol.PROFESOR) {
       let listaCursos = await usuarioService.getAllCoursesByProfesor(
-        usuario.id
+        usuario.id,
       );
       setCursosProfesor(listaCursos);
     }
@@ -53,9 +53,9 @@ export default function HomeScreen() {
         return <DashboardAdmin estadisticas={stats} />;
       case Rol.OFICINA:
         return <DashboardAdmin estadisticas={stats} />;
+      case Rol.PORTERIA:
+        return <DashboardPorteria />;
       default:
-        // Log para depuración del valor de selectedRole y usuario
-        console.log('[DEBUG] selectedRole:', selectedRole, 'usuario:', usuario);
         return (
           <View style={styles.emptyState}>
             <Text>Selecciona un rol</Text>

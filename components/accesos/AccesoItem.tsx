@@ -2,10 +2,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
-import { Access } from "@/model/model";
+import { Acceso } from "@/model/model";
 
 interface AccesoItemProps {
-  acceso: Access;
+  acceso: Acceso;
   showUserInfo?: boolean; // Solo para admin
 }
 

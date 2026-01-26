@@ -1,16 +1,16 @@
 // app/(tabs)/accesos/todos.tsx
 import { SearchBar } from "@/components/ui/SearchBar";
 import { Button } from "@/components/ui/Button";
-import { Access, Rol } from "@/model/model";
+import { Acceso, Rol } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
+    View,
+    Text,
+    ScrollView,
+    StyleSheet,
+    ActivityIndicator,
+    TouchableOpacity,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
@@ -25,7 +25,7 @@ type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 export default function TodosAccesosScreen() {
   const { usuario } = useAuth();
   
-  const [accesos, setAccesos] = useState<Access[]>([]);
+  const [accesos, setAccesos] = useState<Acceso[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(0);

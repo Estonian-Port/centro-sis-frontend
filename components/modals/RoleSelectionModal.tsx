@@ -15,6 +15,7 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> =
       [Rol.PROFESOR]: 'Profesor',
       [Rol.ADMINISTRADOR]: 'Administrador',
       [Rol.OFICINA]: 'Oficina',
+      [Rol.PORTERIA]: 'Portería',
     };
 
     return (

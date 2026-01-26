@@ -23,6 +23,7 @@ import { AdultoResponsableModal } from "@/components/modals/AdultoResponsableMod
 import { COLORES } from "@/util/colores";
 import Toast from "react-native-toast-message";
 import { rolToTagVariant } from "@/helper/funciones";
+import { DescargarQRModal } from "@/components/modals/DescargarQRModal";
 
 // Configuración de roles
 const ROLE_CONFIG = {
@@ -42,6 +43,10 @@ const ROLE_CONFIG = {
     variant: rolToTagVariant(Rol.OFICINA),
     label: "OFICINA",
   },
+  [Rol.PORTERIA]: {
+    variant: rolToTagVariant(Rol.PORTERIA),
+    label: "PORTERÍA",
+  },
 } as const;
 
 // Helper para obtener configuración del rol
@@ -56,7 +61,7 @@ export default function ProfileScreen() {
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showAdultoResponsableModal, setShowAdultoResponsableModal] = useState(false); // ✅ NUEVO
-
+  const [showDescargarQR, setShowDescargarQR] = useState(false); // ✅ NUEVO
   // Verificar si el usuario tiene múltiples roles
   const hasMultipleRoles = (usuario?.listaRol.length || 0) > 1;
 
@@ -128,37 +133,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // ✅ NUEVO: Handler para descargar QR
-  const handleDescargarQR = async () => {
-    try {
-      // 🔥 REAL: Generar y descargar QR
-      // const qrData = await usuarioService.generarQR(usuario!.id);
-      // if (Platform.OS === 'web') {
-      //   const link = document.createElement('a');
-      //   link.href = qrData.url;
-      //   link.download = `qr-${usuario!.dni}.png`;
-      //   link.click();
-      // } else {
-      //   // Para mobile: guardar en galería
-      //   await FileSystem.downloadAsync(qrData.url, FileSystem.documentDirectory + `qr-${usuario!.dni}.png`);
-      // }
-      
-      Toast.show({
-        type: "success",
-        text1: "QR Generado",
-        text2: "Tu código QR se ha descargado correctamente",
-        position: "bottom",
-      });
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "No se pudo generar el código QR",
-        position: "bottom",
-      });
-    }
-  };
-
   const handleLogout = () => {
     setShowLogoutModal(true);
   };
@@ -198,7 +172,7 @@ export default function ProfileScreen() {
       icon: "qr-code-outline",
       title: "Descargar QR Personal",
       subtitle: "Código para registro de asistencia",
-      onPress: handleDescargarQR,
+      onPress: () => setShowDescargarQR(true),
       disabled: false,
       color: "#10b981", // Verde
     },
@@ -407,6 +381,11 @@ export default function ProfileScreen() {
           adultoResponsable={usuario.adultoResponsable}
         />
       )}
+
+      <DescargarQRModal
+  visible={showDescargarQR}
+  onClose={() => setShowDescargarQR(false)}
+/>
 
       {/* Modal de Logout */}
       <ModalLogout
