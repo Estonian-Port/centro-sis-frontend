@@ -1,4 +1,3 @@
-// components/curso/modals/EditarHorariosModal.tsx
 import React, { useState, useEffect } from "react";
 import {
   Modal,

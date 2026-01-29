@@ -1,8 +1,8 @@
-// components/pagos/PagoItem.tsx
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
-import { PagoDisplay, formatConcepto } from "@/model/model";
+import { PagoDisplay } from "@/model/model";
+import { formatConcepto } from "@/helper/funciones";
 
 interface PagoItemProps {
   pago: PagoDisplay;
@@ -45,7 +45,9 @@ export const PagoItem: React.FC<PagoItemProps> = ({ pago }) => {
   };
 
   return (
-    <View style={[styles.container, !pago.estaActivo && styles.containerInactivo]}>
+    <View
+      style={[styles.container, !pago.estaActivo && styles.containerInactivo]}
+    >
       {/* Header con concepto y fecha */}
       <View style={styles.header}>
         <View style={styles.conceptoContainer}>
@@ -92,14 +94,6 @@ export const PagoItem: React.FC<PagoItemProps> = ({ pago }) => {
           <Text style={styles.infoLabel}>Recibió</Text>
           <Text style={styles.infoValue}>{pago.usuarioRecibe}</Text>
         </View>
-
-        {/* Medio de pago */}
-        {pago.medioPago && (
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Medio de pago</Text>
-            <Text style={styles.infoValue}>{pago.medioPago}</Text>
-          </View>
-        )}
 
         {/* Beneficio (solo si existe) */}
         {pago.beneficio !== undefined && pago.beneficio > 0 && (

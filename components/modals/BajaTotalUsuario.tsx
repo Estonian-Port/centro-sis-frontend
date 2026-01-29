@@ -1,4 +1,3 @@
-// components/modals/ConfirmarBajaModal.tsx
 import React, { useState } from "react";
 import {
   Modal,
@@ -10,7 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { Alumno, Usuario } from "@/model/model";
+import { Usuario } from "@/model/model";
 
 interface BajaTotalUsuarioProps {
   visible: boolean;
@@ -81,7 +80,8 @@ export const BajaTotalUsuario: React.FC<BajaTotalUsuarioProps> = ({
           <View style={styles.warningBox}>
             <Ionicons name="information-circle" size={20} color="#f59e0b" />
             <Text style={styles.warningText}>
-              Esta acción no se puede deshacer. El alumno perderá acceso al sistema.
+              Esta acción no se puede deshacer. El alumno perderá acceso al
+              sistema.
             </Text>
           </View>
 

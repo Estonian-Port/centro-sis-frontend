@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,16 +16,14 @@ import { Estadistica, NuevoUsuario, Rol } from "@/model/model";
 import { usuarioService } from "@/services/usuario.service";
 import Toast from "react-native-toast-message";
 import { CreateCourseModal } from "@/components/modals/CreateCourseModal";
-import { router, useNavigation } from "expo-router";
-import { cursoService } from "@/services/curso.service";
+import { router } from "expo-router";
 import { useAuth } from "@/context/authContext";
 
 const DasboardAdmin = ({ estadisticas }: { estadisticas: Estadistica }) => {
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
   const { selectedRole } = useAuth();
-  const isAdmin =
-    selectedRole === Rol.ADMINISTRADOR;
+  const isAdmin = selectedRole === Rol.ADMINISTRADOR;
 
   const handleCrearUsuario = () => {
     setShowCreateUserModal(true);
@@ -58,9 +56,11 @@ const DasboardAdmin = ({ estadisticas }: { estadisticas: Estadistica }) => {
     }
   };
 
+  const mesActual = new Date().toLocaleString("es-ES", { month: "long" });
+
   return (
-    <ScrollView style={styles.container}>
-      <SafeAreaView>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <ScrollView style={styles.container}>
         <Text style={styles.title}>Dashboard</Text>
         <View style={styles.statsGrid}>
           <Card style={styles.statCard}>
@@ -76,12 +76,12 @@ const DasboardAdmin = ({ estadisticas }: { estadisticas: Estadistica }) => {
             <Text style={styles.statLabel}>Profesores Activos</Text>
           </Card>
           {isAdmin && (
-          <Card style={styles.statCard}>
-            <Text style={styles.statNumber}>
-              ${estadisticas.ingresosMensuales}
-            </Text>
-            <Text style={styles.statLabel}>Ingresos Mes</Text>
-          </Card>
+            <Card style={styles.statCard}>
+              <Text style={styles.statNumber}>
+                {estadisticas.accesosMensuales}
+              </Text>
+              <Text style={styles.statLabel}>Accesos en {mesActual}</Text>
+            </Card>
           )}
         </View>
         <Card>
@@ -140,8 +140,8 @@ const DasboardAdmin = ({ estadisticas }: { estadisticas: Estadistica }) => {
           visible={showCreateCourseModal}
           onClose={() => setShowCreateCourseModal(false)}
         />
-      </SafeAreaView>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -152,6 +152,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORES.background,
     padding: 16,
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f9fafb",
   },
   title: {
     ...TIPOGRAFIA.titleL,
@@ -183,6 +187,7 @@ const styles = StyleSheet.create({
   statLabel: {
     ...TIPOGRAFIA.titleM,
     color: COLORES.resaltado,
+    textAlign: "center",
   },
   actionItem: {
     flexDirection: "row",

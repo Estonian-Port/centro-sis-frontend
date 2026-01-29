@@ -1,4 +1,3 @@
-// components/curso/modals/EditarProfesoresModal.tsx
 import React, { useState, useEffect } from "react";
 import {
   Modal,

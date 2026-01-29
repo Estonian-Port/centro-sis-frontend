@@ -38,6 +38,7 @@ const availableRoles = [
   { id: "PROFESOR", label: "Profesor" },
   { id: "OFICINA", label: "Oficina" },
   { id: "ADMINISTRADOR", label: "Administrador" },
+  { id: "PORTERIA", label: "Portería" },
 ];
 
 export const CreateUserModal: React.FC<CreateUserModalProps> = ({
@@ -205,8 +206,8 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 500,
     height: Platform.select({
-      ios: 500,  
-      android: 550,  
+      ios: 500,
+      android: 550,
       default: 500,
     }),
   },
@@ -227,7 +228,6 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   content: {
-    // ✅ Ocupa el espacio disponible
     flexGrow: 1,
   },
   contentContainer: {

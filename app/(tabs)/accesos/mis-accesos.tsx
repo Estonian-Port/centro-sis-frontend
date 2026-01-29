@@ -1,15 +1,14 @@
-// app/(tabs)/accesos/mis-accesos.tsx
 import { MultiSelect, MultiSelectOption } from "@/components/ui/MultiSelect";
 import { Acceso } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-    View,
-    Text,
-    ScrollView,
-    StyleSheet,
-    ActivityIndicator,
-    TouchableOpacity,
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { useAuth } from "@/context/authContext";
@@ -20,7 +19,7 @@ type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export default function MisAccesosScreen() {
   const { usuario } = useAuth();
-  
+
   const [accesos, setAccesos] = useState<Acceso[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -76,8 +75,6 @@ export default function MisAccesosScreen() {
         setAccesos((prev) => [...prev, ...response.content]);
       }
 
-      console.log("Fetched accesos:", response);
-
       setPage(response.page);
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
@@ -103,7 +100,7 @@ export default function MisAccesosScreen() {
 
   const handleToggleMes = (mes: Mes) => {
     setSelectedMeses((prev) =>
-      prev.includes(mes) ? prev.filter((m) => m !== mes) : [...prev, mes]
+      prev.includes(mes) ? prev.filter((m) => m !== mes) : [...prev, mes],
     );
   };
 

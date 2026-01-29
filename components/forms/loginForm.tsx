@@ -1,7 +1,7 @@
 import { useAuth } from "@/context/authContext";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, StyleSheet, View } from "react-native";
 import * as yup from "yup";
@@ -45,7 +45,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   const onSubmit = async (data: LoginFormData) => {
     try {
       const usuarioLogueado = await login(data.email, data.password);
-      if (usuarioLogueado.primerLogin || usuarioLogueado.estado === "PENDIENTE") {
+      if (
+        usuarioLogueado.primerLogin ||
+        usuarioLogueado.estado === "PENDIENTE"
+      ) {
         router.replace("/complete-profile");
       } else {
         router.replace("/(tabs)");
@@ -77,21 +80,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         )}
       />
 
-      <Controller
+      {/** Mostrar/ocultar contraseña con icono de ojo */}
+      <PasswordController
         control={control}
-        name="password"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Contraseña"
-            value={value}
-            onChangeText={onChange}
-            secureTextEntry
-            error={errors.password?.message}
-            editable={!isSubmitting}
-            style={styles.textInput}
-            labelStyle={styles.labelText}
-          />
-        )}
+        error={errors.password?.message}
+        isSubmitting={isSubmitting}
+        labelStyle={styles.labelText}
+        textInputStyle={styles.textInput}
       />
 
       <Button
@@ -103,6 +98,37 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         disabled={isSubmitting || isLoading}
       />
     </View>
+  );
+};
+
+// Componente auxiliar para el campo de contraseña
+const PasswordController: React.FC<{
+  control: any;
+  error?: string;
+  isSubmitting: boolean;
+  labelStyle?: any;
+  textInputStyle?: any;
+}> = ({ control, error, isSubmitting, labelStyle, textInputStyle }) => {
+  const [showPassword, setShowPassword] = useState(false);
+  return (
+    <Controller
+      control={control}
+      name="password"
+      render={({ field: { onChange, value } }) => (
+        <Input
+          label="Contraseña"
+          value={value}
+          onChangeText={onChange}
+          secureTextEntry={!showPassword}
+          error={error}
+          editable={!isSubmitting}
+          style={textInputStyle}
+          labelStyle={labelStyle}
+          rightIcon={showPassword ? "eye-off" : "eye"}
+          onRightIconPress={() => setShowPassword((v) => !v)}
+        />
+      )}
+    />
   );
 };
 

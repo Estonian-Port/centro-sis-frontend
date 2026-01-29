@@ -1,5 +1,3 @@
-// components/dashboard/DashboardAlumno.tsx - LAYOUT MÓVIL ARREGLADO
-
 import { useState, useMemo } from "react";
 import { View, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -60,8 +58,8 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <SafeAreaView>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <ScrollView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Mis Cursos</Text>
           <Text style={styles.legendText}>
@@ -69,7 +67,7 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
           </Text>
         </View>
 
-        {/* ✅ NUEVO LAYOUT: Búsqueda + Toggle arriba */}
+        {/* Búsqueda + Toggle */}
         <View style={styles.topControls}>
           <SearchBar
             value={searchQuery}
@@ -85,20 +83,21 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
           />
         </View>
 
-        {/* ✅ NUEVO: Filtros en ScrollView horizontal */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersScrollContent}
-          style={styles.filtersScroll}
-        >
-          <FilterChips
-            options={estadoFilterOptions}
-            selectedValues={filtrosEstado}
-            onToggle={toggleFiltroEstado}
-            style={styles.filterChips}
-          />
-        </ScrollView>
+        <View style={styles.filtersContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filtersScrollContent}
+            style={styles.filtersScroll}
+          >
+            <FilterChips
+              options={estadoFilterOptions}
+              selectedValues={filtrosEstado}
+              onToggle={toggleFiltroEstado}
+              style={styles.filterChips}
+            />
+          </ScrollView>
+        </View>
 
         {/* Vista de lista o calendario */}
         {vistaActual === "lista" ? (
@@ -125,12 +124,16 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
             curso={selectedCourse}
           />
         )}
-      </SafeAreaView>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f9fafb",
+  },
   container: {
     flex: 1,
     backgroundColor: "#f9fafb",
@@ -152,7 +155,6 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     marginLeft: 8,
   },
-  // ✅ NUEVO: Controls superiores (búsqueda + toggle)
   topControls: {
     flexDirection: "row",
     alignItems: "center",
@@ -164,13 +166,16 @@ const styles = StyleSheet.create({
     borderBottomColor: "#e5e7eb",
   },
   searchBar: {
-    flex: 1,  // ✅ Ocupa el espacio disponible
+    flex: 1,
   },
-  // ✅ NUEVO: Scroll horizontal para filtros
-  filtersScroll: {
+  filtersContainer: {
+    height: 80,
     backgroundColor: "#ffffff",
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
+  },
+  filtersScroll: {
+    flex: 1,
   },
   filtersScrollContent: {
     flexDirection: "row",
@@ -178,6 +183,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 20,
     paddingVertical: 12,
+    minHeight: 60,
   },
   filterChips: {
     paddingHorizontal: 0,

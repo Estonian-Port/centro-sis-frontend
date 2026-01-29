@@ -23,7 +23,6 @@ import { AdultoResponsableModal } from "@/components/modals/AdultoResponsableMod
 import { COLORES } from "@/util/colores";
 import Toast from "react-native-toast-message";
 import { rolToTagVariant } from "@/helper/funciones";
-import { DescargarQRModal } from "@/components/modals/DescargarQRModal";
 
 // Configuración de roles
 const ROLE_CONFIG = {
@@ -61,12 +60,12 @@ export default function ProfileScreen() {
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showAdultoResponsableModal, setShowAdultoResponsableModal] =
-    useState(false); // ✅ NUEVO
-  const [showDescargarQR, setShowDescargarQR] = useState(false); // ✅ NUEVO
+    useState(false);
+  const [showDescargarQR, setShowDescargarQR] = useState(false);
   // Verificar si el usuario tiene múltiples roles
   const hasMultipleRoles = (usuario?.listaRol.length || 0) > 1;
 
-  // ✅ NUEVO: Verificar si es menor de edad
+  // Verificar si es menor de edad
   const esMenorDeEdad = () => {
     if (!usuario?.fechaNacimiento) return false;
     const hoy = new Date();
@@ -171,14 +170,6 @@ export default function ProfileScreen() {
       onPress: () => setShowChangePasswordModal(true),
       disabled: false,
     },
-    {
-      icon: "qr-code-outline",
-      title: "Descargar QR Personal",
-      subtitle: "Código para registro de asistencia",
-      onPress: () => setShowDescargarQR(true),
-      disabled: false,
-      color: COLORES.verde,
-    },
     ...(selectedRole === Rol.ADMINISTRADOR
       ? [
           {
@@ -260,30 +251,33 @@ export default function ProfileScreen() {
               />
               <InfoItem label="Último ingreso" value={usuario?.ultimoIngreso} />
             </View>
-
-            {/* ✅ NUEVO: Botón de Adulto Responsable (solo si es menor de edad) */}
+            {/* ✅ Botón de Adulto Responsable a la DERECHA */}
             {esMenorDeEdad() && tieneAdultoResponsable && (
               <>
                 <View style={styles.dividerSmall} />
-                <TouchableOpacity
-                  style={styles.adultoResponsableButton}
-                  onPress={() => setShowAdultoResponsableModal(true)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.adultoResponsableIconContainer}>
-                    <Ionicons name="people-outline" size={22} color="#f59e0b" />
-                  </View>
-                  <View style={styles.adultoResponsableContent}>
-                    <Text style={styles.adultoResponsableTitle}>
-                      Ver Adulto Responsable
+                <View style={styles.adultoResponsableSection}>
+                  <View style={styles.adultoResponsableLeft}>
+                    <Ionicons name="people-outline" size={20} color="#f59e0b" />
+                    <Text style={styles.adultoResponsableLabel}>
+                      Adulto Responsable
                     </Text>
-                    <Text style={styles.adultoResponsableSubtitle}>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.adultoResponsableButtonRight}
+                    onPress={() => setShowAdultoResponsableModal(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.adultoResponsableNameRight}>
                       {usuario?.adultoResponsable?.nombre}{" "}
                       {usuario?.adultoResponsable?.apellido}
                     </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-                </TouchableOpacity>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={18}
+                      color="#9ca3af"
+                    />
+                  </TouchableOpacity>
+                </View>
               </>
             )}
           </View>
@@ -316,7 +310,7 @@ export default function ProfileScreen() {
                   style={[
                     styles.actionIconContainer,
                     action.disabled && styles.actionIconContainerDisabled,
-                    action.color && { backgroundColor: `${action.color}20` }, // ✅ Color personalizado
+                    action.color && { backgroundColor: `${action.color}20` },
                   ]}
                 >
                   <Ionicons
@@ -391,7 +385,6 @@ export default function ProfileScreen() {
         onSuccess={handleChangePassword}
       />
 
-      {/* ✅ NUEVO: Modal de Adulto Responsable */}
       {usuario?.adultoResponsable && (
         <AdultoResponsableModal
           visible={showAdultoResponsableModal}
@@ -399,11 +392,6 @@ export default function ProfileScreen() {
           adultoResponsable={usuario.adultoResponsable}
         />
       )}
-
-      <DescargarQRModal
-        visible={showDescargarQR}
-        onClose={() => setShowDescargarQR(false)}
-      />
 
       {/* Modal de Logout */}
       <ModalLogout
@@ -539,43 +527,42 @@ const styles = StyleSheet.create({
     textAlign: "right",
     flex: 1,
   },
-  // ✅ NUEVO: Estilos para botón de Adulto Responsable
   dividerSmall: {
     height: 1,
     backgroundColor: "#e5e7eb",
     marginVertical: 16,
   },
-  adultoResponsableButton: {
+  adultoResponsableSection: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
+    justifyContent: "space-between",
+    paddingVertical: 6,
+  },
+  adultoResponsableLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  adultoResponsableLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#6b7280",
+  },
+  adultoResponsableButtonRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 6,
     paddingHorizontal: 12,
     backgroundColor: "#fffbeb",
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#fde68a",
   },
-  adultoResponsableIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#fef3c7",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  adultoResponsableContent: {
-    flex: 1,
-  },
-  adultoResponsableTitle: {
+  adultoResponsableNameRight: {
     fontSize: 14,
     fontWeight: "600",
     color: "#92400e",
-    marginBottom: 2,
-  },
-  adultoResponsableSubtitle: {
-    fontSize: 13,
-    color: "#b45309",
   },
   actionItem: {
     flexDirection: "row",

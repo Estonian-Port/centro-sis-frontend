@@ -31,6 +31,7 @@ import { cursoService } from "@/services/curso.service";
 import Toast from "react-native-toast-message";
 import { DatePicker } from "../pickers/DatePicker";
 import { CuotasCalculadas } from "../pagos/CuotasCalculadas";
+import { calcularCuotas, calcularDiasTotales } from "@/util/calcularCuotas";
 
 interface FormValues {
   nombre: string;
@@ -50,22 +51,6 @@ interface CreateCourseModalProps {
 }
 
 type Modalidad = "ALQUILER" | "COMISION";
-
-const calcularCuotas = (fechaInicio: string, fechaFin: string): number => {
-  if (!fechaInicio || !fechaFin) return 0;
-
-  const inicio = new Date(fechaInicio);
-  const fin = new Date(fechaFin);
-
-  const inicioAnio = inicio.getFullYear();
-  const inicioMes = inicio.getMonth();
-  const finAnio = fin.getFullYear();
-  const finMes = fin.getMonth();
-
-  const meses = (finAnio - inicioAnio) * 12 + (finMes - inicioMes) + 1;
-
-  return Math.max(1, meses);
-};
 
 // Validación personalizada para horarios
 const validarHorarios = (horarios: any[]): boolean => {
@@ -119,7 +104,6 @@ const getValidationSchema = (modalidad: Modalidad): any => {
         .number()
         .positive("El monto debe ser mayor a 0")
         .required("El monto de alquiler es requerido"),
-      // ✅ ELIMINADO: validación de cuotasAlquiler
     });
   } else {
     return yup.object().shape({
@@ -265,7 +249,6 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   const fechaInicio = watch("fechaInicio");
   const fechaFin = watch("fechaFin");
 
-  // ✅ Calcular cuotas automáticamente
   const cuotasCalculadas = useMemo(
     () => calcularCuotas(fechaInicio, fechaFin),
     [fechaInicio, fechaFin],
@@ -301,7 +284,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
     return () => clearTimeout(timer);
   }, [searchQuery, profesoresSeleccionados]);
 
-  // Calcular duración mejorada en días, meses y días
+  // Calcular duración
   const duracion = useMemo(() => {
     if (!fechaInicio || !fechaFin) return null;
 
@@ -310,19 +293,16 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
 
     if (fin <= inicio) return null;
 
-    // Calcular diferencia en días
-    const diferenciaMs = fin.getTime() - inicio.getTime();
-    const totalDias = Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
+    const diasTotales = calcularDiasTotales(inicio, fin);
+    const meses = Math.floor(diasTotales / 30);
+    const diasRestantes = diasTotales % 30;
 
-    // Calcular meses y días restantes
-    const meses = Math.floor(totalDias / 30);
-    const diasRestantes = totalDias % 30;
-
-    return { totalDias, meses, diasRestantes };
+    return {
+      totalDias: diasTotales,
+      meses,
+      diasRestantes,
+    };
   }, [fechaInicio, fechaFin]);
-
-  // ✅ ELIMINADO: useEffect que actualizaba cuotasAlquiler y cuotasMensual
-  // Ya no es necesario porque se calcula en tiempo real
 
   // Verificar si un tipo de pago está seleccionado
   const tieneTipoPago = (tipo: PagoType): boolean => {
@@ -385,8 +365,6 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
     setValue("horarios", newHorarios);
   };
 
-  // ✅ ELIMINADO: updateCuotasTipoPago (ya no es necesario)
-
   const toggleTipoPago = (tipo: PagoType): void => {
     const tieneActualmente = tieneTipoPago(tipo);
 
@@ -396,7 +374,6 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
         tiposPago.filter((tp) => tp.tipo !== tipo),
       );
     } else {
-      // ✅ Las cuotas se calculan automáticamente según las fechas
       const cuotas = tipo === PagoType.MENSUAL ? cuotasCalculadas : 1;
       setValue("tipoPago", [...tiposPago, { tipo, monto: 0, cuotas }]);
     }
@@ -456,14 +433,13 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
           id: 0,
           nombre: data.nombre,
           montoAlquiler: data.montoAlquiler || 0,
-          cuotasAlquiler: cuotasCalculadas, // ✅ Usar valor calculado
+          cuotasAlquiler: cuotasCalculadas,
           profesoresId: data.profesoresId,
           fechaInicio: data.fechaInicio,
           fechaFin: data.fechaFin,
         };
         await crearCursoAlquiler(requestData);
       } else {
-        // ✅ Actualizar cuotas del tipo pago MENSUAL antes de enviar
         const tiposPagoConCuotas = (data.tipoPago || []).map((tp) => ({
           tipo: tp.tipo,
           monto: tp.monto,
@@ -474,7 +450,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
           id: 0,
           nombre: data.nombre,
           horarios: data.horarios || [],
-          tipoPago: tiposPagoConCuotas, // ✅ Usar cuotas calculadas
+          tipoPago: tiposPagoConCuotas,
           recargo: data.recargo || null,
           comisionProfesor: data.comisionProfesor || null,
           profesoresId: data.profesoresId,
@@ -513,10 +489,8 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
       setValue("recargo", null);
       setValue("comisionProfesor", null);
       setValue("montoAlquiler", undefined);
-      // ✅ ELIMINADO: setValue("cuotasAlquiler", ...)
     } else {
       setValue("montoAlquiler", undefined);
-      // ✅ ELIMINADO: setValue("cuotasAlquiler", ...)
       setValue("horarios", [
         {
           dia: DayOfWeek.MONDAY,
@@ -560,34 +534,34 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
             {/* Fechas */}
             <View style={Platform.OS === "web" ? styles.row : styles.column}>
               <View style={styles.halfWidth}>
-              <Controller
-                control={control}
-                name="fechaInicio"
-                render={({ field: { onChange, value } }) => (
-                <DatePicker
-                  label="Fecha de Inicio"
-                  value={value}
-                  onChange={onChange}
-                  error={errors.fechaInicio?.message}
+                <Controller
+                  control={control}
+                  name="fechaInicio"
+                  render={({ field: { onChange, value } }) => (
+                    <DatePicker
+                      label="Fecha de Inicio"
+                      value={value}
+                      onChange={onChange}
+                      error={errors.fechaInicio?.message}
+                    />
+                  )}
                 />
-                )}
-              />
               </View>
 
               <View style={styles.halfWidth}>
-              <Controller
-                control={control}
-                name="fechaFin"
-                render={({ field: { onChange, value } }) => (
-                <DatePicker
-                  label="Fecha de Fin"
-                  value={value}
-                  onChange={onChange}
-                  error={errors.fechaFin?.message}
-                  maximumDate={new Date(2030, 11, 31)}
+                <Controller
+                  control={control}
+                  name="fechaFin"
+                  render={({ field: { onChange, value } }) => (
+                    <DatePicker
+                      label="Fecha de Fin"
+                      value={value}
+                      onChange={onChange}
+                      error={errors.fechaFin?.message}
+                      maximumDate={new Date(2030, 11, 31)}
+                    />
+                  )}
                 />
-                )}
-              />
               </View>
             </View>
 
@@ -793,7 +767,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                   )}
                 />
 
-                {/* ✅ Componente CuotasCalculadas para Alquiler */}
+                {/* Componente CuotasCalculadas para Alquiler */}
                 <CuotasCalculadas
                   fechaInicio={fechaInicio ? new Date(fechaInicio) : null}
                   fechaFin={fechaFin ? new Date(fechaFin) : null}
@@ -1003,7 +977,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                           placeholder="10000"
                         />
 
-                        {/* ✅ Componente CuotasCalculadas para Pago Mensual */}
+                        {/* Componente CuotasCalculadas para Pago Mensual */}
                         <CuotasCalculadas
                           fechaInicio={
                             fechaInicio ? new Date(fechaInicio) : null
@@ -1094,7 +1068,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                       name="recargo"
                       render={({ field: { onChange, value } }) => (
                         <Input
-                          label="Recargo Atraso (%)"
+                          label="Recargo por atraso (%)"
                           value={value?.toString() || ""}
                           onChangeText={(text) =>
                             onChange(text ? parseFloat(text) : null)
@@ -1184,29 +1158,29 @@ const styles = StyleSheet.create({
     padding: 20,
     zIndex: 1000,
   },
-modal: {
-  backgroundColor: "#ffffff",
-  borderRadius: 12,
-  width: "100%",
-  maxWidth: Platform.OS === "web" ? 700 : "100%",
-  height: 600,  
-  zIndex: 1001,
-  ...Platform.select({
-    ios: {
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-    },
-    android: {
-      elevation: 5,
-    },
-    web: {
-      boxShadow:
-        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-    },
-  }),
-},
+  modal: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    width: "100%",
+    maxWidth: Platform.OS === "web" ? 700 : "100%",
+    height: 600,
+    zIndex: 1001,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      },
+      android: {
+        elevation: 5,
+      },
+      web: {
+        boxShadow:
+          "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      },
+    }),
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1239,12 +1213,12 @@ modal: {
   row: {
     flexDirection: "row",
     gap: 12,
-    marginBottom: 16,
+    marginVertical: 16,
   },
   column: {
     flexDirection: "column",
     gap: 12,
-    marginBottom: 16,
+    marginVertical: 16,
   },
   halfWidth: {
     flex: 1,

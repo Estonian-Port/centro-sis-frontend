@@ -1,4 +1,3 @@
-// app/(tabs)/mi-qr.tsx - SOLO QR PERMANENTE
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -39,10 +38,13 @@ export default function MiQRScreen() {
   }
 
   return (
- <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <CustomDrawerHeader title="Mi Código QR" />
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         {/* Instrucción Principal */}
         <View style={styles.header}>
           <Ionicons name="qr-code" size={48} color="#3b82f6" />
@@ -115,15 +117,6 @@ export default function MiQRScreen() {
             </View>
             <Text style={styles.instructionText}>
               El portero escaneará el código y registrará tu acceso
-            </Text>
-          </View>
-          <View style={styles.instructionRow}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>3</Text>
-            </View>
-            <Text style={styles.instructionText}>
-              Si preferís, podés descargar e imprimir este código desde{" "}
-              <Text style={styles.bold}>Perfil → Descargar QR</Text>
             </Text>
           </View>
         </View>
@@ -243,7 +236,6 @@ const styles = StyleSheet.create({
     color: "#1f2937",
     flex: 1,
   },
-
   // Info Box
   infoBox: {
     flexDirection: "row",

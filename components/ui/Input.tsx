@@ -39,8 +39,10 @@ export const Input: React.FC<InputProps> = ({
   return (
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
-      
-      <View style={[styles.inputContainer, error && styles.inputContainerError]}>
+
+      <View
+        style={[styles.inputContainer, error && styles.inputContainerError]}
+      >
         {leftIcon && (
           <Ionicons
             name={leftIcon}
@@ -49,7 +51,7 @@ export const Input: React.FC<InputProps> = ({
             style={styles.leftIcon}
           />
         )}
-        
+
         <TextInput
           style={[
             styles.input,
@@ -61,7 +63,7 @@ export const Input: React.FC<InputProps> = ({
           placeholderTextColor="#9ca3af"
           {...props}
         />
-        
+
         {rightIcon && (
           <TouchableOpacity
             onPress={onRightIconPress}
@@ -76,7 +78,7 @@ export const Input: React.FC<InputProps> = ({
           </TouchableOpacity>
         )}
       </View>
-      
+
       {error && (
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle" size={14} color="#ef4444" />

@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Modal,
   Platform,
@@ -11,17 +11,23 @@ import {
 } from "react-native";
 import { Card } from "../ui/Card";
 import { Tag } from "../ui/Tag";
-import { UsuarioDetails, Rol, formatEstadoPago, Curso } from "@/model/model";
+import { UsuarioDetails, Rol, Curso, Estado } from "@/model/model";
 import { usuarioService } from "@/services/usuario.service";
 import Toast from "react-native-toast-message";
 import {
   estadoPagoToTagVariant,
   estadoUsuarioToTagVariant,
+  formatEstadoPago,
   rolToTagVariant,
 } from "@/helper/funciones";
 import { useAuth } from "@/context/authContext";
 import { Button } from "../ui/Button";
 import { router } from "expo-router";
+import QRCode from "react-native-qrcode-svg";
+import * as Sharing from "expo-sharing"; // Para compartir en móvil
+// @ts-ignore
+import { captureRef } from "react-native-view-shot"; // Para capturar la vista como imagen
+import { AdultoResponsableModal } from "./AdultoResponsableModal";
 
 interface UserDetailModalProps {
   visible: boolean;
@@ -34,14 +40,24 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
   visible,
   onClose,
   idUsuario,
-  fetchUsers
+  fetchUsers,
 }) => {
   const { usuario } = useAuth();
   const [user, setUsuario] = useState<UsuarioDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [showRoleSelector, setShowRoleSelector] = useState(false);
+  const [downloadingQR, setDownloadingQR] = useState(false);
 
-  // Verificar si el usuario actual es admin
+  // Estados para modales de confirmación
+  const [showConfirmAsignar, setShowConfirmAsignar] = useState(false);
+  const [showConfirmRemover, setShowConfirmRemover] = useState(false);
+  const [rolSeleccionado, setRolSeleccionado] = useState<Rol | null>(null);
+  const [showAdultoResponsableModal, setShowAdultoResponsableModal] =
+    useState(false);
+
+  // Ref para capturar el QR
+  const qrRef = useRef<any>(null);
+
   const esAdmin = usuario!.listaRol.includes(Rol.ADMINISTRADOR);
 
   useEffect(() => {
@@ -54,7 +70,6 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
     setLoading(true);
     try {
       const response = await usuarioService.getUserDetail(idUsuario);
-      console.log(response);
       setUsuario(response);
     } catch (error) {
       Toast.show({
@@ -84,9 +99,10 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
         text2: `Rol de ${rol} asignado correctamente`,
         position: "bottom",
       });
-      fetchUserDetails(); // Recargar los datos
-      fetchUsers()
-      setShowRoleSelector(false);
+      fetchUserDetails();
+      fetchUsers();
+      setShowConfirmAsignar(false);
+      setRolSeleccionado(null);
     } catch (error) {
       Toast.show({
         type: "error",
@@ -97,17 +113,193 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
     }
   };
 
+  const confirmarAsignarRol = (rol: Rol) => {
+    setRolSeleccionado(rol);
+    setShowConfirmAsignar(true);
+  };
+
+  const handleRemoverRol = async (rol: Rol) => {
+    if (!user) return;
+
+    // Validar que no se quite el último rol
+    if (user.listaRol.length === 1) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "No se puede quitar el último rol del usuario",
+        position: "bottom",
+      });
+      return;
+    }
+
+    try {
+      await usuarioService.removerRol(user.id, rol);
+      Toast.show({
+        type: "success",
+        text1: "Rol Removido",
+        text2: `Rol de ${rol} removido correctamente`,
+        position: "bottom",
+      });
+      fetchUserDetails();
+      fetchUsers();
+      setShowConfirmRemover(false);
+      setRolSeleccionado(null);
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "No se pudo remover el rol",
+        position: "bottom",
+      });
+    }
+  };
+
+  const confirmarRemoverRol = (rol: Rol) => {
+    setRolSeleccionado(rol);
+    setShowConfirmRemover(true);
+  };
+
+  const handleDownloadQR = async () => {
+    if (!user) return;
+
+    setDownloadingQR(true);
+
+    try {
+      if (Platform.OS === "web") {
+        // En web: usar html2canvas o capturar el SVG
+        try {
+          // Intentar capturar el contenedor del QR
+          const qrElement = qrRef.current;
+
+          if (qrElement) {
+            // Buscar el SVG dentro del contenedor
+            const svgElement = qrElement.querySelector("svg");
+
+            if (svgElement) {
+              // Obtener el tamaño real del SVG
+              const svgWidth = svgElement.width.baseVal.value || 180;
+              const svgHeight = svgElement.height.baseVal.value || 180;
+
+              // Crear un canvas con el tamaño exacto del QR
+              const canvas = document.createElement("canvas");
+              const ctx = canvas.getContext("2d");
+              const svgData = new XMLSerializer().serializeToString(svgElement);
+              const img = new Image();
+
+              // Usar el tamaño real del SVG
+              canvas.width = svgWidth;
+              canvas.height = svgHeight;
+
+              img.onload = () => {
+                if (ctx) {
+                  // Fondo blanco
+                  ctx.fillStyle = "white";
+                  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                  // Dibujar el QR
+                  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                  // Descargar
+                  const link = document.createElement("a");
+                  link.href = canvas.toDataURL("image/png");
+                  link.download = `QR_${user.nombre}_${user.apellido}_${user.dni}.png`;
+                  link.click();
+
+                  Toast.show({
+                    type: "success",
+                    text1: "QR Descargado",
+                    text2: "El código QR se descargó correctamente",
+                    position: "bottom",
+                  });
+                }
+              };
+
+              img.src =
+                "data:image/svg+xml;base64," +
+                btoa(unescape(encodeURIComponent(svgData)));
+            } else {
+              throw new Error("No se encontró el SVG");
+            }
+          } else {
+            throw new Error("No se encontró el elemento QR");
+          }
+        } catch (webError) {
+          console.error("Error en web:", webError);
+          Toast.show({
+            type: "error",
+            text1: "Error",
+            text2:
+              "No se pudo descargar el QR en web. Intenta hacer captura de pantalla.",
+            position: "bottom",
+          });
+        }
+      } else {
+        // En móvil: capturar y compartir directamente
+        const uri = await captureRef(qrRef, {
+          format: "png",
+          quality: 1,
+        });
+
+        // Compartir directamente sin guardar
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, {
+            mimeType: "image/png",
+            dialogTitle: `QR de ${user.nombre} ${user.apellido}`,
+          });
+
+          Toast.show({
+            type: "success",
+            text1: "QR Generado",
+            text2: "El código QR está listo para compartir",
+            position: "bottom",
+          });
+        } else {
+          Toast.show({
+            type: "error",
+            text1: "Error",
+            text2: "No se puede compartir archivos en este dispositivo",
+            position: "bottom",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error descargando QR:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "No se pudo generar el código QR",
+        position: "bottom",
+      });
+    } finally {
+      setDownloadingQR(false);
+    }
+  };
+
   if (!user) {
     return null;
   }
 
-  // Verificar roles
+  const esMenorDeEdad = (fechaNacimiento: string | undefined) => {
+    if (!fechaNacimiento) return false;
+    const hoy = new Date();
+    const fechaNac = new Date(fechaNacimiento);
+    const edad = hoy.getFullYear() - fechaNac.getFullYear();
+    const mesActual = hoy.getMonth() - fechaNac.getMonth();
+
+    if (
+      mesActual < 0 ||
+      (mesActual === 0 && hoy.getDate() < fechaNac.getDate())
+    ) {
+      return edad - 1 < 18;
+    }
+    return edad < 18;
+  };
+
   const esAlumno = user.listaRol.includes(Rol.ALUMNO);
   const esProfesor = user.listaRol.includes(Rol.PROFESOR);
   const esAdminUsuario = user.listaRol.includes(Rol.ADMINISTRADOR);
   const esOficina = user.listaRol.includes(Rol.OFICINA);
 
-  // Roles disponibles para asignar (los que no tiene)
   const rolesDisponibles = Object.values(Rol).filter(
     (rol) => !user.listaRol.includes(rol),
   );
@@ -115,6 +307,12 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
   const handleViewCourseDetails = (course: Curso) => {
     router.push(`/curso/${course.id}/alumnos`);
     onClose();
+  };
+
+  // Data del QR (igual que en mi-qr)
+  const qrData = {
+    usuarioId: user.id,
+    tipo: "PERMANENTE",
   };
 
   return (
@@ -144,62 +342,6 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
           </View>
 
           <ScrollView style={styles.content}>
-            {/* Botón para asignar roles (solo visible para ADMIN) */}
-            {esAdmin && rolesDisponibles.length > 0 && (
-              <View style={styles.section}>
-                <Card style={styles.roleManagementCard}>
-                  <View style={styles.roleManagementHeader}>
-                    <Ionicons
-                      name="person-add-outline"
-                      size={20}
-                      color="#8b5cf6"
-                    />
-                    <Text style={styles.roleManagementTitle}>
-                      Gestión de Roles
-                    </Text>
-                  </View>
-
-                  {!showRoleSelector ? (
-                    <Button
-                      variant="secondary"
-                      onPress={() => setShowRoleSelector(true)}
-                      style={styles.assignRoleButton}
-                      title="Asignar Nuevo Rol"
-                      textStyle={styles.assignRoleButtonText}
-                    />
-                  ) : (
-                    <View style={styles.roleSelectorContainer}>
-                      <Text style={styles.roleSelectorTitle}>
-                        Selecciona un rol para asignar:
-                      </Text>
-                      <View style={styles.roleOptionsContainer}>
-                        {rolesDisponibles.map((rol) => (
-                          <TouchableOpacity
-                            key={rol}
-                            style={styles.roleOption}
-                            onPress={() => handleAsignarRol(rol)}
-                          >
-                            <Tag label={rol} variant={rolToTagVariant(rol)} />
-                            <Ionicons
-                              name="add-circle"
-                              size={20}
-                              color="#8b5cf6"
-                            />
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                      <Button
-                        variant="secondary"
-                        onPress={() => setShowRoleSelector(false)}
-                        style={styles.cancelButton}
-                        title="Cancelar"
-                      />
-                    </View>
-                  )}
-                </Card>
-              </View>
-            )}
-
             {/* Información Personal */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Información Personal</Text>
@@ -243,7 +385,149 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   />
                 </View>
               </Card>
+              {esMenorDeEdad(user.fechaNacimiento) &&
+                user.adultoResponsable && (
+                  <TouchableOpacity
+                    style={styles.adultoResponsableCard}
+                    onPress={() => setShowAdultoResponsableModal(true)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.adultoResponsableHeader}>
+                      <View style={styles.adultoResponsableIconCircle}>
+                        <Ionicons name="people" size={20} color="#f59e0b" />
+                      </View>
+                      <View style={styles.adultoResponsableInfo}>
+                        <Text style={styles.adultoResponsableTitle}>
+                          Adulto Responsable
+                        </Text>
+                        <Text style={styles.adultoResponsableName}>
+                          {user.adultoResponsable.nombre}{" "}
+                          {user.adultoResponsable.apellido}
+                        </Text>
+                      </View>
+                      <Ionicons
+                        name="chevron-forward"
+                        size={20}
+                        color="#9ca3af"
+                      />
+                    </View>
+                  </TouchableOpacity>
+                )}
             </View>
+
+            {/* SECCIÓN DE CÓDIGO QR (solo para admins) y usuario que no esten de baja */}
+            {(esAdmin || esOficina) && user.estado !== Estado.BAJA && (
+              <View style={styles.section}>
+                <Card style={styles.qrCard}>
+                  <View style={styles.qrHeader}>
+                    <Ionicons name="qr-code" size={20} color="#3b82f6" />
+                    <Text style={styles.qrTitle}>Código QR del Usuario</Text>
+                  </View>
+
+                  <View style={styles.qrContainer}>
+                    {/* QR Code con ref para captura */}
+                    <View ref={qrRef} style={styles.qrWrapper}>
+                      <QRCode
+                        value={JSON.stringify(qrData)}
+                        size={Platform.OS === "web" ? 260 : 180}
+                        backgroundColor="white"
+                        color="black"
+                        // @ts-ignore
+                        getRef={(ref) => (qrRef.current = ref)}
+                      />
+                    </View>
+
+                    <Text style={styles.qrSubtext}>
+                      ID: {user.id} • DNI: {user.dni}
+                    </Text>
+
+                    <Button
+                      variant="primary"
+                      onPress={handleDownloadQR}
+                      loading={downloadingQR}
+                      style={styles.downloadButton}
+                      title={downloadingQR ? "Generando..." : "Descargar QR"}
+                    />
+                  </View>
+                </Card>
+              </View>
+            )}
+
+            {/* Gestion de roles (asignar + desasignar) */}
+            {esAdmin && user.estado !== Estado.BAJA && (
+              <View style={styles.section}>
+                <Card style={styles.roleManagementCard}>
+                  <View style={styles.roleManagementHeader}>
+                    <Ionicons name="people-outline" size={20} color="#8b5cf6" />
+                    <Text style={styles.roleManagementTitle}>
+                      Gestión de Roles
+                    </Text>
+                  </View>
+
+                  {/* Roles Actuales */}
+                  {user.listaRol.length > 0 && (
+                    <View style={styles.rolesActualesSection}>
+                      <Text style={styles.rolesSubtitle}>Roles Actuales:</Text>
+                      <View style={styles.rolesActualesList}>
+                        {user.listaRol.map((rol) => (
+                          <View key={rol} style={styles.rolActualItem}>
+                            <Tag label={rol} variant={rolToTagVariant(rol)} />
+                            <TouchableOpacity
+                              onPress={() => confirmarRemoverRol(rol)}
+                              style={styles.removeRolButton}
+                            >
+                              <Ionicons
+                                name="close-circle"
+                                size={20}
+                                color="#ef4444"
+                              />
+                            </TouchableOpacity>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Roles Disponibles para Asignar */}
+                  {rolesDisponibles.length > 0 && (
+                    <View style={styles.rolesDisponiblesSection}>
+                      <Text style={styles.rolesSubtitle}>
+                        Asignar Nuevo Rol:
+                      </Text>
+                      <View style={styles.roleOptionsContainer}>
+                        {rolesDisponibles.map((rol) => (
+                          <TouchableOpacity
+                            key={rol}
+                            style={styles.roleOption}
+                            onPress={() => confirmarAsignarRol(rol)}
+                          >
+                            <Tag label={rol} variant={rolToTagVariant(rol)} />
+                            <Ionicons
+                              name="add-circle"
+                              size={20}
+                              color="#10b981"
+                            />
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+
+                  {rolesDisponibles.length === 0 && (
+                    <View style={styles.allRolesAssigned}>
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={24}
+                        color="#10b981"
+                      />
+                      <Text style={styles.allRolesText}>
+                        Todos los roles están asignados
+                      </Text>
+                    </View>
+                  )}
+                </Card>
+              </View>
+            )}
 
             {/* Información de Alumno */}
             {esAlumno && (
@@ -277,7 +561,6 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                               </Text>
                             </View>
 
-                            {/* Horarios */}
                             {curso.horarios && curso.horarios.length > 0 && (
                               <View style={styles.horariosChips}>
                                 {curso.horarios
@@ -441,11 +724,120 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
           </ScrollView>
         </View>
       </View>
+
+      {/* MODAL DE CONFIRMACIÓN - ASIGNAR ROL */}
+      <Modal
+        visible={showConfirmAsignar}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowConfirmAsignar(false)}
+      >
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmModal}>
+            <View style={styles.confirmIconContainer}>
+              <Ionicons name="add-circle" size={56} color="#10b981" />
+            </View>
+
+            <Text style={styles.confirmTitle}>Asignar Rol</Text>
+
+            <Text style={styles.confirmMessage}>
+              ¿Estás seguro que deseas asignar el rol de{" "}
+              <Text style={styles.confirmRolText}>{rolSeleccionado}</Text> a{" "}
+              <Text style={styles.confirmUserText}>
+                {user?.nombre} {user?.apellido}
+              </Text>
+              ?
+            </Text>
+
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={[styles.confirmButton, styles.confirmButtonCancel]}
+                onPress={() => {
+                  setShowConfirmAsignar(false);
+                  setRolSeleccionado(null);
+                }}
+              >
+                <Text style={styles.confirmButtonCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.confirmButton, styles.confirmButtonConfirm]}
+                onPress={() => handleAsignarRol(rolSeleccionado!)}
+              >
+                <Ionicons name="checkmark" size={20} color="#ffffff" />
+                <Text style={styles.confirmButtonConfirmText}>Sí, Asignar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL DE CONFIRMACIÓN - REMOVER ROL */}
+      <Modal
+        visible={showConfirmRemover}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowConfirmRemover(false)}
+      >
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmModal}>
+            <View
+              style={[styles.confirmIconContainer, styles.confirmIconDanger]}
+            >
+              <Ionicons name="alert-circle" size={56} color="#ef4444" />
+            </View>
+
+            <Text style={styles.confirmTitle}>Remover Rol</Text>
+
+            <Text style={styles.confirmMessage}>
+              ¿Estás seguro que deseas remover el rol de{" "}
+              <Text style={styles.confirmRolText}>{rolSeleccionado}</Text> a{" "}
+              <Text style={styles.confirmUserText}>
+                {user?.nombre} {user?.apellido}
+              </Text>
+              ?
+            </Text>
+
+            <View style={styles.confirmWarning}>
+              <Ionicons name="warning" size={18} color="#f59e0b" />
+              <Text style={styles.confirmWarningText}>
+                Esta acción modificará los permisos del usuario
+              </Text>
+            </View>
+
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={[styles.confirmButton, styles.confirmButtonCancel]}
+                onPress={() => {
+                  setShowConfirmRemover(false);
+                  setRolSeleccionado(null);
+                }}
+              >
+                <Text style={styles.confirmButtonCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.confirmButton, styles.confirmButtonDanger]}
+                onPress={() => handleRemoverRol(rolSeleccionado!)}
+              >
+                <Ionicons name="trash" size={20} color="#ffffff" />
+                <Text style={styles.confirmButtonDangerText}>Sí, Remover</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      {user?.adultoResponsable && (
+        <AdultoResponsableModal
+          visible={showAdultoResponsableModal}
+          onClose={() => setShowAdultoResponsableModal(false)}
+          adultoResponsable={user.adultoResponsable}
+        />
+      )}
     </Modal>
   );
 };
 
-// Componente helper para filas de información
 const InfoRow = ({
   icon,
   iconColor,
@@ -538,7 +930,45 @@ const styles = StyleSheet.create({
     color: "#111827",
     marginBottom: 12,
   },
-  // Estilos para gestión de roles
+  qrCard: {
+    backgroundColor: "#eff6ff",
+    borderColor: "#3b82f6",
+    borderWidth: 1,
+    padding: 20,
+  },
+  qrHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+  qrTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1e40af",
+  },
+  qrContainer: {
+    alignItems: "center",
+    gap: 12,
+  },
+  qrWrapper: {
+    padding: 16,
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  qrSubtext: {
+    fontSize: 13,
+    color: "#6b7280",
+    fontWeight: "500",
+  },
+  downloadButton: {
+    minWidth: 200,
+  },
   roleManagementCard: {
     backgroundColor: "#faf5ff",
     borderColor: "#8b5cf6",
@@ -556,30 +986,38 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#6b21a8",
   },
-  assignRoleButton: {
+  rolesActualesSection: {
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e9d5ff",
+  },
+  rolesSubtitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#6b21a8",
+    marginBottom: 10,
+  },
+  rolesActualesList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  rolActualItem: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#ede9fe",
-    borderColor: "#8b5cf6",
-    borderWidth: 1,
-    padding: 12,
+    gap: 6,
+    backgroundColor: "#ffffff",
+    padding: 8,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e9d5ff",
   },
-  assignRoleButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#8b5cf6",
+  removeRolButton: {
+    padding: 2,
   },
-  roleSelectorContainer: {
-    gap: 12,
-  },
-  roleSelectorTitle: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#374151",
-    marginBottom: 8,
+  rolesDisponiblesSection: {
+    marginBottom: 12,
   },
   roleOptionsContainer: {
     gap: 10,
@@ -594,8 +1032,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e5e7eb",
   },
-  cancelButton: {
-    marginTop: 8,
+  allRolesAssigned: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 12,
+    backgroundColor: "#f0fdf4",
+    borderRadius: 8,
+  },
+  allRolesText: {
+    fontSize: 13,
+    color: "#15803d",
+    fontWeight: "500",
   },
   infoCard: {
     backgroundColor: "#f9fafb",
@@ -761,5 +1209,145 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#9ca3af",
     textAlign: "center",
+  },
+  confirmOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  confirmModal: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 24,
+    width: "100%",
+    maxWidth: 400,
+    alignItems: "center",
+  },
+  confirmIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#f0fdf4",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  confirmIconDanger: {
+    backgroundColor: "#fef2f2",
+  },
+  confirmTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1f2937",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  confirmMessage: {
+    fontSize: 15,
+    color: "#6b7280",
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  confirmRolText: {
+    fontWeight: "700",
+    color: "#8b5cf6",
+  },
+  confirmUserText: {
+    fontWeight: "700",
+    color: "#1f2937",
+  },
+  confirmWarning: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#fffbeb",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+    width: "100%",
+  },
+  confirmWarningText: {
+    fontSize: 13,
+    color: "#92400e",
+    fontWeight: "500",
+    flex: 1,
+  },
+  confirmButtons: {
+    flexDirection: "row",
+    gap: 12,
+    width: "100%",
+  },
+  confirmButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 14,
+    borderRadius: 8,
+  },
+  confirmButtonCancel: {
+    backgroundColor: "#f3f4f6",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+  },
+  confirmButtonCancelText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#6b7280",
+  },
+  confirmButtonConfirm: {
+    backgroundColor: "#10b981",
+  },
+  confirmButtonConfirmText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#ffffff",
+  },
+  confirmButtonDanger: {
+    backgroundColor: "#ef4444",
+  },
+  confirmButtonDangerText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#ffffff",
+  },
+  adultoResponsableCard: {
+    backgroundColor: "#fffbeb",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: "#fde68a",
+  },
+  adultoResponsableHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  adultoResponsableIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#fef3c7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  adultoResponsableInfo: {
+    flex: 1,
+  },
+  adultoResponsableTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#92400e",
+    marginBottom: 2,
+  },
+  adultoResponsableName: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#78350f",
   },
 });

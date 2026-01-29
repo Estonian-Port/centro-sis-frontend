@@ -1,11 +1,10 @@
-// app/(auth)/complete-profile.tsx
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/context/authContext";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { router } from "expo-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   StyleSheet,
@@ -13,7 +12,8 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  Linking,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import * as yup from "yup";
 import Toast from "react-native-toast-message";
@@ -22,9 +22,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { DatePicker } from "@/components/pickers/DatePicker";
 import { COLORES } from "@/util/colores";
 import { LinearGradient } from "expo-linear-gradient";
+import TerminosCondicionesModal from "@/components/modals/TerminosCondiciones";
+import { usuarioService } from "@/services/usuario.service";
+import { CompleteProfileData } from "@/model/model";
 
-// Esquema de validación dinámico
-const getValidationSchema = (esMenorDeEdad: boolean) => {
+// ✅ HELPER PARA EXTRAER MENSAJE DE ERROR
+const getErrorMessage = (error: any): string | undefined => {
+  if (!error) return undefined;
+  if (typeof error === 'string') return error;
+  if (typeof error.message === 'string') return error.message;
+  return undefined;
+};
+
+// Esquema de validación
+const getValidationSchema = (esMenorDeEdad: boolean, terminosLeidos: boolean) => {
   const baseSchema = {
     nombre: yup.string().required("El nombre es requerido"),
     apellido: yup.string().required("El apellido es requerido"),
@@ -42,8 +53,12 @@ const getValidationSchema = (esMenorDeEdad: boolean) => {
       .required("La fecha de nacimiento es requerida"),
     password: yup
       .string()
-      .min(6, "La contraseña debe tener al menos 6 caracteres")
-      .required("La nueva contraseña es requerida"),
+      .required("La nueva contraseña es requerida")
+      .min(8, "La contraseña debe tener al menos 8 caracteres")
+      .matches(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        "Debe contener mayúscula, minúscula y número",
+      ),
     confirmPassword: yup
       .string()
       .oneOf([yup.ref("password")], "Las contraseñas no coinciden")
@@ -51,7 +66,12 @@ const getValidationSchema = (esMenorDeEdad: boolean) => {
     aceptaTerminos: yup
       .boolean()
       .oneOf([true], "Debes aceptar los términos y condiciones")
-      .required("Debes aceptar los términos y condiciones"),
+      .required("Debes aceptar los términos y condiciones")
+      .test(
+        "terminos-leidos",
+        "Debes leer los términos y condiciones antes de aceptarlos",
+        () => terminosLeidos
+      ),
   };
 
   if (esMenorDeEdad) {
@@ -80,39 +100,43 @@ const getValidationSchema = (esMenorDeEdad: boolean) => {
   return yup.object().shape(baseSchema);
 };
 
-interface CompleteProfileData {
-  nombre: string;
-  apellido: string;
-  dni: string;
-  celular: string;
-  fechaNacimiento: string;
-  password: string;
-  confirmPassword: string;
-  aceptaTerminos: boolean;
-  // Responsable (solo si es menor)
-  responsableNombre?: string;
-  responsableApellido?: string;
-  responsableDni?: string;
-  responsableCelular?: string;
-  responsableRelacion?: string;
-}
+// Helper para detectar datos temporales
+const isDatoTemporal = (valor: string | number): boolean => {
+  if (typeof valor === "string") {
+    return (
+      valor === "PENDIENTE" ||
+      valor === "TEMPORAL" ||
+      valor.startsWith("0000000") ||
+      valor === ""
+    );
+  }
+  if (typeof valor === "number") {
+    return valor === 0 || valor === 1100000000;
+  }
+  return false;
+};
 
 export default function CompleteProfileScreen() {
-  const { usuario, setUsuario, hasMultipleRoles } = useAuth();
+  const { usuario, setUsuario } = useAuth();
+
+  const [showTerminosModal, setShowTerminosModal] = useState(false);
+  const [terminosLeidos, setTerminosLeidos] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
     watch,
-    setValue,
-  } = useForm<CompleteProfileData>({
-    resolver: yupResolver(getValidationSchema(false)) as any, // Se actualiza dinámicamente
+    trigger,
+  } = useForm<any>({
+    resolver: yupResolver(getValidationSchema(false, terminosLeidos)) as any,
     defaultValues: {
-      nombre: usuario?.nombre || "",
-      apellido: usuario?.apellido || "",
-      dni: usuario?.dni || "",
-      celular: usuario?.celular || "",
+      nombre: isDatoTemporal(usuario?.nombre || "") ? "" : usuario?.nombre || "",
+      apellido: isDatoTemporal(usuario?.apellido || "") ? "" : usuario?.apellido || "",
+      dni: isDatoTemporal(usuario?.dni || "") ? "" : usuario?.dni || "",
+      celular: isDatoTemporal(usuario?.celular || 0) ? "" : String(usuario?.celular || ""),
       fechaNacimiento: "",
       password: "",
       confirmPassword: "",
@@ -127,6 +151,7 @@ export default function CompleteProfileScreen() {
 
   const fechaNacimiento = watch("fechaNacimiento");
   const aceptaTerminos = watch("aceptaTerminos");
+  const password = watch("password");
 
   // Calcular edad
   const edad = useMemo(() => {
@@ -146,36 +171,43 @@ export default function CompleteProfileScreen() {
 
   const esMenorDeEdad = edad !== null && edad < 18;
 
-  const handleOpenTerminos = async () => {
-    // URL de la página de términos - CAMBIAR por tu URL real
-    const url = "https://www.instagram.com/centro_cultural_tenri/?hl=es";
+  // Fuerza de contraseña
+  const getPasswordStrength = () => {
+    if (!password) return null;
 
-    try {
-      const canOpen = await Linking.canOpenURL(url);
-      if (canOpen) {
-        await Linking.openURL(url);
-      } else {
-        Toast.show({
-          type: "info",
-          text1: "No se pudo abrir el enlace",
-          text2: "Por favor, visita la página de términos en tu navegador",
-          position: "bottom",
-        });
-      }
-    } catch (error) {
-      console.error("Error opening URL:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "No se pudo abrir la página de términos",
-        position: "bottom",
-      });
-    }
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+
+    if (strength <= 2) return { label: "Débil", color: "#ef4444" };
+    if (strength <= 3) return { label: "Media", color: "#f59e0b" };
+    return { label: "Fuerte", color: "#10b981" };
   };
 
-  const onSubmit = async (data: CompleteProfileData) => {
+  const passwordStrength = getPasswordStrength();
+
+  const handleCloseTerminos = () => {
+    setShowTerminosModal(false);
+    setTerminosLeidos(true);
+    setTimeout(() => {
+      trigger("aceptaTerminos");
+    }, 100);
+  };
+
+  const onSubmit = async (data: any) => {
     try {
-      // VALIDACIÓN MANUAL: Si es menor de edad, validar campos del responsable
+      if (!terminosLeidos) {
+        Toast.show({
+          type: "error",
+          text1: "Términos no leídos",
+          text2: "Debes abrir y leer los términos antes de aceptarlos",
+          position: "bottom",
+        });
+        return;
+      }
+
       if (esMenorDeEdad) {
         const errores: string[] = [];
 
@@ -210,48 +242,28 @@ export default function CompleteProfileScreen() {
         }
       }
 
-      console.log("Updating profile:", data);
-
-      // Preparar datos para enviar al backend
-      const profileData: any = {
+      const profileData: CompleteProfileData = {
+        id: usuario!.id,
         nombre: data.nombre,
         apellido: data.apellido,
         dni: data.dni,
-        celular: data.celular,
+        celular: parseInt(data.celular, 10),
         fechaNacimiento: data.fechaNacimiento,
         password: data.password,
+        aceptaTerminos: data.aceptaTerminos,
       };
 
-      // Agregar adulto responsable si es menor
       if (esMenorDeEdad) {
         profileData.adultoResponsable = {
-          nombre: data.responsableNombre,
-          apellido: data.responsableApellido,
-          dni: data.responsableDni,
+          nombre: data.responsableNombre!,
+          apellido: data.responsableApellido!,
+          dni: data.responsableDni!,
           celular: parseInt(data.responsableCelular || "0", 10),
-          relacion: data.responsableRelacion,
+          relacion: data.responsableRelacion!,
         };
       }
 
-      // TODO: Llamar al endpoint del backend
-      // await usuarioService.completarPerfil(usuario.id, profileData);
-
-      // Simula API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Actualizar el usuario en el contexto
-      if (usuario) {
-        const updatedUser = {
-          ...usuario,
-          nombre: data.nombre,
-          apellido: data.apellido,
-          dni: data.dni,
-          celular: data.celular,
-          firstLogin: false,
-        };
-        setUsuario(updatedUser);
-      }
-
+      const usuarioActualizado = await usuarioService.completarPerfil(profileData);
       Toast.show({
         type: "success",
         text1: "Perfil Completado",
@@ -259,20 +271,17 @@ export default function CompleteProfileScreen() {
         position: "bottom",
       });
 
-      // Navegar según roles
+      setUsuario(usuarioActualizado);
+
       setTimeout(() => {
-        if (hasMultipleRoles()) {
-          router.replace("/(tabs)/" as any);
-        } else {
-          router.replace("/(tabs)/" as any);
-        }
+        router.replace("/(tabs)/" as any);
       }, 1000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error completando perfil:", error);
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "Hubo un error al actualizar tu perfil.",
+        text2: error?.response?.data?.message || "Hubo un error al actualizar tu perfil.",
         position: "bottom",
       });
     }
@@ -285,178 +294,66 @@ export default function CompleteProfileScreen() {
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 1 }}
     >
-      <SafeAreaView style={styles.container}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardView}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
-          <Card style={styles.card}>
-            <View style={styles.header}>
-              <View style={styles.iconContainer}>
-                <Ionicons name="person-add" size={32} color="#3b82f6" />
-              </View>
-              <Text style={styles.title}>Completar Perfil</Text>
-              <Text style={styles.subtitle}>
-                Para continuar, necesitamos que completes tu información
-                personal y cambies tu contraseña temporal.
-              </Text>
-            </View>
-
-            <View style={styles.form}>
-              {/* Email (solo lectura) */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email</Text>
-                <View style={styles.emailDisplay}>
-                  <Ionicons name="mail" size={20} color="#6b7280" />
-                  <Text style={styles.emailText}>{usuario?.email}</Text>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Card style={styles.card}>
+              <View style={styles.header}>
+                <View style={styles.iconContainer}>
+                  <Ionicons name="person-add" size={32} color="#3b82f6" />
                 </View>
+                <Text style={styles.title}>Completar Perfil</Text>
+                <Text style={styles.subtitle}>
+                  Para continuar, necesitamos que completes tu información
+                  personal y cambies tu contraseña temporal.
+                </Text>
               </View>
 
-              {/* Sección: Datos Personales */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Datos Personales</Text>
-
-                <Controller
-                  control={control}
-                  name="nombre"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="Nombre *"
-                      value={value}
-                      onChangeText={onChange}
-                      error={errors.nombre?.message}
-                      placeholder="Juan"
-                    />
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="apellido"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="Apellido *"
-                      value={value}
-                      onChangeText={onChange}
-                      error={errors.apellido?.message}
-                      placeholder="Pérez"
-                    />
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="dni"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="DNI *"
-                      value={value}
-                      onChangeText={onChange}
-                      keyboardType="numeric"
-                      error={errors.dni?.message}
-                      placeholder="12345678"
-                      maxLength={8}
-                    />
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="celular"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="Celular *"
-                      value={value}
-                      onChangeText={onChange}
-                      keyboardType="phone-pad"
-                      error={errors.celular?.message}
-                      placeholder="1123456789"
-                      maxLength={10}
-                    />
-                  )}
-                />
-
-                {/* Fecha de Nacimiento */}
-                <Controller
-                  control={control}
-                  name="fechaNacimiento"
-                  render={({ field: { onChange, value } }) => (
-                    <DatePicker
-                      label="Fecha de Nacimiento"
-                      value={value}
-                      onChange={onChange}
-                      error={errors.fechaNacimiento?.message}
-                      maximumDate={new Date()}
-                    />
-                  )}
-                />
-
-                {/* Mostrar edad */}
-                {edad !== null && (
-                  <View
-                    style={[
-                      styles.edadBanner,
-                      esMenorDeEdad
-                        ? styles.edadBannerWarning
-                        : styles.edadBannerInfo,
-                    ]}
-                  >
-                    <Ionicons
-                      name={
-                        esMenorDeEdad ? "alert-circle" : "information-circle"
-                      }
-                      size={20}
-                      color={esMenorDeEdad ? "#f59e0b" : "#3b82f6"}
-                    />
-                    <Text
-                      style={[
-                        styles.edadBannerText,
-                        esMenorDeEdad
-                          ? styles.edadBannerTextWarning
-                          : styles.edadBannerTextInfo,
-                      ]}
-                    >
-                      {edad} años
-                      {esMenorDeEdad &&
-                        " - Se requieren datos del adulto responsable"}
-                    </Text>
+              <View style={styles.form}>
+                {/* Email (solo lectura) */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Email</Text>
+                  <View style={styles.emailDisplay}>
+                    <Ionicons name="mail" size={20} color="#6b7280" />
+                    <Text style={styles.emailText}>{usuario?.email}</Text>
                   </View>
-                )}
-              </View>
+                </View>
 
-              {/* Sección: Adulto Responsable (solo si es menor) */}
-              {esMenorDeEdad && (
-                <View style={[styles.section, styles.responsableSection]}>
-                  <View style={styles.responsableHeader}>
-                    <Ionicons name="people" size={24} color="#f59e0b" />
-                    <Text style={styles.sectionTitle}>
-                      Datos del Adulto Responsable
-                    </Text>
-                  </View>
+                {/* Datos Personales */}
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Datos Personales</Text>
 
                   <Controller
                     control={control}
-                    name="responsableNombre"
+                    name="nombre"
                     render={({ field: { onChange, value } }) => (
                       <Input
                         label="Nombre *"
                         value={value}
                         onChangeText={onChange}
-                        error={errors.responsableNombre?.message}
-                        placeholder="María"
+                        error={getErrorMessage(errors.nombre)}
+                        placeholder="Juan"
                       />
                     )}
                   />
 
                   <Controller
                     control={control}
-                    name="responsableApellido"
+                    name="apellido"
                     render={({ field: { onChange, value } }) => (
                       <Input
                         label="Apellido *"
                         value={value}
                         onChangeText={onChange}
-                        error={errors.responsableApellido?.message}
+                        error={getErrorMessage(errors.apellido)}
                         placeholder="Pérez"
                       />
                     )}
@@ -464,15 +361,15 @@ export default function CompleteProfileScreen() {
 
                   <Controller
                     control={control}
-                    name="responsableDni"
+                    name="dni"
                     render={({ field: { onChange, value } }) => (
                       <Input
                         label="DNI *"
                         value={value}
                         onChangeText={onChange}
                         keyboardType="numeric"
-                        error={errors.responsableDni?.message}
-                        placeholder="87654321"
+                        error={getErrorMessage(errors.dni)}
+                        placeholder="12345678"
                         maxLength={8}
                       />
                     )}
@@ -480,14 +377,14 @@ export default function CompleteProfileScreen() {
 
                   <Controller
                     control={control}
-                    name="responsableCelular"
+                    name="celular"
                     render={({ field: { onChange, value } }) => (
                       <Input
                         label="Celular *"
                         value={value}
                         onChangeText={onChange}
                         keyboardType="phone-pad"
-                        error={errors.responsableCelular?.message}
+                        error={getErrorMessage(errors.celular)}
                         placeholder="1123456789"
                         maxLength={10}
                       />
@@ -496,130 +393,373 @@ export default function CompleteProfileScreen() {
 
                   <Controller
                     control={control}
-                    name="responsableRelacion"
+                    name="fechaNacimiento"
+                    render={({ field: { onChange, value } }) => (
+                      <DatePicker
+                        label="Fecha de Nacimiento *"
+                        value={value}
+                        onChange={onChange}
+                        error={getErrorMessage(errors.fechaNacimiento)}
+                        maximumDate={new Date()}
+                      />
+                    )}
+                  />
+
+                  {edad !== null && (
+                    <View
+                      style={[
+                        styles.edadBanner,
+                        esMenorDeEdad
+                          ? styles.edadBannerWarning
+                          : styles.edadBannerInfo,
+                      ]}
+                    >
+                      <Ionicons
+                        name={
+                          esMenorDeEdad ? "alert-circle" : "information-circle"
+                        }
+                        size={20}
+                        color={esMenorDeEdad ? "#f59e0b" : "#3b82f6"}
+                      />
+                      <Text
+                        style={[
+                          styles.edadBannerText,
+                          esMenorDeEdad
+                            ? styles.edadBannerTextWarning
+                            : styles.edadBannerTextInfo,
+                        ]}
+                      >
+                        {edad} años
+                        {esMenorDeEdad &&
+                          " - Se requieren datos del adulto responsable"}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Adulto Responsable */}
+                {esMenorDeEdad && (
+                  <View style={[styles.section, styles.responsableSection]}>
+                    <View style={styles.responsableHeader}>
+                      <Ionicons name="people" size={24} color="#f59e0b" />
+                      <Text style={styles.sectionTitle}>
+                        Datos del Adulto Responsable
+                      </Text>
+                    </View>
+
+                    <Controller
+                      control={control}
+                      name="responsableNombre"
+                      render={({ field: { onChange, value } }) => (
+                        <Input
+                          label="Nombre *"
+                          value={value}
+                          onChangeText={onChange}
+                          error={getErrorMessage(errors.responsableNombre)}
+                          placeholder="María"
+                        />
+                      )}
+                    />
+
+                    <Controller
+                      control={control}
+                      name="responsableApellido"
+                      render={({ field: { onChange, value } }) => (
+                        <Input
+                          label="Apellido *"
+                          value={value}
+                          onChangeText={onChange}
+                          error={getErrorMessage(errors.responsableApellido)}
+                          placeholder="Pérez"
+                        />
+                      )}
+                    />
+
+                    <Controller
+                      control={control}
+                      name="responsableDni"
+                      render={({ field: { onChange, value } }) => (
+                        <Input
+                          label="DNI *"
+                          value={value}
+                          onChangeText={onChange}
+                          keyboardType="numeric"
+                          error={getErrorMessage(errors.responsableDni)}
+                          placeholder="87654321"
+                          maxLength={8}
+                        />
+                      )}
+                    />
+
+                    <Controller
+                      control={control}
+                      name="responsableCelular"
+                      render={({ field: { onChange, value } }) => (
+                        <Input
+                          label="Celular *"
+                          value={value}
+                          onChangeText={onChange}
+                          keyboardType="phone-pad"
+                          error={getErrorMessage(errors.responsableCelular)}
+                          placeholder="1123456789"
+                          maxLength={10}
+                        />
+                      )}
+                    />
+
+                    <Controller
+                      control={control}
+                      name="responsableRelacion"
+                      render={({ field: { onChange, value } }) => (
+                        <Input
+                          label="Relación *"
+                          value={value}
+                          onChangeText={onChange}
+                          error={getErrorMessage(errors.responsableRelacion)}
+                          placeholder="Madre / Padre / Tutor"
+                        />
+                      )}
+                    />
+                  </View>
+                )}
+
+                {/* Seguridad */}
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Seguridad</Text>
+
+                  <Controller
+                    control={control}
+                    name="password"
+                    render={({ field: { onChange, value } }) => (
+                      <>
+                        <Input
+                          label="Nueva Contraseña *"
+                          value={value}
+                          onChangeText={onChange}
+                          secureTextEntry={!showPassword}
+                          error={getErrorMessage(errors.password)}
+                          placeholder="Mínimo 8 caracteres"
+                          leftIcon="lock-closed-outline"
+                          rightIcon={
+                            showPassword ? "eye-off-outline" : "eye-outline"
+                          }
+                          onRightIconPress={() =>
+                            setShowPassword(!showPassword)
+                          }
+                        />
+
+                        {passwordStrength && (
+                          <View style={styles.strengthContainer}>
+                            <View style={styles.strengthBar}>
+                              <View
+                                style={[
+                                  styles.strengthFill,
+                                  {
+                                    width:
+                                      passwordStrength.label === "Débil"
+                                        ? "33%"
+                                        : passwordStrength.label === "Media"
+                                          ? "66%"
+                                          : "100%",
+                                    backgroundColor: passwordStrength.color,
+                                  },
+                                ]}
+                              />
+                            </View>
+                            <Text
+                              style={[
+                                styles.strengthText,
+                                { color: passwordStrength.color },
+                              ]}
+                            >
+                              {passwordStrength.label}
+                            </Text>
+                          </View>
+                        )}
+
+                        <View style={styles.requirementsContainer}>
+                          <Text style={styles.requirementsTitle}>
+                            La contraseña debe contener:
+                          </Text>
+                          <View style={styles.requirement}>
+                            <Ionicons
+                              name={
+                                password.length >= 8
+                                  ? "checkmark-circle"
+                                  : "ellipse-outline"
+                              }
+                              size={16}
+                              color={
+                                password.length >= 8 ? "#10b981" : "#9ca3af"
+                              }
+                            />
+                            <Text style={styles.requirementText}>
+                              Al menos 8 caracteres
+                            </Text>
+                          </View>
+                          <View style={styles.requirement}>
+                            <Ionicons
+                              name={
+                                /[A-Z]/.test(password)
+                                  ? "checkmark-circle"
+                                  : "ellipse-outline"
+                              }
+                              size={16}
+                              color={
+                                /[A-Z]/.test(password) ? "#10b981" : "#9ca3af"
+                              }
+                            />
+                            <Text style={styles.requirementText}>
+                              Una mayúscula
+                            </Text>
+                          </View>
+                          <View style={styles.requirement}>
+                            <Ionicons
+                              name={
+                                /[a-z]/.test(password)
+                                  ? "checkmark-circle"
+                                  : "ellipse-outline"
+                              }
+                              size={16}
+                              color={
+                                /[a-z]/.test(password) ? "#10b981" : "#9ca3af"
+                              }
+                            />
+                            <Text style={styles.requirementText}>
+                              Una minúscula
+                            </Text>
+                          </View>
+                          <View style={styles.requirement}>
+                            <Ionicons
+                              name={
+                                /\d/.test(password)
+                                  ? "checkmark-circle"
+                                  : "ellipse-outline"
+                              }
+                              size={16}
+                              color={
+                                /\d/.test(password) ? "#10b981" : "#9ca3af"
+                              }
+                            />
+                            <Text style={styles.requirementText}>
+                              Un número
+                            </Text>
+                          </View>
+                        </View>
+                      </>
+                    )}
+                  />
+
+                  <Controller
+                    control={control}
+                    name="confirmPassword"
                     render={({ field: { onChange, value } }) => (
                       <Input
-                        label="Relación *"
+                        label="Confirmar Contraseña *"
                         value={value}
                         onChangeText={onChange}
-                        error={errors.responsableRelacion?.message}
-                        placeholder="Madre / Padre / Tutor"
+                        secureTextEntry={!showConfirmPassword}
+                        error={getErrorMessage(errors.confirmPassword)}
+                        placeholder="Repetir contraseña"
+                        leftIcon="lock-closed-outline"
+                        rightIcon={
+                          showConfirmPassword
+                            ? "eye-off-outline"
+                            : "eye-outline"
+                        }
+                        onRightIconPress={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                       />
                     )}
                   />
                 </View>
-              )}
 
-              {/* Sección: Seguridad */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Seguridad</Text>
-
-                <Controller
-                  control={control}
-                  name="password"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="Nueva Contraseña *"
-                      value={value}
-                      onChangeText={onChange}
-                      secureTextEntry
-                      error={errors.password?.message}
-                      placeholder="Mínimo 6 caracteres"
-                    />
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="confirmPassword"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="Confirmar Contraseña *"
-                      value={value}
-                      onChangeText={onChange}
-                      secureTextEntry
-                      error={errors.confirmPassword?.message}
-                      placeholder="Repetir contraseña"
-                    />
-                  )}
-                />
-              </View>
-
-              {/* Términos y Condiciones */}
-              <View style={styles.terminosSection}>
-                <Controller
-                  control={control}
-                  name="aceptaTerminos"
-                  render={({ field: { onChange, value } }) => (
-                    <>
-                      <TouchableOpacity
-                        style={[
-                          styles.terminosCheckbox,
-                          errors.aceptaTerminos && styles.terminosCheckboxError,
-                        ]}
-                        onPress={() => onChange(!value)}
-                        activeOpacity={0.7}
-                      >
-                        <View
+                {/* Términos y Condiciones */}
+                <View style={styles.terminosSection}>
+                  <Controller
+                    control={control}
+                    name="aceptaTerminos"
+                    render={({ field: { onChange, value } }) => (
+                      <>
+                        <TouchableOpacity
                           style={[
-                            styles.checkbox,
-                            value && styles.checkboxChecked,
+                            styles.terminosCheckbox,
+                            errors.aceptaTerminos &&
+                              styles.terminosCheckboxError,
                           ]}
+                          onPress={() => onChange(!value)}
+                          activeOpacity={0.7}
                         >
-                          {value && (
-                            <Ionicons
-                              name="checkmark"
-                              size={16}
-                              color="#ffffff"
-                            />
-                          )}
-                        </View>
-                        <View style={styles.terminosTextContainer}>
-                          <Text style={styles.terminosText}>
-                            Acepto los{" "}
-                            <Text
-                              style={styles.terminosLink}
-                              onPress={(e) => {
-                                e.stopPropagation();
-                                handleOpenTerminos();
-                              }}
-                            >
-                              términos y condiciones
+                          <View
+                            style={[
+                              styles.checkbox,
+                              value && styles.checkboxChecked,
+                            ]}
+                          >
+                            {value && (
+                              <Ionicons
+                                name="checkmark"
+                                size={16}
+                                color="#ffffff"
+                              />
+                            )}
+                          </View>
+                          <View style={styles.terminosTextContainer}>
+                            <Text style={styles.terminosText}>
+                              Acepto los{" "}
+                              <Text
+                                style={styles.terminosLink}
+                                onPress={(e) => {
+                                  e.stopPropagation();
+                                  setShowTerminosModal(true);
+                                }}
+                              >
+                                términos y condiciones
+                              </Text>
+                              {terminosLeidos && (
+                                <Text style={styles.terminosLeidos}>
+                                  {" "}✓ Leídos
+                                </Text>
+                              )}
                             </Text>
+                          </View>
+                        </TouchableOpacity>
+                        {errors.aceptaTerminos && (
+                          <Text style={styles.errorText}>
+                            {getErrorMessage(errors.aceptaTerminos)}
                           </Text>
-                        </View>
-                      </TouchableOpacity>
-                      {errors.aceptaTerminos && (
-                        <Text style={styles.errorText}>
-                          {errors.aceptaTerminos.message}
-                        </Text>
-                      )}
-                    </>
-                  )}
+                        )}
+                      </>
+                    )}
+                  />
+                </View>
+
+                <Button
+                  title="Completar Perfil"
+                  onPress={handleSubmit(onSubmit)}
+                  loading={isSubmitting}
+                  style={styles.submitButton}
                 />
               </View>
-
-              <Button
-                title="Completar Perfil"
-                onPress={handleSubmit(onSubmit)}
-                loading={isSubmitting}
-                style={styles.submitButton}
-              />
-            </View>
-          </Card>
-        </ScrollView>
+            </Card>
+          </ScrollView>
+        </KeyboardAvoidingView>
+        
+        <TerminosCondicionesModal
+          visible={showTerminosModal}
+          onClose={handleCloseTerminos}
+        />
       </SafeAreaView>
     </LinearGradient>
   );
 }
 
+// ... (todos los estilos igual que antes)
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+  keyboardView: { flex: 1 },
+  scrollView: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
@@ -631,10 +771,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: "100%",
   },
-  header: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
+  header: { alignItems: "center", marginBottom: 24 },
   iconContainer: {
     width: 64,
     height: 64,
@@ -657,12 +794,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
   },
-  form: {
-    width: "100%",
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
+  form: { width: "100%" },
+  inputGroup: { marginBottom: 16 },
   inputLabel: {
     fontSize: 14,
     fontWeight: "600",
@@ -742,6 +875,49 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 16,
   },
+  strengthContainer: {
+    marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  strengthBar: {
+    flex: 1,
+    height: 4,
+    backgroundColor: "#e5e7eb",
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  strengthFill: {
+    height: "100%",
+    borderRadius: 2,
+  },
+  strengthText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  requirementsContainer: {
+    backgroundColor: "#f9fafb",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  requirementsTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 8,
+  },
+  requirement: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
+  requirementText: {
+    fontSize: 13,
+    color: "#6b7280",
+  },
   terminosSection: {
     marginBottom: 24,
     paddingTop: 16,
@@ -789,6 +965,11 @@ const styles = StyleSheet.create({
     color: "#3b82f6",
     fontWeight: "600",
     textDecorationLine: "underline",
+  },
+  terminosLeidos: {
+    color: "#10b981",
+    fontWeight: "600",
+    fontSize: 12,
   },
   submitButton: {
     marginTop: 8,

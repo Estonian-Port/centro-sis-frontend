@@ -1,20 +1,18 @@
-// app/curso/[cursoId]/alumnos.tsx
 import { AddAlumnoModal } from "@/components/modals/AddAlumnoModal";
 import { AlumnoItem } from "@/components/curso/AlumnoItem";
 import { SearchBar } from "@/components/ui/SearchBar";
 import { Button } from "@/components/ui/Button";
-import { Curso, Inscripcion, EstadoPago } from "@/model/model";
+import { Curso, EstadoPago } from "@/model/model";
 import { cursoService } from "@/services/curso.service";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
-  ActivityIndicator,
-  Platform,
+  ActivityIndicator
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
@@ -33,13 +31,6 @@ export default function AlumnosTab() {
 
   // Estados de modales
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showRegistrarPagoModal, setShowRegistrarPagoModal] = useState(false);
-  const [showAsignarPuntosModal, setShowAsignarPuntosModal] = useState(false);
-  const [showDarDeBajaModal, setShowDarDeBajaModal] = useState(false);
-  const [showModificarBeneficioModal, setShowModificarBeneficioModal] =
-    useState(false);
-  const [selectedInscripcion, setSelectedInscripcion] =
-    useState<Inscripcion | null>(null);
 
   useEffect(() => {
     fetchCurso();
@@ -112,34 +103,12 @@ export default function AlumnosTab() {
 
     // Filtrar por estado de pago
     if (selectedEstados.length > 0) {
-      console.log("Filtrando por estados:", selectedEstados);
       filtered = filtered.filter((inscripcion) =>
         selectedEstados.includes(inscripcion.estadoPago),
       );
     }
 
     return filtered;
-  };
-
-  // Handlers de acciones
-  const handleRegistrarPago = (inscripcion: Inscripcion) => {
-    setSelectedInscripcion(inscripcion);
-    setShowRegistrarPagoModal(true);
-  };
-
-  const handleAsignarPuntos = (inscripcion: Inscripcion) => {
-    setSelectedInscripcion(inscripcion);
-    setShowAsignarPuntosModal(true);
-  };
-
-  const handleDarDeBaja = (inscripcion: Inscripcion) => {
-    setSelectedInscripcion(inscripcion);
-    setShowDarDeBajaModal(true);
-  };
-
-  const handleModificarBeneficio = (inscripcion: Inscripcion) => {
-    setSelectedInscripcion(inscripcion);
-    setShowModificarBeneficioModal(true);
   };
 
   const evaluarPorRol =

@@ -19,7 +19,6 @@ class CursoService {
   altaCursoAlquiler = async (
     nuevoCurso: nuevoCursoAlquilerAdmin,
   ): Promise<any> => {
-    console.log("Nuevo curso alquiler service", nuevoCurso);
     const response = await api.post(`${CURSO}/alta-alquiler`, nuevoCurso);
     return response.data;
   };
@@ -93,7 +92,6 @@ class CursoService {
   completarCursoAlquiler = async (
     curso: nuevoCursoAlquilerProfesor,
   ): Promise<Curso> => {
-    console.log("Completar curso alquiler service", curso);
     const response = await api.post(
       `${CURSO}/${curso.id}/finalizar-alta-alquiler`,
       curso,

@@ -5,12 +5,11 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
+  TouchableOpacity
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { Alumno, Curso, Usuario } from "@/model/model";
+import { Curso } from "@/model/model";
 
 interface BajaTotalCursoProps {
   visible: boolean;
@@ -117,7 +116,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#ef4444",
   },
-  // Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",

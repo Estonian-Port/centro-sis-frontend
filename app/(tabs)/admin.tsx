@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import {
   Curso,
@@ -41,11 +42,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 // Filtros de ROL
 const rolFilterOptions: FilterOption<Rol>[] = [
-  { value: Rol.ALUMNO, label: "Alumno", color: "#3b82f6" },        
-  { value: Rol.PROFESOR, label: "Profesor", color: "#10b981" },    
-  { value: Rol.OFICINA, label: "Oficina", color: "#f59e0b" },      
-  { value: Rol.ADMINISTRADOR, label: "Admin", color: "#ef4444" },  
-  { value: Rol.PORTERIA, label: "Portería", color: "#6b7280" },    
+  { value: Rol.ALUMNO, label: "Alumno", color: "#3b82f6" },
+  { value: Rol.PROFESOR, label: "Profesor", color: "#10b981" },
+  { value: Rol.OFICINA, label: "Oficina", color: "#f59e0b" },
+  { value: Rol.ADMINISTRADOR, label: "Admin", color: "#ef4444" },
+  { value: Rol.PORTERIA, label: "Portería", color: "#6b7280" },
 ];
 
 // Filtros de ESTADO DE USUARIO
@@ -79,12 +80,12 @@ export default function AdminScreen() {
   // Filtros para USUARIOS
   const [filtrosRol, setFiltrosRol] = useState<Rol[]>([]);
   const [filtrosEstadoUsuario, setFiltrosEstadoUsuario] = useState<Estado[]>(
-    []
+    [],
   );
 
   // Filtros para CURSOS
   const [filtrosEstadoCurso, setFiltrosEstadoCurso] = useState<EstadoCurso[]>(
-    []
+    [],
   );
   const [filtrosEstadoAlta, setFiltrosEstadoAlta] = useState<Estado[]>([]);
 
@@ -101,11 +102,8 @@ export default function AdminScreen() {
   const [selectedPendingCourse, setSelectedPendingCourse] =
     useState<Curso | null>(null);
 
-  // ✅ Cargar datos SOLO si el usuario existe
   useEffect(() => {
-    // ✅ Validar que el usuario existe antes de cargar datos
     if (!usuario) {
-      console.log('[AdminScreen] Usuario no disponible, saltando carga de datos');
       return;
     }
 
@@ -114,12 +112,10 @@ export default function AdminScreen() {
     } else {
       fetchCourses();
     }
-  }, [activeTab, usuario]); // ✅ Agregar usuario como dependencia
+  }, [activeTab, usuario]);
 
   const fetchUsers = async () => {
-    // ✅ Double-check: no cargar si no hay usuario
     if (!usuario) {
-      console.log('[fetchUsers] Usuario no disponible');
       return;
     }
 
@@ -128,7 +124,7 @@ export default function AdminScreen() {
       const data = await usuarioService.getAllUsuarios(usuario.id);
       setUsers(data);
     } catch (error) {
-      console.error('[fetchUsers] Error:', error);
+      console.error("[fetchUsers] Error:", error);
       Toast.show({
         type: "error",
         text1: "Error",
@@ -140,9 +136,7 @@ export default function AdminScreen() {
   };
 
   const fetchCourses = async () => {
-    // ✅ Validar usuario antes de cargar cursos
     if (!usuario) {
-      console.log('[fetchCourses] Usuario no disponible');
       return;
     }
 
@@ -151,7 +145,7 @@ export default function AdminScreen() {
       const data = await cursoService.getAllCursos();
       setCourses(data);
     } catch (error) {
-      console.error('[fetchCourses] Error:', error);
+      console.error("[fetchCourses] Error:", error);
       Toast.show({
         type: "error",
         text1: "Error",
@@ -201,25 +195,6 @@ export default function AdminScreen() {
     }
   };
 
-  const registrarPago = async (curso: any) => {
-    try {
-      //await cursoService.registrarPagoCurso(curso.id);
-      Toast.show({
-        type: "success",
-        text1: "Pago registrado",
-        text2: `El pago del curso ${curso.nombre} ha sido registrado.`,
-        position: "bottom",
-      });
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "No se pudo registrar el pago del curso.",
-        position: "bottom",
-      });
-    }
-  };
-
   const altaUsuario = async (nuevoUsuario: NuevoUsuario) => {
     try {
       const response = await usuarioService.altaUsuario(nuevoUsuario);
@@ -246,7 +221,7 @@ export default function AdminScreen() {
 
   const toggleFiltroRol = (rol: Rol) => {
     setFiltrosRol((prev) =>
-      prev.includes(rol) ? prev.filter((r) => r !== rol) : [...prev, rol]
+      prev.includes(rol) ? prev.filter((r) => r !== rol) : [...prev, rol],
     );
   };
 
@@ -254,7 +229,7 @@ export default function AdminScreen() {
     setFiltrosEstadoUsuario((prev) =>
       prev.includes(estado)
         ? prev.filter((e) => e !== estado)
-        : [...prev, estado]
+        : [...prev, estado],
     );
   };
 
@@ -262,7 +237,7 @@ export default function AdminScreen() {
     setFiltrosEstadoCurso((prev) =>
       prev.includes(estado)
         ? prev.filter((e) => e !== estado)
-        : [...prev, estado]
+        : [...prev, estado],
     );
   };
 
@@ -270,7 +245,7 @@ export default function AdminScreen() {
     setFiltrosEstadoAlta((prev) =>
       prev.includes(estado)
         ? prev.filter((e) => e !== estado)
-        : [...prev, estado]
+        : [...prev, estado],
     );
   };
 
@@ -299,21 +274,21 @@ export default function AdminScreen() {
           user.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
           user.apellido.toLowerCase().includes(searchQuery.toLowerCase()) ||
           user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.dni.includes(searchQuery)
+          user.dni.includes(searchQuery),
       );
     }
 
     // Filtrar por rol
     if (filtrosRol.length > 0) {
       filtered = filtered.filter((user) =>
-        filtrosRol.some((rol) => user.listaRol.includes(rol))
+        filtrosRol.some((rol) => user.listaRol.includes(rol)),
       );
     }
 
     // Filtrar por estado de usuario
     if (filtrosEstadoUsuario.length > 0) {
       filtered = filtered.filter((user) =>
-        filtrosEstadoUsuario.includes(user.estado)
+        filtrosEstadoUsuario.includes(user.estado),
       );
     }
 
@@ -333,22 +308,22 @@ export default function AdminScreen() {
         (course) =>
           course.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
           course.profesores.some((p) =>
-            p.nombre.toLowerCase().includes(searchQuery.toLowerCase())
-          )
+            p.nombre.toLowerCase().includes(searchQuery.toLowerCase()),
+          ),
       );
     }
 
     // Filtrar por estado de curso
     if (filtrosEstadoCurso.length > 0) {
       filtered = filtered.filter((course) =>
-        filtrosEstadoCurso.includes(course.estado)
+        filtrosEstadoCurso.includes(course.estado),
       );
     }
 
     // Filtrar por estado de alta
     if (filtrosEstadoAlta.length > 0) {
       filtered = filtered.filter((course) =>
-        filtrosEstadoAlta.includes(course.estadoAlta)
+        filtrosEstadoAlta.includes(course.estadoAlta),
       );
     }
 
@@ -363,6 +338,15 @@ export default function AdminScreen() {
 
   if (!usuario) {
     return null;
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+        <Text style={styles.loadingText}>Cargando...</Text>
+      </View>
+    );
   }
 
   return (
@@ -582,7 +566,6 @@ export default function AdminScreen() {
                       course={curso}
                       handleCourseDetails={handleViewCourseDetails}
                       onEditPendingCourse={handleEditPendingCourse}
-                      onRegistrarPago={registrarPago}
                       onDarDeBaja={(cursoId: number) => bajaCurso(cursoId)}
                     />
                   ))
@@ -643,7 +626,7 @@ export default function AdminScreen() {
               try {
                 await usuarioService.reenviarInvitacion(
                   selectedUser.id,
-                  usuario.id // ✅ Ya validamos que usuario existe arriba
+                  usuario.id,
                 );
               } catch (error) {
                 console.error("Error reenviando mail de invitación:", error);
@@ -657,6 +640,16 @@ export default function AdminScreen() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#6b7280",
+  },
   container: {
     flex: 1,
     backgroundColor: "#f9fafb",

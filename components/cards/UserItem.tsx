@@ -44,9 +44,9 @@ const UserItem = ({
       onPress={() => handleUserDetails(user)}
       activeOpacity={0.7}
     >
-      <View style={styles.content}>
-        {/* Fila superior: Nombre/Email + Icono borrar */}
-        <View style={styles.topRow}>
+      {Platform.OS === "web" ? (
+        <View style={styles.contentWeb}>
+          {/* Info del usuario (izquierda) */}
           <View style={styles.userMainInfo}>
             {user.estado !== Estado.PENDIENTE && (
               <Text style={styles.userName}>
@@ -56,7 +56,27 @@ const UserItem = ({
             <Text style={styles.userEmail}>{user.email}</Text>
           </View>
 
-          {/* Icono de borrar */}
+          {/* Tags (centro-derecha) */}
+          <View style={styles.tagsRowWeb}>
+            <View style={styles.rolesContainer}>
+              {user.listaRol.map((rol) => (
+                <Tag
+                  key={rol}
+                  label={rol}
+                  variant={rolToTagVariant(rol)}
+                  size="small"
+                />
+              ))}
+            </View>
+
+            <Tag
+              label={user.estado}
+              variant={estadoUsuarioToTagVariant(user.estado)}
+              size="small"
+            />
+          </View>
+
+          {/* Icono de borrar (derecha) */}
           {canDelete && (
             <TouchableOpacity
               onPress={() => setModalBajaVisible(true)}
@@ -70,28 +90,57 @@ const UserItem = ({
             </TouchableOpacity>
           )}
         </View>
+      ) : (
+        <View style={styles.content}>
+          {/* Fila superior: Nombre/Email + Icono borrar */}
+          <View style={styles.topRow}>
+            <View style={styles.userMainInfo}>
+              {user.estado !== Estado.PENDIENTE && (
+                <Text style={styles.userName}>
+                  {user.nombre} {user.apellido}
+                </Text>
+              )}
+              <Text style={styles.userEmail}>{user.email}</Text>
+            </View>
 
-        <View style={styles.tagsRow}>
-          {/* Roles */}
-          <View style={styles.rolesContainer}>
-            {user.listaRol.map((rol) => (
-              <Tag
-                key={rol}
-                label={rol}
-                variant={rolToTagVariant(rol)}
-                size="small"  // ✅ Tags más chicos
-              />
-            ))}
+            {/* Icono de borrar */}
+            {canDelete && (
+              <TouchableOpacity
+                onPress={() => setModalBajaVisible(true)}
+                style={styles.deleteButton}
+              >
+                <Ionicons
+                  name={"trash-outline"}
+                  size={20}
+                  color={COLORES.error}
+                />
+              </TouchableOpacity>
+            )}
           </View>
 
-          {/* Estado */}
-          <Tag
-            label={user.estado}
-            variant={estadoUsuarioToTagVariant(user.estado)}
-            size="small"  // ✅ Tag más chico
-          />
+          {/* Tags abajo */}
+          <View style={styles.tagsRow}>
+            {/* Roles */}
+            <View style={styles.rolesContainer}>
+              {user.listaRol.map((rol) => (
+                <Tag
+                  key={rol}
+                  label={rol}
+                  variant={rolToTagVariant(rol)}
+                  size="small"
+                />
+              ))}
+            </View>
+
+            {/* Estado */}
+            <Tag
+              label={user.estado}
+              variant={estadoUsuarioToTagVariant(user.estado)}
+              size="small"
+            />
+          </View>
         </View>
-      </View>
+      )}
 
       <BajaTotalUsuario
         visible={modalBajaVisible}
@@ -176,7 +225,21 @@ const styles = StyleSheet.create({
   },
   rolesContainer: {
     flexDirection: "row",
-    flexWrap: "wrap", 
+    flexWrap: "wrap",
     gap: 4,
+  },
+  contentWeb: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  tagsRowWeb: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+    marginLeft: "auto",
+    marginRight: 8,
   },
 });

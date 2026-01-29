@@ -1,12 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, Slot, usePathname } from "expo-router";
 import { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { COLORES } from "@/util/colores";
 import { useAuth } from "@/context/authContext";
 import { CustomDrawerHeader } from "@/components/navigation/CustomDrawerHeader";
@@ -16,14 +11,16 @@ export default function AccesosLayout() {
   const router = useRouter();
   const pathname = usePathname();
   const { selectedRole } = useAuth();
-  const [activeTab, setActiveTab] = useState<"mis-accesos" | "todos-accesos">("mis-accesos");
+  const [activeTab, setActiveTab] = useState<"mis-accesos" | "todos-accesos">(
+    "mis-accesos",
+  );
   const isAdmin = selectedRole === "ADMINISTRADOR";
 
   useEffect(() => {
-    if (pathname.includes('todos-accesos')) {
-      setActiveTab('todos-accesos');
-    } else if (pathname.includes('mis-accesos')) {
-      setActiveTab('mis-accesos');
+    if (pathname.includes("todos-accesos")) {
+      setActiveTab("todos-accesos");
+    } else if (pathname.includes("mis-accesos")) {
+      setActiveTab("mis-accesos");
     }
   }, [pathname]);
 
@@ -42,14 +39,17 @@ export default function AccesosLayout() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      {/* ✅ Header unificado */}
+      {/* Header unificado */}
       <CustomDrawerHeader title="Accesos" />
 
       {/* Tabs (solo admin) */}
       {isAdmin && (
         <View style={styles.tabsContainer}>
           <TouchableOpacity
-            style={[styles.tab, activeTab === "mis-accesos" && styles.activeTab]}
+            style={[
+              styles.tab,
+              activeTab === "mis-accesos" && styles.activeTab,
+            ]}
             onPress={() => handleTabChange("mis-accesos")}
           >
             <Ionicons
@@ -68,7 +68,10 @@ export default function AccesosLayout() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.tab, activeTab === "todos-accesos" && styles.activeTab]}
+            style={[
+              styles.tab,
+              activeTab === "todos-accesos" && styles.activeTab,
+            ]}
             onPress={() => handleTabChange("todos-accesos")}
           >
             <Ionicons
@@ -100,11 +103,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9fafb",
   },
   centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
-    color: '#6b7280',
+    color: "#6b7280",
     fontSize: 16,
   },
   tabsContainer: {

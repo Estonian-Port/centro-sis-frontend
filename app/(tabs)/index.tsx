@@ -17,7 +17,7 @@ export default function HomeScreen() {
     alumnosActivos: 0,
     cursos: 0,
     profesores: 0,
-    ingresosMensuales: 0,
+    accesosMensuales: 0,
   });
 
   const fetchData = async () => {
@@ -67,10 +67,7 @@ export default function HomeScreen() {
   return (
     <>
       {Platform.OS !== "web" && (
-        <StatusBar
-          barStyle="dark-content"
-          backgroundColor="#f9fafb"
-        />
+        <StatusBar barStyle="dark-content" backgroundColor="#f9fafb" />
       )}
       {renderContent()}
     </>

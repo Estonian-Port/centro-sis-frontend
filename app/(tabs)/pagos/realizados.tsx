@@ -1,12 +1,6 @@
-// app/(tabs)/pagos/realizados.tsx
 import { PagoItem } from "@/components/pagos/PagoItem";
 import { SearchBar } from "@/components/ui/SearchBar";
-import {
-  Pago,
-  pagoToDisplay,
-  TipoPagoConcepto,
-  Rol,
-} from "@/model/model";
+import { Pago, TipoPagoConcepto, Rol } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState, useMemo } from "react";
 import {
@@ -22,6 +16,7 @@ import { FilterOption } from "@/components/ui/FilterChip";
 import { MultiSelect, MultiSelectOption } from "@/components/ui/MultiSelect";
 import { useAuth } from "@/context/authContext";
 import { pagoService } from "@/services/pago.service";
+import { pagoToDisplay } from "@/helper/funciones";
 
 type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
@@ -113,7 +108,7 @@ export default function PagosRealizadosScreen() {
     }
 
     try {
-      // ✅ Llamada real al backend con filtros
+      // Llamada real al backend con filtros
       const response = await pagoService.getPagosRealizados(
         usuario.id,
         selectedRole,
@@ -122,7 +117,7 @@ export default function PagosRealizadosScreen() {
           size: PAGE_SIZE,
           search: searchQuery || undefined,
           meses: selectedMeses.length > 0 ? selectedMeses : undefined,
-        }
+        },
       );
 
       if (pageNum === 0) {
@@ -156,13 +151,13 @@ export default function PagosRealizadosScreen() {
 
   const handleToggleTipo = (tipo: TipoPagoConcepto) => {
     setSelectedTipos((prev) =>
-      prev.includes(tipo) ? prev.filter((t) => t !== tipo) : [...prev, tipo]
+      prev.includes(tipo) ? prev.filter((t) => t !== tipo) : [...prev, tipo],
     );
   };
 
   const handleToggleMes = (mes: Mes) => {
     setSelectedMeses((prev) =>
-      prev.includes(mes) ? prev.filter((m) => m !== mes) : [...prev, mes]
+      prev.includes(mes) ? prev.filter((m) => m !== mes) : [...prev, mes],
     );
   };
 

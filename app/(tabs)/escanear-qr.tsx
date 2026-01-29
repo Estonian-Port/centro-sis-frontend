@@ -1,4 +1,5 @@
-// app/(tabs)/escanear-qr.tsx
+// app/(tabs)/escanear-qr.tsx - CON MODAL EN iOS PARA OCULTAR TABS
+
 import { useState, useEffect } from "react";
 import {
   View,
@@ -16,6 +17,7 @@ import { useAuth } from "@/context/authContext";
 import Toast from "react-native-toast-message";
 import { Acceso } from "@/model/model";
 import { accesoService } from "@/services/acceso.service";
+import IOSScannerOverlay from "@/components/ui/IosScannerOverlay";
 
 export default function EscanearQRScreen() {
   const { usuario } = useAuth();
@@ -46,7 +48,6 @@ export default function EscanearQRScreen() {
       setShowSuccess(true);
       setAccesosRecientes([acceso, ...accesosRecientes.slice(0, 49)]);
 
-      // Cerrar modal después de 4 segundos (más tiempo si hay alerta)
       setTimeout(
         () => {
           setShowSuccess(false);
@@ -55,6 +56,7 @@ export default function EscanearQRScreen() {
         acceso.alertaPagos ? 5000 : 3000,
       );
     } catch (error: any) {
+      console.error("Error al registrar acceso:", error);
       Toast.show({
         type: "error",
         text1: "❌ Error",
@@ -143,6 +145,7 @@ export default function EscanearQRScreen() {
         <Text style={styles.title}>Registrar Accesos</Text>
         <Text style={styles.subtitle}>Escanea el QR del usuario</Text>
       </View>
+
       {/* Botón Escanear */}
       <TouchableOpacity
         style={styles.scanButton}
@@ -154,6 +157,7 @@ export default function EscanearQRScreen() {
           {processing ? "Procesando..." : "Escanear QR"}
         </Text>
       </TouchableOpacity>
+
       {/* Accesos Recientes */}
       <View style={styles.accesosContainer}>
         <View style={styles.accesosHeader}>
@@ -177,7 +181,7 @@ export default function EscanearQRScreen() {
               >
                 <View style={styles.accesoInfo}>
                   <Text style={styles.accesoNombre}>
-                    {acceso.usuarioNombre}
+                    {acceso.usuarioNombre} {acceso.usuarioApellido}
                   </Text>
                   <Text style={styles.accesoDni}>DNI: {acceso.usuarioDni}</Text>
                 </View>
@@ -198,54 +202,72 @@ export default function EscanearQRScreen() {
           </ScrollView>
         )}
       </View>
-      {/* Modal Escáner */}
-      <Modal visible={scanning} animationType="slide">
-        <View style={styles.scannerContainer}>
-          <CameraView
-            style={styles.camera}
-            facing="back"
-            onBarcodeScanned={processing ? undefined : handleBarCodeScanned}
-            barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-          >
-            <View style={styles.overlay}>{/* Header, scanArea, etc */}</View>
-          </CameraView>
-        </View>
-      </Modal>
-      // ✅ DESPUÉS (overlay fuera con posicionamiento absoluto):
-      <Modal visible={scanning} animationType="slide">
-        <View style={styles.scannerContainer}>
-          <CameraView
-            style={styles.camera}
-            facing="back"
-            onBarcodeScanned={processing ? undefined : handleBarCodeScanned}
-            barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-          />
 
-          {/* ✅ Overlay fuera de CameraView */}
-          <View style={styles.overlay}>
-            {/* Header */}
-            <View style={styles.scannerHeader}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setScanning(false)}
-                disabled={processing}
-              >
-                <Ionicons name="close" size={32} color="#ffffff" />
-              </TouchableOpacity>
-            </View>
+      {/* ✅ MODAL PARA iOS - FULLSCREEN PARA OCULTAR TABS */}
+      {scanning && Platform.OS === "ios" && (
+        <Modal
+          visible={scanning}
+          animationType="slide"
+          presentationStyle="fullScreen" // ✅ CLAVE: Oculta las tabs
+        >
+          <View style={styles.iosScannerContainer}>
+            <CameraView
+              style={StyleSheet.absoluteFill}
+              facing="back"
+              onBarcodeScanned={processing ? undefined : handleBarCodeScanned}
+              barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+            />
 
-            {/* Marco */}
-            <View style={styles.scanArea}>
-              <View style={styles.scanFrame} />
-              <Text style={styles.scanText}>
-                {processing ? "Procesando..." : "Apuntá al QR"}
-              </Text>
-            </View>
-
-            <View style={styles.scannerFooter} />
+            <IOSScannerOverlay
+              processing={processing}
+              onClose={() => setScanning(false)}
+            />
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      )}
+
+      {/* Modal Escáner Android */}
+      {scanning && Platform.OS !== "ios" && (
+        <Modal
+          visible={scanning}
+          animationType="slide"
+          presentationStyle="fullScreen"
+        >
+          <View style={styles.scannerContainer}>
+            <CameraView
+              style={styles.camera}
+              facing="back"
+              onBarcodeScanned={processing ? undefined : handleBarCodeScanned}
+              barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+            />
+
+            <View style={styles.overlay}>
+              {/* Header */}
+              <View style={styles.scannerHeader}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setScanning(false)}
+                  disabled={processing}
+                >
+                  <Ionicons name="close" size={32} color="#ffffff" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Marco */}
+              <View style={styles.scanArea}>
+                <View style={styles.scanFrame} />
+                <Text style={styles.scanText}>
+                  {processing ? "Procesando..." : "Apuntá al QR"}
+                </Text>
+              </View>
+
+              <View style={styles.scannerFooter} />
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Modal de Éxito */}
       <Modal visible={showSuccess} transparent animationType="fade">
         <View style={styles.successOverlay}>
           <View
@@ -266,18 +288,13 @@ export default function EscanearQRScreen() {
             {lastAcceso && (
               <>
                 <Text style={styles.successName}>
-                  {lastAcceso.usuarioNombre}
+                  {lastAcceso.usuarioNombre} {lastAcceso.usuarioApellido}
                 </Text>
                 <Text style={styles.successDni}>
                   DNI: {lastAcceso.usuarioDni}
                 </Text>
 
-                {/* Tipo de QR */}
-                <View
-                  style={[styles.tipoQRBadge, styles.tipoQRBadgePermanente]}
-                ></View>
-
-                {/* ✅ ALERTA DE PAGOS */}
+                {/* Alerta de Pagos */}
                 {lastAcceso.alertaPagos?.tieneAtrasos && (
                   <View style={styles.alertaPagos}>
                     <View style={styles.alertaHeader}>
@@ -289,7 +306,6 @@ export default function EscanearQRScreen() {
                       {lastAcceso.alertaPagos.mensaje}
                     </Text>
 
-                    {/* Detalle de cursos atrasados */}
                     {lastAcceso.alertaPagos.cursosAtrasados.map(
                       (curso, index) => (
                         <View key={index} style={styles.cursoAtrasoItem}>
@@ -364,6 +380,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: "#ffffff",
+  },
+  iosScannerContainer: {
+    flex: 1,
+    backgroundColor: "#000",
   },
   accesosContainer: {
     flex: 1,
@@ -541,20 +561,6 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     marginBottom: 16,
   },
-  tipoQRBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginBottom: 20,
-  },
-  tipoQRBadgePermanente: {
-    backgroundColor: "#d1fae5",
-  },
-
-  // ✅ Estilos de alerta
   alertaPagos: {
     width: "100%",
     backgroundColor: "#fef2f2",

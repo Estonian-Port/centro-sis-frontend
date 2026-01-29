@@ -1,4 +1,3 @@
-// components/modals/AvisoInvitacionModal.tsx
 import React, { useState } from "react";
 import {
   Modal,

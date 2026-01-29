@@ -1,4 +1,3 @@
-// app/(tabs)/index.tsx - Dashboard Portería
 import { useState, useEffect } from "react";
 import {
   View,
@@ -6,11 +5,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  RefreshControl,
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useAuth } from "@/context/authContext";
 import { accesoService } from "@/services/acceso.service";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,7 +22,6 @@ interface EstadisticasAcceso {
 }
 
 export default function DashboardPorteria() {
-  const { usuario, selectedRole } = useAuth();
   const [estadisticas, setEstadisticas] = useState<EstadisticasAcceso | null>(
     null,
   );

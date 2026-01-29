@@ -18,8 +18,6 @@ import { Logo } from "@/components/ui/Logo";
 import { LoginForm } from "@/components/forms/loginForm";
 
 export default function LoginScreen() {
-  const { usuario, isLoading, isAuthenticated } = useAuth();
-
   return (
     <LinearGradient
       colors={[COLORES.violeta, COLORES.cobre]}
@@ -38,7 +36,7 @@ export default function LoginScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            {Platform.OS === "web" ? (
               <View style={styles.content}>
                 <View style={styles.header}>
                   <Logo size={200} color={COLORES.dorado} />
@@ -51,7 +49,22 @@ export default function LoginScreen() {
                   <LoginForm />
                 </Card>
               </View>
-            </TouchableWithoutFeedback>
+            ) : (
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={styles.content}>
+                  <View style={styles.header}>
+                    <Logo size={200} color={COLORES.dorado} />
+                    <Text style={styles.title}>CENTRO SIS</Text>
+                    <Text style={styles.subtitle}>
+                      Sistema de Gestión Educativa
+                    </Text>
+                  </View>
+                  <Card style={styles.loginCard}>
+                    <LoginForm />
+                  </Card>
+                </View>
+              </TouchableWithoutFeedback>
+            )}
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>

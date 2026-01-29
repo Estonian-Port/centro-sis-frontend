@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 export const STORAGE_KEY_TOKEN = "token";
-export const STORAGE_KEY_SELECTED_ROLE = "selectedRole"; // ✅ NUEVO
+export const STORAGE_KEY_SELECTED_ROLE = "selectedRole";
 
 type AuthContextType = {
   usuario: Usuario | null;
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
-  // ✅ Wrapper para persistir el rol seleccionado
+  // Wrapper para persistir el rol seleccionado
   const setSelectedRole = async (role: Rol | null) => {
     setSelectedRoleState(role);
     if (role) {
@@ -41,27 +41,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
   
-  // Inicializar autenticación al montar
+  // ✅ Inicializar autenticación al montar (CORREGIDO)
   useEffect(() => {
     const initAuth = async () => {
       try {
         const token = await AsyncStorage.getItem(STORAGE_KEY_TOKEN);
+        
+        // ✅ Solo intentar obtener usuario si hay token
         if (token) {
+          // ✅ Configurar token antes de hacer la petición
+          await authService.setAuthToken();
+          
           const currentUser = await authService.getCurrentUser();
           setUsuario(currentUser);
           setIsAuthenticated(true);
 
-          // ✅ Restaurar rol seleccionado si existe
+          // Restaurar rol seleccionado si existe
           const savedRole = await AsyncStorage.getItem(STORAGE_KEY_SELECTED_ROLE);
           if (savedRole && currentUser.listaRol.includes(savedRole as Rol)) {
             setSelectedRoleState(savedRole as Rol);
           }
         } else {
+          // ✅ No hay token, estado inicial limpio
           setUsuario(null);
           setIsAuthenticated(false);
         }
       } catch (e) {
         console.error("Error al inicializar auth:", e);
+        // ✅ En caso de error, limpiar todo
+        await AsyncStorage.removeItem(STORAGE_KEY_TOKEN);
+        await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
         setUsuario(null);
         setIsAuthenticated(false);
       } finally {
@@ -91,7 +100,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUsuario(currentUser);
       setIsAuthenticated(true);
       
-      // ✅ 6. Limpiar rol anterior (nuevo login)
+      // 6. Limpiar rol anterior (nuevo login)
       await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
       setSelectedRoleState(null);
       
@@ -113,7 +122,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsLoading(true);
       
       await AsyncStorage.removeItem(STORAGE_KEY_TOKEN);
-      await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE); // ✅ Limpiar rol
+      await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
       
       setUsuario(null);
       setIsAuthenticated(false);

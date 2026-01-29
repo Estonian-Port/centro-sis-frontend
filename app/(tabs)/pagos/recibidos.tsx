@@ -1,7 +1,6 @@
-// app/(tabs)/pagos/recibidos.tsx
 import { PagoItem } from "@/components/pagos/PagoItem";
 import { SearchBar } from "@/components/ui/SearchBar";
-import { Pago, pagoToDisplay, TipoPagoConcepto, Rol } from "@/model/model";
+import { Pago, TipoPagoConcepto, Rol } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState, useMemo } from "react";
 import {
@@ -17,6 +16,7 @@ import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
 import { MultiSelect, MultiSelectOption } from "@/components/ui/MultiSelect";
 import { useAuth } from "@/context/authContext";
 import { pagoService } from "@/services/pago.service";
+import { pagoToDisplay } from "@/helper/funciones";
 
 type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
@@ -105,7 +105,6 @@ export default function PagosRecibidosScreen() {
     }
 
     try {
-      // ✅ Llamada real al backend con filtros
       const response = await pagoService.getPagosRecibidos(
         usuario.id,
         selectedRole,
@@ -400,7 +399,7 @@ const styles = StyleSheet.create({
     height: 32,
     backgroundColor: "#e5e7eb",
   },
-    filterChipsContainer: {
+  filterChipsContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
@@ -410,6 +409,6 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   multiSelectContainer: {
-    minWidth: 120,  // ✅ Ancho fijo para que no se encime
+    minWidth: 120,
   },
 });

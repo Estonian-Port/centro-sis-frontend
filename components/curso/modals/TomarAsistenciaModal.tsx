@@ -1,4 +1,3 @@
-// components/curso/modals/TomarAsistenciaModal.tsx
 import React, { useState } from "react";
 import {
   Modal,
@@ -265,7 +264,7 @@ const styles = StyleSheet.create({
     maxWidth: 450,
     padding: 24,
     alignItems: "center",
-    height: 380,
+    height: 450,
   },
   iconContainer: {
     width: 80,

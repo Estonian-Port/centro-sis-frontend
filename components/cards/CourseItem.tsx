@@ -11,8 +11,6 @@ import {
   Rol,
   TipoCurso,
   Estado,
-  EstadoCurso,
-  formatEstadoCurso,
   CursoAlumno,
   EstadoPago,
 } from "@/model/model";
@@ -23,16 +21,15 @@ import { useState } from "react";
 import {
   estadoCursoToTagVariant,
   estadoToTagVariant,
+  formatEstadoCurso,
 } from "@/helper/funciones";
 import { BajaTotalCurso } from "../modals/BajaTotalCursoModal";
 import { RegistrarPagoCursoModal } from "../modals/RegistrarPagoCursoModal";
-import { set } from "react-hook-form";
 
 interface CourseItemProps {
   course: Curso | CursoAlumno;
   handleCourseDetails: (course: Curso | CursoAlumno) => void;
   onEditPendingCourse?: (course: Curso) => void;
-  onRegistrarPago?: (course: Curso) => void;
   onDarDeBaja?: (courseId: number) => void;
 }
 
@@ -40,7 +37,6 @@ const CourseItem = ({
   course,
   handleCourseDetails,
   onEditPendingCourse,
-  onRegistrarPago,
   onDarDeBaja,
 }: CourseItemProps) => {
   const { selectedRole, usuario } = useAuth();
@@ -60,9 +56,9 @@ const CourseItem = ({
   const tieneDeuda =
     esCursoAlumno(course) && course.estadoPago === EstadoPago.ATRASADO;
 
-  // 🎨 LÓGICA DE COLORES ACTUALIZADA
+  // LÓGICA DE COLORES
   const getEstilosCurso = () => {
-    // ✅ ALUMNO: Fondo blanco excepto si tiene deuda
+    // ALUMNO: Fondo blanco excepto si tiene deuda
     if (selectedRole === Rol.ALUMNO) {
       if (tieneDeuda) {
         // Curso con deuda: fondo rojo suave
@@ -82,7 +78,7 @@ const CourseItem = ({
       };
     }
 
-    // ✅ ADMIN/PROFESOR/OFICINA: Colores por tipo de curso
+    // ADMIN/PROFESOR/OFICINA: Colores por tipo de curso
     const coloresTipo = {
       [TipoCurso.ALQUILER]: {
         bg: "#dbeafe",
@@ -138,12 +134,12 @@ const CourseItem = ({
     }
   };
 
-  // ✅ NUEVO: Determinar si mostrar botones de acción
+  // Determinar si mostrar botones de acción
   const mostrarBotonesAccion =
     (selectedRole === Rol.ADMINISTRADOR || selectedRole === Rol.OFICINA) &&
-    !esCursoAlumno(course); // Solo para Curso, no CursoAlumno
+    !esCursoAlumno(course); // Solo para CursoAlquiler, no CursoAlumno
 
-  // ✅ NUEVO: Texto del botón de pago según tipo de curso
+  // Texto del botón de pago según tipo de curso
   const getTextoPago = () => {
     if (course.tipoCurso === TipoCurso.ALQUILER) {
       return "Alquiler"; // Profesor paga al instituto
@@ -152,7 +148,6 @@ const CourseItem = ({
     }
   };
 
-  // ✅ NUEVO: Handlers de botones
   const handleRegistrarPago = (e: any) => {
     e.stopPropagation(); // Evitar que abra el curso
     setShowRegistrarPagoModal(true);
@@ -190,12 +185,12 @@ const CourseItem = ({
         onPress={handlePress}
         activeOpacity={0.7}
       >
-        {/* Indicador visual de curso pendiente (borde izquierdo) - SOLO NO ALUMNO */}
+        {/* Indicador visual de curso pendiente (borde izquierdo)*/}
         {esPendiente && selectedRole !== Rol.ALUMNO && (
           <View style={styles.pendingIndicator} />
         )}
 
-        {/* Indicador visual de DEUDA (borde izquierdo rojo) - SOLO ALUMNO */}
+        {/* Indicador visual de DEUDA (borde izquierdo rojo) */}
         {tieneDeuda && selectedRole === Rol.ALUMNO && (
           <View style={styles.deudaIndicator} />
         )}
@@ -209,12 +204,12 @@ const CourseItem = ({
                 {course.nombre}
               </Text>
 
-              {/* Icono de advertencia para pendientes - SOLO NO ALUMNO */}
+              {/* Icono de advertencia para pendientes */}
               {esPendiente && selectedRole !== Rol.ALUMNO && (
                 <Ionicons name="alert-circle" size={20} color="#f59e0b" />
               )}
 
-              {/* Icono de deuda - SOLO ALUMNO */}
+              {/* Icono de deuda */}
               {tieneDeuda && selectedRole === Rol.ALUMNO && (
                 <View style={styles.deudaBadge}>
                   <Ionicons name="warning" size={16} color="#ef4444" />
@@ -307,7 +302,7 @@ const CourseItem = ({
               </View>
             )}
 
-            {/* ✅ FILA 3: Botones de Acción (solo Admin/Oficina) */}
+            {/* FILA 3: Botones de Acción (solo Admin/Oficina) */}
             {mostrarBotonesAccion &&
               course.estadoAlta !== Estado.PENDIENTE &&
               course.estadoAlta !== Estado.BAJA && (

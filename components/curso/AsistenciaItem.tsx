@@ -1,4 +1,3 @@
-// components/curso/AsistenciaItem.tsx
 import { formatDateToDDMMYYYY } from "@/helper/funciones";
 import { ParteAsistencia } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,8 +9,6 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
-
-
 
 interface ParteAsistenciaItemProps {
   parte: ParteAsistencia;
@@ -36,10 +33,11 @@ export const AsistenciaItem: React.FC<ParteAsistenciaItemProps> = ({
             <Ionicons name="calendar" size={20} color="#3b82f6" />
           </View>
           <View>
-            <Text style={styles.dateText}>{formatDateToDDMMYYYY(parte.fecha)}</Text>
+            <Text style={styles.dateText}>
+              {formatDateToDDMMYYYY(parte.fecha)}
+            </Text>
             <Text style={styles.statsText}>
-              {parte.totalPresentes} presentes •{" "}
-              {parte.totalAusentes} ausentes
+              {parte.totalPresentes} presentes • {parte.totalAusentes} ausentes
             </Text>
           </View>
         </View>
@@ -52,8 +50,8 @@ export const AsistenciaItem: React.FC<ParteAsistenciaItemProps> = ({
               parte.porcentajeAsistencia >= 80
                 ? styles.badgeGreen
                 : parte.porcentajeAsistencia >= 50
-                ? styles.badgeYellow
-                : styles.badgeRed,
+                  ? styles.badgeYellow
+                  : styles.badgeRed,
             ]}
           >
             <Text style={styles.percentageText}>

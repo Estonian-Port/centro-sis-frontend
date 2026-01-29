@@ -1,15 +1,14 @@
-// app/curso/[cursoId]/informacion.tsx
 import { EditarHorariosModal } from "@/components/curso/modals/EditarHorariosModal";
 import { EditarModalidadesPagoModal } from "@/components/curso/modals/EditarModalidadPagoModal";
 import { EditarNombreCursoModal } from "@/components/curso/modals/EditarNombreCursoModal";
 import { EditarProfesoresModal } from "@/components/curso/modals/EditarProfesoresModal";
-import { formatDateToDDMMYYYY } from "@/helper/funciones";
-import { formatEstadoCurso, Pago, pagoToDisplay } from "@/model/model";
+import { formatDateToDDMMYYYY, formatEstadoCurso, pagoToDisplay } from "@/helper/funciones";
+import { Pago } from "@/model/model";
 import { cursoService } from "@/services/curso.service";
 import { usuarioService } from "@/services/usuario.service";
 import { useCurso } from "@/context/cursoContext";
 import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
   View,

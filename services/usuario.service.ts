@@ -108,7 +108,6 @@ class UsuarioService {
   completarPerfil = async (
     usuario: CompleteProfileData
   ): Promise<Usuario> => {
-    console.log("Completing profile for user ID:", usuario.id, "with data:", usuario);
     const response = await api.put(
       `${USER}/registro`,
       usuario
@@ -130,6 +129,10 @@ class UsuarioService {
     const response = await api.post(`${USER}/asignar-rol/${id}/${rol}`);
     return response.data.data;
   };
+
+  removerRol = async (usuarioId: number, rol: string): Promise<void> => {
+  await api.delete(`${USER}/${usuarioId}/remover-rol/${rol}`);
+};
 }
 
 export const usuarioService = new UsuarioService();

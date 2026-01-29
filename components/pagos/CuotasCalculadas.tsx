@@ -1,31 +1,15 @@
+// components/pagos/CuotasCalculadas.tsx - NUEVO CÁLCULO CON UMBRAL 15 DÍAS
+
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { calcularCuotas, calcularDuracionEnTexto, tieneCuotaAdicional } from "@/util/calcularCuotas";
 
 interface CuotasCalculadasProps {
   fechaInicio: Date | null;
   fechaFin: Date | null;
   label?: string;
   helpText?: string;
-}
-
-/**
- * Calcula la cantidad de cuotas basándose en la duración del curso.
- * Cuenta meses completos + parciales (1 mes y medio = 2 cuotas)
- */
-function calcularCuotas(fechaInicio: Date | null, fechaFin: Date | null): number {
-  if (!fechaInicio || !fechaFin) return 0;
-
-  // Año y mes de inicio y fin
-  const inicioAnio = fechaInicio.getFullYear();
-  const inicioMes = fechaInicio.getMonth();
-  const finAnio = fechaFin.getFullYear();
-  const finMes = fechaFin.getMonth();
-
-  // Calcular diferencia de meses
-  const meses = (finAnio - inicioAnio) * 12 + (finMes - inicioMes) + 1;
-
-  return Math.max(1, meses); // Mínimo 1 cuota
 }
 
 export const CuotasCalculadas: React.FC<CuotasCalculadasProps> = ({
@@ -35,6 +19,7 @@ export const CuotasCalculadas: React.FC<CuotasCalculadasProps> = ({
   helpText = "Calculadas automáticamente según la duración del curso"
 }) => {
   const cuotas = calcularCuotas(fechaInicio, fechaFin);
+  const hayCuotaAdicional = fechaInicio && fechaFin ? tieneCuotaAdicional(fechaInicio, fechaFin) : false;
 
   return (
     <View style={styles.container}>
@@ -60,6 +45,16 @@ export const CuotasCalculadas: React.FC<CuotasCalculadasProps> = ({
         </View>
       </View>
 
+      {/* ✅ Aclaración de cuota adicional */}
+      {hayCuotaAdicional && (
+        <View style={styles.additionalInfoContainer}>
+          <Ionicons name="add-circle" size={16} color="#8b5cf6" />
+          <Text style={styles.additionalInfoText}>
+            Se cobra una cuota adicional porque el curso supera los 15 días adicionales
+          </Text>
+        </View>
+      )}
+
       {/* Info adicional */}
       {!fechaInicio || !fechaFin ? (
         <View style={styles.warningContainer}>
@@ -79,19 +74,6 @@ export const CuotasCalculadas: React.FC<CuotasCalculadasProps> = ({
     </View>
   );
 };
-
-/**
- * Formatea la duración del curso en texto legible
- */
-function calcularDuracionEnTexto(fechaInicio: Date, fechaFin: Date): string {
-  const cuotas = calcularCuotas(fechaInicio, fechaFin);
-  
-  if (cuotas === 1) {
-    return "1 mes";
-  } else {
-    return `${cuotas} meses`;
-  }
-}
 
 const styles = StyleSheet.create({
   container: {
@@ -133,6 +115,26 @@ const styles = StyleSheet.create({
   helpText: {
     fontSize: 12,
     color: "#6b7280",
+  },
+  // ✅ NUEVO: Banner de cuota adicional
+  additionalInfoContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: "#faf5ff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e9d5ff",
+    gap: 8,
+  },
+  additionalInfoText: {
+    fontSize: 12,
+    color: "#7c3aed",
+    fontWeight: "500",
+    flex: 1,
+    lineHeight: 16,
   },
   warningContainer: {
     flexDirection: "row",

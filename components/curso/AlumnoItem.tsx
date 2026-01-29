@@ -1,6 +1,5 @@
-// components/curso/AlumnoItem.tsx - REFACTORIZADO
 import { Ionicons } from "@expo/vector-icons";
-import React, { use, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,15 +9,13 @@ import {
 } from "react-native";
 import { Curso, Inscripcion } from "@/model/model";
 import { Tag } from "../ui/Tag";
-import { formatEstadoPago } from "@/model/model";
 import { inscripcionService } from "@/services/inscripcion.service";
 import { AlumnoDetailModal } from "./modals/AlumnoInscripcionModal";
 import { AsignarPuntosModal } from "./modals/AsignarPuntosModal";
 import { EditarBeneficioModal } from "./modals/EditarBeneficioModal";
 import { RegistrarPagoModal } from "./modals/RegistrarPagoModal";
 import { ConfirmarBajaModal } from "./modals/BajaAlumnoModal";
-import { estadoPagoToTagVariant } from "@/helper/funciones";
-import { pagoService } from "@/services/pago.service";
+import { estadoPagoToTagVariant, formatEstadoPago } from "@/helper/funciones";
 import { useAuth } from "@/context/authContext";
 
 interface AlumnoItemProps {
@@ -52,35 +49,86 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         onPress={() => setShowDetailModal(true)}
         activeOpacity={0.7}
       >
-        {/* Fila 1: Avatar + Info + Chevron */}
-        <View style={styles.topRow}>
-          <View style={styles.alumnoInfo}>
-            <View style={styles.alumnoAvatar}>
-              <Text style={styles.avatarText}>
-                {alumno.nombre[0]}
-                {alumno.apellido[0]}
-              </Text>
-            </View>
-            <View style={styles.alumnoDetails}>
-              <Text style={styles.alumnoName}>
-                {alumno.nombre} {alumno.apellido}
-              </Text>
-              <View style={styles.alumnoMeta}>
-                <Ionicons name="mail-outline" size={14} color="#6b7280" />
-                <Text style={styles.alumnoMetaText}>{alumno.email}</Text>
+        {/* Layout diferente según plataforma */}
+        {Platform.OS === "web" ? (
+          // WEB: Todo en una fila horizontal
+          <View style={styles.contentWeb}>
+            {/* Avatar + Info (izquierda) */}
+            <View style={styles.alumnoInfo}>
+              <View style={styles.alumnoAvatar}>
+                <Text style={styles.avatarText}>
+                  {alumno.nombre[0]}
+                  {alumno.apellido[0]}
+                </Text>
+              </View>
+              <View style={styles.alumnoDetails}>
+                <Text style={styles.alumnoName}>
+                  {alumno.nombre} {alumno.apellido}
+                </Text>
+                <View style={styles.alumnoMeta}>
+                  <Ionicons name="mail-outline" size={14} color="#6b7280" />
+                  <Text style={styles.alumnoMetaText}>{alumno.email}</Text>
+                </View>
               </View>
             </View>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-        </View>
 
-        {/* Fila 2: Tag de estado */}
-        <View style={styles.bottomRow}>
-          <Tag
-            label={formatEstadoPago(inscripcion.estadoPago)}
-            variant={estadoPagoToTagVariant(inscripcion.estadoPago)}
-          />
-        </View>
+            {/* Puntos + Tag (derecha) */}
+            <View style={styles.rightSectionWeb}>
+              {/* Puntos */}
+              <View style={styles.puntosContainer}>
+                <Ionicons name="star" size={18} color="#f59e0b" />
+                <Text style={styles.puntosText}>{inscripcion.puntos}</Text>
+              </View>
+
+              {/* Tag estado */}
+              <Tag
+                label={formatEstadoPago(inscripcion.estadoPago)}
+                variant={estadoPagoToTagVariant(inscripcion.estadoPago)}
+              />
+
+              {/* Chevron */}
+              <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+            </View>
+          </View>
+        ) : (
+          // MÓVIL: Layout vertical
+          <>
+            {/* Fila 1: Avatar + Info + Chevron */}
+            <View style={styles.topRow}>
+              <View style={styles.alumnoInfo}>
+                <View style={styles.alumnoAvatar}>
+                  <Text style={styles.avatarText}>
+                    {alumno.nombre[0]}
+                    {alumno.apellido[0]}
+                  </Text>
+                </View>
+                <View style={styles.alumnoDetails}>
+                  <Text style={styles.alumnoName}>
+                    {alumno.nombre} {alumno.apellido}
+                  </Text>
+                  <View style={styles.alumnoMeta}>
+                    <Ionicons name="mail-outline" size={14} color="#6b7280" />
+                    <Text style={styles.alumnoMetaText}>{alumno.email}</Text>
+                  </View>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+            </View>
+
+            {/* Fila 2: Puntos + Tag de estado */}
+            <View style={styles.bottomRow}>
+              <View style={styles.puntosContainer}>
+                <Ionicons name="star" size={16} color="#f59e0b" />
+                <Text style={styles.puntosText}>{inscripcion.puntos} pts</Text>
+              </View>
+
+              <Tag
+                label={formatEstadoPago(inscripcion.estadoPago)}
+                variant={estadoPagoToTagVariant(inscripcion.estadoPago)}
+              />
+            </View>
+          </>
+        )}
       </TouchableOpacity>
 
       {/* Modal de Detalle */}
@@ -112,14 +160,17 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         visible={showPuntosModal}
         onClose={() => {
           setShowPuntosModal(false);
-          setShowDetailModal(true); // ← REABRE el detalle
+          setShowDetailModal(true);
         }}
         alumno={inscripcion.alumno}
         puntosActuales={inscripcion.puntos}
         onAsignar={async (puntos) => {
-          await inscripcionService.asignarPuntos(inscripcion.id, puntos, usuario.id);
+          await inscripcionService.asignarPuntos(
+            inscripcion.id,
+            puntos,
+            usuario.id,
+          );
           await onRefresh();
-          // Al confirmar, NO reabre el detalle, va a la lista
         }}
       />
 
@@ -128,7 +179,7 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         visible={showBeneficioModal}
         onClose={() => {
           setShowBeneficioModal(false);
-          setShowDetailModal(true); // ← REABRE el detalle
+          setShowDetailModal(true);
         }}
         alumno={inscripcion.alumno}
         beneficioActual={inscripcion.beneficio}
@@ -139,7 +190,6 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
             beneficio,
           );
           await onRefresh();
-          // Al guardar, NO reabre el detalle, va a la lista
         }}
       />
 
@@ -148,13 +198,12 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         visible={showPagoModal}
         onClose={() => {
           setShowPagoModal(false);
-          setShowDetailModal(true); // ← REABRE el detalle
+          setShowDetailModal(true);
         }}
         usuarioId={usuario.id}
         inscripcionId={inscripcion.id}
         onSuccess={async () => {
           await onRefresh();
-          // Al registrar, NO reabre el detalle, va a la lista
         }}
       />
 
@@ -163,14 +212,13 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         visible={showBajaModal}
         onClose={() => {
           setShowBajaModal(false);
-          setShowDetailModal(true); // ← REABRE el detalle
+          setShowDetailModal(true);
         }}
         alumno={inscripcion.alumno}
         curso={curso.nombre}
         onConfirmar={async () => {
           await inscripcionService.eliminarInscripcion(inscripcion.id);
           await onRefresh();
-          // Al confirmar baja, NO reabre, el alumno ya no existe
         }}
       />
     </>
@@ -189,6 +237,7 @@ const styles = StyleSheet.create({
     ...Platform.select({
       web: {
         boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
+        cursor: "pointer",
       },
       default: {
         shadowColor: "#000",
@@ -199,6 +248,7 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  // MÓVIL: Layout vertical
   topRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -245,5 +295,36 @@ const styles = StyleSheet.create({
   bottomRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 12,
+    justifyContent: "center",
+  },
+  puntosContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#fffbeb",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#fef3c7",
+  },
+  puntosText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#92400e",
+  },
+  // WEB: Layout horizontal
+  contentWeb: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 16,
+  },
+  rightSectionWeb: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginLeft: "auto",
   },
 });

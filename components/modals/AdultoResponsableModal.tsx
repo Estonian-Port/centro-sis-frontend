@@ -1,18 +1,14 @@
-// components/modals/AdultoResponsableModal.tsx
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
   Modal,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Linking,
   Platform,
 } from "react-native";
 import { AdultoResponsable } from "@/model/model";
-import { Button } from "@/components/ui/Button";
 
 interface AdultoResponsableModalProps {
   visible: boolean;
@@ -25,139 +21,68 @@ export const AdultoResponsableModal: React.FC<AdultoResponsableModalProps> = ({
   onClose,
   adultoResponsable,
 }) => {
-  const handleCallPhone = () => {
-    const phoneUrl = `tel:${adultoResponsable.celular}`;
-    Linking.canOpenURL(phoneUrl)
-      .then((supported) => {
-        if (supported) {
-          Linking.openURL(phoneUrl);
-        }
-      })
-      .catch((err) => console.error("Error al abrir teléfono:", err));
-  };
-
-  const handleWhatsApp = () => {
-    const whatsappUrl = `whatsapp://send?phone=${adultoResponsable.celular}`;
-    Linking.canOpenURL(whatsappUrl)
-      .then((supported) => {
-        if (supported) {
-          Linking.openURL(whatsappUrl);
-        } else {
-          // Fallback a web
-          const webUrl = `https://wa.me/${adultoResponsable.celular}`;
-          Linking.openURL(webUrl);
-        }
-      })
-      .catch((err) => console.error("Error al abrir WhatsApp:", err));
-  };
-
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.modal}>
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerContent}>
               <View style={styles.iconContainer}>
-                <Ionicons name="people" size={32} color="#f59e0b" />
+                <Ionicons name="people" size={28} color="#f59e0b" />
               </View>
-              <View>
-                <Text style={styles.title}>Adulto Responsable</Text>
-                <Text style={styles.subtitle}>Información de contacto</Text>
-              </View>
+              <Text style={styles.title}>Adulto Responsable</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={28} color="#6b7280" />
+              <Ionicons name="close" size={24} color="#6b7280" />
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.content}>
-            {/* Tarjeta de información */}
+          {/* Content */}
+          <View style={styles.content}>
             <View style={styles.infoCard}>
               {/* Nombre completo */}
-              <View style={styles.infoSection}>
-                <View style={styles.infoHeader}>
-                  <Ionicons name="person" size={20} color="#f59e0b" />
-                  <Text style={styles.infoHeaderText}>Datos Personales</Text>
-                </View>
-                <View style={styles.infoGrid}>
-                  <InfoRow
-                    label="Nombre completo"
-                    value={`${adultoResponsable.nombre} ${adultoResponsable.apellido}`}
-                  />
-                  <InfoRow label="DNI" value={adultoResponsable.dni} />
-                  <InfoRow
-                    label="Relación"
-                    value={adultoResponsable.relacion}
-                  />
-                </View>
-              </View>
+              <InfoRow
+                icon="person"
+                iconColor="#f59e0b"
+                label="Nombre completo"
+                value={`${adultoResponsable.nombre} ${adultoResponsable.apellido}`}
+              />
 
-              {/* Contacto */}
-              <View style={styles.divider} />
-              <View style={styles.infoSection}>
-                <View style={styles.infoHeader}>
-                  <Ionicons name="call" size={20} color="#10b981" />
-                  <Text style={styles.infoHeaderText}>Contacto</Text>
-                </View>
-                <View style={styles.infoGrid}>
-                  <InfoRow
-                    label="Celular"
-                    value={adultoResponsable.celular.toString()}
-                  />
-                </View>
-              </View>
+              {/* DNI */}
+              <InfoRow
+                icon="card"
+                iconColor="#3b82f6"
+                label="DNI"
+                value={adultoResponsable.dni}
+              />
+
+              {/* Relación */}
+              <InfoRow
+                icon="heart"
+                iconColor="#ec4899"
+                label="Relación"
+                value={adultoResponsable.relacion}
+              />
+
+              {/* Celular */}
+              <InfoRow
+                icon="call"
+                iconColor="#10b981"
+                label="Celular"
+                value={adultoResponsable.celular.toString()}
+              />
             </View>
-
-            {/* Botones de acción rápida */}
-            <View style={styles.quickActions}>
-              <Text style={styles.quickActionsTitle}>Acciones Rápidas</Text>
-              <View style={styles.quickActionsGrid}>
-                {/* Botón Llamar */}
-                <TouchableOpacity
-                  style={styles.quickActionButton}
-                  onPress={handleCallPhone}
-                  activeOpacity={0.7}
-                >
-                  <View
-                    style={[
-                      styles.quickActionIcon,
-                      { backgroundColor: "#dbeafe" },
-                    ]}
-                  >
-                    <Ionicons name="call" size={24} color="#3b82f6" />
-                  </View>
-                  <Text style={styles.quickActionText}>Llamar</Text>
-                </TouchableOpacity>
-
-                {/* Botón WhatsApp */}
-                <TouchableOpacity
-                  style={styles.quickActionButton}
-                  onPress={handleWhatsApp}
-                  activeOpacity={0.7}
-                >
-                  <View
-                    style={[
-                      styles.quickActionIcon,
-                      { backgroundColor: "#d1fae5" },
-                    ]}
-                  >
-                    <Ionicons name="logo-whatsapp" size={24} color="#10b981" />
-                  </View>
-                  <Text style={styles.quickActionText}>WhatsApp</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </ScrollView>
+          </View>
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Button
-              title="Cerrar"
-              variant="outline"
+            <TouchableOpacity
+              style={styles.closeButtonFooter}
               onPress={onClose}
-              style={styles.footerButton}
-            />
+            >
+              <Text style={styles.closeButtonText}>Cerrar</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -166,9 +91,22 @@ export const AdultoResponsableModal: React.FC<AdultoResponsableModalProps> = ({
 };
 
 // Helper component
-const InfoRow = ({ label, value }: { label: string; value: string }) => (
+const InfoRow = ({
+  icon,
+  iconColor,
+  label,
+  value,
+}: {
+  icon: string;
+  iconColor: string;
+  label: string;
+  value: string;
+}) => (
   <View style={styles.infoRow}>
-    <Text style={styles.infoLabel}>{label}</Text>
+    <View style={styles.infoLabelContainer}>
+      <Ionicons name={icon as any} size={18} color={iconColor} />
+      <Text style={styles.infoLabel}>{label}</Text>
+    </View>
     <Text style={styles.infoValue}>{value}</Text>
   </View>
 );
@@ -177,13 +115,27 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
   },
   modal: {
     backgroundColor: "#ffffff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    height: 600,
+    borderRadius: 16,
+    width: "100%",
+    maxWidth: 450,
+    ...Platform.select({
+      web: {
+        boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+      },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 8,
+      },
+    }),
   },
   header: {
     flexDirection: "row",
@@ -197,25 +149,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    flex: 1,
   },
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: "#fef3c7",
     alignItems: "center",
     justifyContent: "center",
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
     color: "#1f2937",
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginTop: 2,
   },
   closeButton: {
     padding: 4,
@@ -229,29 +175,18 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: "#e5e7eb",
-  },
-  infoSection: {
-    marginBottom: 12,
-  },
-  infoHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
-  },
-  infoHeaderText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-  },
-  infoGrid: {
-    gap: 12,
+    gap: 14,
   },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 4,
+  },
+  infoLabelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
   },
   infoLabel: {
     fontSize: 14,
@@ -264,59 +199,21 @@ const styles = StyleSheet.create({
     color: "#1f2937",
     textAlign: "right",
     flex: 1,
-    marginLeft: 12,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#e5e7eb",
-    marginVertical: 12,
-  },
-  quickActions: {
-    marginTop: 20,
-  },
-  quickActionsTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 12,
-  },
-  quickActionsGrid: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  quickActionButton: {
-    flex: 1,
-    alignItems: "center",
-    gap: 8,
-    padding: 16,
-    backgroundColor: "#f9fafb",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    ...Platform.select({
-      web: {
-        cursor: "pointer",
-      },
-    }),
-  },
-  quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  quickActionText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
   },
   footer: {
-    padding: 20,
+    padding: 16,
     borderTopWidth: 1,
     borderTopColor: "#e5e7eb",
   },
-  footerButton: {
-    width: "100%",
+  closeButtonFooter: {
+    backgroundColor: "#f3f4f6",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  closeButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#6b7280",
   },
 });

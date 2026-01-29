@@ -6,7 +6,7 @@ import { Acceso } from "@/model/model";
 
 interface AccesoItemProps {
   acceso: Acceso;
-  showUserInfo?: boolean; // Solo para admin
+  showUserInfo?: boolean;
 }
 
 export const AccesoItem: React.FC<AccesoItemProps> = ({

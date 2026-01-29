@@ -48,9 +48,10 @@ export const RegistrarPagoCursoModal: React.FC<
 
   const esAlquiler = curso.tipoCurso === TipoCurso.ALQUILER;
 
-  const profesorId = curso.profesores.length > 0 ? curso.profesores[0].id : null;
+  const profesorId =
+    curso.profesores.length > 0 ? curso.profesores[0].id : null;
 
-  // ✅ Cargar preview al abrir modal
+  // Cargar preview al abrir modal
   useEffect(() => {
     if (visible) {
       loadPreview();
@@ -68,14 +69,11 @@ export const RegistrarPagoCursoModal: React.FC<
     setError(null);
     try {
       if (esAlquiler) {
-        console.log("Calculando preview alquiler...");
-
         const preview = await pagoService.calcularPreviewAlquiler(
           usuarioId,
           curso.id,
           curso.profesores[0].id || 0,
         );
-        console.log("Preview alquiler:", preview);
         setPreviewAlquiler(preview);
 
         // Auto-seleccionar primera cuota pendiente
@@ -83,7 +81,6 @@ export const RegistrarPagoCursoModal: React.FC<
           setCuotaSeleccionada(preview.cuotasPendientes[0]);
         }
       } else {
-        console.log("Calculando preview comisión...");
         if (!profesorId) {
           throw new Error("Profesor ID es requerido para comisión");
         }

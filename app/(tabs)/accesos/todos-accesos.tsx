@@ -1,4 +1,3 @@
-// app/(tabs)/accesos/todos.tsx
 import { SearchBar } from "@/components/ui/SearchBar";
 import { Button } from "@/components/ui/Button";
 import { Acceso, Rol } from "@/model/model";
@@ -396,6 +395,6 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   multiSelectContainer: {
-    minWidth: 120, // ✅ Ancho fijo
+    minWidth: 120,
   },
 });

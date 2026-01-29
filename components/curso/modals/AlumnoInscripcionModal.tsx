@@ -1,6 +1,6 @@
 // components/curso/AlumnoDetailModal.tsx
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -19,16 +19,14 @@ import {
   Rol,
   TipoCurso,
 } from "@/model/model";
-import { formatEstadoPago } from "@/model/model";
 import { COLORES } from "@/util/colores";
 import { Tag } from "@/components/ui/Tag";
 import { Button } from "@/components/ui/Button";
 import {
-  estadoPagoToTagVariant,
-  estadoToTagVariant,
-  estadoUsuarioToTagVariant,
+  estadoPagoToTagVariant, formatEstadoPago
 } from "@/helper/funciones";
 import { useAuth } from "@/context/authContext";
+import { AdultoResponsableModal } from "@/components/modals/AdultoResponsableModal";
 
 interface AlumnoDetailModalProps {
   visible: boolean;
@@ -52,7 +50,25 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
   onDarDeBaja,
 }) => {
   const { selectedRole } = useAuth();
+  const [showAdultoResponsableModal, setShowAdultoResponsableModal] =
+    useState(false);
   const alumno = inscripcion.alumno;
+
+  const esMenorDeEdad = (fechaNacimiento: string | undefined) => {
+    if (!fechaNacimiento) return false;
+    const hoy = new Date();
+    const fechaNac = new Date(fechaNacimiento);
+    const edad = hoy.getFullYear() - fechaNac.getFullYear();
+    const mesActual = hoy.getMonth() - fechaNac.getMonth();
+
+    if (
+      mesActual < 0 ||
+      (mesActual === 0 && hoy.getDate() < fechaNac.getDate())
+    ) {
+      return edad - 1 < 18;
+    }
+    return edad < 18;
+  };
 
   const evaluarPorRol =
     (curso?.tipoCurso === TipoCurso.COMISION &&
@@ -139,6 +155,39 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                   }
                 />
               </View>
+              {esMenorDeEdad(alumno.fechaNacimiento) &&
+                alumno.adultoResponsable && (
+                  <>
+                    <View style={styles.dividerSmall} />
+                    <TouchableOpacity
+                      style={styles.adultoResponsableRow}
+                      onPress={() => setShowAdultoResponsableModal(true)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.adultoResponsableLeft}>
+                        <Ionicons
+                          name="people-outline"
+                          size={18}
+                          color="#f59e0b"
+                        />
+                        <Text style={styles.adultoResponsableLabel}>
+                          Adulto Responsable
+                        </Text>
+                      </View>
+                      <View style={styles.adultoResponsableRight}>
+                        <Text style={styles.adultoResponsableName}>
+                          {alumno.adultoResponsable.nombre}{" "}
+                          {alumno.adultoResponsable.apellido}
+                        </Text>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={18}
+                          color="#9ca3af"
+                        />
+                      </View>
+                    </TouchableOpacity>
+                  </>
+                )}
             </View>
 
             {/* Asistencia */}
@@ -294,6 +343,13 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
               </View>
             )}
           </ScrollView>
+          {alumno.adultoResponsable && (
+            <AdultoResponsableModal
+              visible={showAdultoResponsableModal}
+              onClose={() => setShowAdultoResponsableModal(false)}
+              adultoResponsable={alumno.adultoResponsable}
+            />
+          )}
         </View>
       </View>
     </Modal>
@@ -540,5 +596,41 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
     color: "#f59e0b",
+  },
+  dividerSmall: {
+    height: 1,
+    backgroundColor: "#e5e7eb",
+    marginVertical: 12,
+  },
+  adultoResponsableRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: "#fffbeb",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#fde68a",
+  },
+  adultoResponsableLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  adultoResponsableLabel: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#92400e",
+  },
+  adultoResponsableRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  adultoResponsableName: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#78350f",
   },
 });

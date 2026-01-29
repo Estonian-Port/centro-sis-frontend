@@ -142,8 +142,6 @@ export const AddAlumnoModal: React.FC<AddAlumnoModalProps> = ({
       beneficio: beneficioNum,
     };
 
-    console.log("INSCRIPCION A ENVIAR:", inscripcion);
-
     try {
       await inscripcionService.inscribirAlumno(
         curso.id,

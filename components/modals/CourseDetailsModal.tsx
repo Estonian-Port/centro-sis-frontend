@@ -1,6 +1,5 @@
-// components/curso/CourseDetailModal.tsx
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Modal,
   ScrollView,
@@ -11,13 +10,15 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Card } from "../ui/Card";
-import { CursoAlumno, Inscripcion } from "@/model/model";
-import { inscripcionService } from "@/services/inscripcion.service";
-import Toast from "react-native-toast-message";
+import { CursoAlumno } from "@/model/model";
 import { Button } from "../ui/Button";
-import { formatDateToDDMMYYYY, estadoPagoToTagVariant } from "@/helper/funciones";
+import {
+  formatDateToDDMMYYYY,
+  estadoPagoToTagVariant,
+  formatEstadoPago,
+  formatEstadoCurso,
+} from "@/helper/funciones";
 import { Tag } from "../ui/Tag";
-import { formatEstadoPago } from "@/model/model";
 
 interface CourseDetailModalProps {
   visible: boolean;
@@ -30,8 +31,6 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
   onClose,
   curso,
 }) => {
-  const [loading, setLoading] = useState(false);
-
   const handleClose = () => {
     onClose();
   };
@@ -77,7 +76,7 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Información del Curso</Text>
               <Card style={styles.infoCard}>
-                <InfoRow label="Estado" value={curso.estado} />
+                <InfoRow label="Estado" value={formatEstadoCurso(curso.estado)} />
                 <InfoRow
                   label="Fecha Inicio"
                   value={formatDateToDDMMYYYY(curso.fechaInicio)}
@@ -161,8 +160,8 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                             (curso.porcentajeAsistencia || 0) >= 75
                               ? "#10b981"
                               : (curso.porcentajeAsistencia || 0) >= 50
-                              ? "#f59e0b"
-                              : "#ef4444",
+                                ? "#f59e0b"
+                                : "#ef4444",
                         },
                       ]}
                     />
@@ -211,13 +210,16 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
               <Text style={styles.sectionTitle}>
                 Mis Pagos ({curso.pagosRealizados?.length || 0})
               </Text>
-              {curso.pagosRealizados &&
-              curso.pagosRealizados.length > 0 ? (
+              {curso.pagosRealizados && curso.pagosRealizados.length > 0 ? (
                 <View style={styles.pagosContainer}>
                   {curso.pagosRealizados.map((pago) => (
                     <View key={pago.id} style={styles.pagoItem}>
                       <View style={styles.pagoInfo}>
-                        <Ionicons name="checkmark-circle" size={20} color="#10b981" />
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={20}
+                          color="#10b981"
+                        />
                         <View style={styles.pagoDetails}>
                           <Text style={styles.pagoMonto}>
                             ${pago.monto.toLocaleString()}
@@ -227,7 +229,7 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                           </Text>
                         </View>
                       </View>
-                      {pago.beneficioAplicado > 0 && (
+                      {pago.beneficioAplicado && pago.beneficioAplicado > 0 && (
                         <View style={styles.descuentoBadge}>
                           <Text style={styles.descuentoText}>
                             -{pago.beneficioAplicado}%

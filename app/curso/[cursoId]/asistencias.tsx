@@ -7,7 +7,7 @@ import { Curso, ParteAsistencia, Rol } from "@/model/model";
 import { cursoService } from "@/services/curso.service";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -43,7 +43,6 @@ export default function AsistenciasTab() {
         Number(cursoId),
       );
       setPartesAsistencias(partesAsistenciaData.data);
-
     } catch (error) {
       console.error("Error fetching data:", error);
       Toast.show({
@@ -104,8 +103,12 @@ export default function AsistenciasTab() {
           <Text style={styles.statValue}>
             {partesAsistencia.length > 0
               ? Math.round(
-                  (partesAsistencia.reduce((sum, a) => sum + a.presentes.length, 0) /
-                    (partesAsistencia.length * (curso.inscripciones?.length || 1))) *
+                  (partesAsistencia.reduce(
+                    (sum, a) => sum + a.presentes.length,
+                    0,
+                  ) /
+                    (partesAsistencia.length *
+                      (curso.inscripciones?.length || 1))) *
                     100,
                 )
               : 0}
@@ -247,6 +250,7 @@ const styles = StyleSheet.create({
     color: "#1f2937",
     marginTop: 16,
     marginBottom: 8,
+    textAlign: "center",
   },
   emptyStateText: {
     fontSize: 14,

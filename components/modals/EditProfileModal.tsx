@@ -14,7 +14,6 @@ import {
 import * as yup from "yup";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-import Toast from "react-native-toast-message";
 import { UpdatePerfilUsuario } from "@/model/model";
 
 // Esquema de validación

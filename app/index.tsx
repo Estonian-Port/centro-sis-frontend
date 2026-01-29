@@ -1,9 +1,8 @@
-// app/index.tsx
-import { useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { useAuth } from '@/context/authContext';
-import { router } from 'expo-router';
-import { TIPOGRAFIA } from '@/util/tipografia';
+import { useEffect } from "react";
+import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import { useAuth } from "@/context/authContext";
+import { router } from "expo-router";
+import { TIPOGRAFIA } from "@/util/tipografia";
 
 export default function RootIndex() {
   const { isAuthenticated, isLoading, usuario } = useAuth();
@@ -11,9 +10,9 @@ export default function RootIndex() {
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated) {
-        router.replace('/login');
+        router.replace("/login");
       } else {
-        router.replace('/(tabs)');
+        router.replace("/(tabs)");
       }
     }
   }, [isAuthenticated, isLoading, usuario?.primerLogin]);
@@ -29,8 +28,8 @@ export default function RootIndex() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   text: {
     ...TIPOGRAFIA.titleL,

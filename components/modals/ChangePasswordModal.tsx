@@ -14,9 +14,7 @@ import {
 import * as yup from "yup";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-import Toast from "react-native-toast-message";
 import { UsuarioUpdatePassword } from "@/model/model";
-import { useAuth } from "@/context/authContext";
 
 // Esquema de validación
 const schema = yup.object().shape({
@@ -46,7 +44,6 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { usuario } = useAuth();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -400,6 +397,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     marginTop: 8,
+    marginBottom: 16,
   },
   requirementsTitle: {
     fontSize: 13,

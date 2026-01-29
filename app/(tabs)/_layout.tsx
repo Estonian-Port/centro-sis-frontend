@@ -9,7 +9,6 @@ import { RoleSelectionModal } from "../../components/modals/RoleSelectionModal";
 import { DrawerContent } from "../../components/navigation/DrawerContent";
 import { CustomDrawerHeader } from "../../components/navigation/CustomDrawerHeader";
 
-// ✅ Wrapper que maneja el modal sin interferir con el layout
 function DrawerWithModal({ children }: { children: React.ReactNode }) {
   const { usuario, selectedRole, setSelectedRole, hasMultipleRoles } =
     useAuth();

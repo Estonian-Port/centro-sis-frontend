@@ -1,4 +1,3 @@
-// app/(tabs)/pagos/_layout.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, Slot, usePathname } from "expo-router";
 import { useEffect, useState } from "react";
@@ -40,8 +39,8 @@ export default function PagosLayout() {
   }
 
   return (
-        <SafeAreaView style={styles.container} edges={["top"]}>
-      {/* ✅ Header unificado */}
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      {/* Header unificado */}
       <CustomDrawerHeader title="Pagos" />
 
       {/* Tabs */}

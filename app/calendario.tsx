@@ -39,37 +39,40 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
 
   // Agrupar cursos por día de la semana
   const cursosPorDia = useMemo(() => {
-    return cursos.reduce((acc, curso) => {
-      curso.horarios.forEach((horario) => {
-        let dia = horario.dia.toUpperCase();
+    return cursos.reduce(
+      (acc, curso) => {
+        curso.horarios.forEach((horario) => {
+          let dia = horario.dia.toUpperCase();
 
-        // Mapear posibles variaciones
-        const diaMapping: Record<string, string> = {
-          LUNES: "MONDAY",
-          MARTES: "TUESDAY",
-          MIERCOLES: "WEDNESDAY",
-          MIÉRCOLES: "WEDNESDAY",
-          JUEVES: "THURSDAY",
-          VIERNES: "FRIDAY",
-          SABADO: "SATURDAY",
-          SÁBADO: "SATURDAY",
-          DOMINGO: "SUNDAY",
-        };
+          // Mapear posibles variaciones
+          const diaMapping: Record<string, string> = {
+            LUNES: "MONDAY",
+            MARTES: "TUESDAY",
+            MIERCOLES: "WEDNESDAY",
+            MIÉRCOLES: "WEDNESDAY",
+            JUEVES: "THURSDAY",
+            VIERNES: "FRIDAY",
+            SABADO: "SATURDAY",
+            SÁBADO: "SATURDAY",
+            DOMINGO: "SUNDAY",
+          };
 
-        if (diaMapping[dia]) {
-          dia = diaMapping[dia];
-        }
+          if (diaMapping[dia]) {
+            dia = diaMapping[dia];
+          }
 
-        if (!acc[dia]) {
-          acc[dia] = [];
-        }
-        acc[dia].push({
-          curso,
-          horario,
+          if (!acc[dia]) {
+            acc[dia] = [];
+          }
+          acc[dia].push({
+            curso,
+            horario,
+          });
         });
-      });
-      return acc;
-    }, {} as Record<string, Array<{ curso: CursoAlumno; horario: any }>>);
+        return acc;
+      },
+      {} as Record<string, Array<{ curso: CursoAlumno; horario: any }>>,
+    );
   }, [cursos]);
 
   const renderDaySchedule = (dia: string) => {
@@ -86,7 +89,7 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
 
     // Ordenar por hora de inicio
     const cursosOrdenados = cursosDelDia.sort((a, b) =>
-      a.horario.horaInicio.localeCompare(b.horario.horaInicio)
+      a.horario.horaInicio.localeCompare(b.horario.horaInicio),
     );
 
     return cursosOrdenados.map(({ curso, horario }, index) => (
@@ -120,10 +123,7 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
 
   const getCursoColor = (curso: Curso | CursoAlumno) => {
     if (selectedRole === "ALUMNO") {
-      if (
-        "estadoPago" in curso &&
-        (curso.estadoPago === "ATRASADO")
-      ) {
+      if ("estadoPago" in curso && curso.estadoPago === "ATRASADO") {
         return COLORES.rojo;
       } else {
         return COLORES.violeta;

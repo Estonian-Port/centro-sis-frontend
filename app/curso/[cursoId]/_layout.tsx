@@ -1,6 +1,10 @@
-// app/curso/[cursoId]/_layout.tsx - FIXED
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter, Slot, usePathname } from "expo-router";
+import {
+  useLocalSearchParams,
+  useRouter,
+  Slot,
+  usePathname,
+} from "expo-router";
 import { useState, useEffect, useCallback } from "react";
 import {
   View,
@@ -12,20 +16,20 @@ import {
 import { COLORES } from "@/util/colores";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { cursoService } from "@/services/curso.service";
-import { Curso, formatEstadoCurso } from "@/model/model";
+import { Curso } from "@/model/model";
 import Toast from "react-native-toast-message";
 import { Tag } from "@/components/ui/Tag";
-import { estadoCursoToTagVariant } from "@/helper/funciones";
+import { estadoCursoToTagVariant, formatEstadoCurso } from "@/helper/funciones";
 import { CursoContext } from "@/context/cursoContext";
 
 export default function CursoLayout() {
   const { cursoId } = useLocalSearchParams();
   const router = useRouter();
-  const pathname = usePathname(); // ← FIX: Usar pathname para sincronizar
+  const pathname = usePathname();
   const [curso, setCurso] = useState<Curso | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ← FIX: Derivar activeTab del pathname en lugar de estado local
+  // Derivar activeTab del pathname en lugar de estado local
   const getActiveTab = (): "alumnos" | "informacion" | "asistencias" => {
     if (pathname.includes("/informacion")) return "informacion";
     if (pathname.includes("/asistencias")) return "asistencias";
@@ -38,28 +42,31 @@ export default function CursoLayout() {
     fetchCurso();
   }, [cursoId]);
 
-  const fetchCurso = useCallback(async (showLoading = true) => {
-    if (!cursoId) return;
+  const fetchCurso = useCallback(
+    async (showLoading = true) => {
+      if (!cursoId) return;
 
-    if (showLoading) setLoading(true);
-    try {
-      const response = await cursoService.getById(Number(cursoId));
-      setCurso(response);
-    } catch (error) {
-      console.error("Error fetching curso:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "No se pudo cargar el curso",
-        position: "bottom",
-      });
-    } finally {
-      if (showLoading) setLoading(false);
-    }
-  }, [cursoId]);
+      if (showLoading) setLoading(true);
+      try {
+        const response = await cursoService.getById(Number(cursoId));
+        setCurso(response);
+      } catch (error) {
+        console.error("Error fetching curso:", error);
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "No se pudo cargar el curso",
+          position: "bottom",
+        });
+      } finally {
+        if (showLoading) setLoading(false);
+      }
+    },
+    [cursoId],
+  );
 
   const handleTabChange = (tab: "alumnos" | "informacion" | "asistencias") => {
-    // ← FIX: Usar replace en lugar de push para no agregar al historial
+    // Usar replace en lugar de push para no agregar al historial
     router.replace(`/curso/${cursoId}/${tab}`);
   };
 

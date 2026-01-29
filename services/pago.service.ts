@@ -72,7 +72,6 @@ export const pagoService = {
     }
   ): Promise<Pago> => {
     const response = await api.post(`/pagos/alquiler/${usuarioId}`, data);
-    console.log("Registrar pago alquiler response:", response.data);
     return response.data;
   },
 
