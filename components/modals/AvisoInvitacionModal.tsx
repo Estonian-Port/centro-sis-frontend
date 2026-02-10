@@ -10,6 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { Usuario } from "@/model/model";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 interface AvisoInvitacionModalProps {
   visible: boolean;
@@ -42,7 +43,7 @@ export const AvisoInvitacionModal: React.FC<AvisoInvitacionModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo reenviar el mail de invitación",
+        text2: getErrorMessage(error) || "No se pudo reenviar el mail de invitación",
         position: "bottom",
       });
     } finally {

@@ -11,6 +11,7 @@ import { DatePicker } from "@/components/pickers/DatePicker";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { cursoService } from "@/services/curso.service";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 interface TomarAsistenciaModalProps {
   visible: boolean;
@@ -79,7 +80,7 @@ export const TomarAsistenciaModal: React.FC<TomarAsistenciaModalProps> = ({
       onClose();
     } catch (error: any) {
       const mensaje =
-        error?.response?.data?.message || "No se pudo tomar la asistencia";
+        getErrorMessage(error) || "No se pudo tomar la asistencia";
       setError(mensaje);
     } finally {
       setLoading(false);

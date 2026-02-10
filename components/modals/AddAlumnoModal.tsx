@@ -16,6 +16,7 @@ import { usuarioService } from "@/services/usuario.service";
 import { inscripcionService } from "@/services/inscripcion.service";
 import Toast from "react-native-toast-message";
 import { Button } from "../ui/Button";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 interface AddAlumnoModalProps {
   visible: boolean;
@@ -87,7 +88,7 @@ export const AddAlumnoModal: React.FC<AddAlumnoModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudieron cargar los alumnos",
+        text2: getErrorMessage(error) || "No se pudieron cargar los alumnos",
         position: "bottom",
       });
     } finally {
@@ -163,7 +164,7 @@ export const AddAlumnoModal: React.FC<AddAlumnoModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: error.message || "No se pudo inscribir al alumno",
+        text2: getErrorMessage(error) || "No se pudo inscribir al alumno",
         position: "bottom",
       });
     } finally {

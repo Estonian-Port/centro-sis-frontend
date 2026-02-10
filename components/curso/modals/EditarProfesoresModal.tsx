@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { Usuario } from "@/model/model";
 import { cursoService } from "@/services/curso.service";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 interface EditarProfesoresModalProps {
   visible: boolean;
@@ -114,7 +115,7 @@ export const EditarProfesoresModal: React.FC<EditarProfesoresModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudieron actualizar los profesores",
+        text2: getErrorMessage(error) || "No se pudieron actualizar los profesores",
         position: "bottom",
       });
     } finally {

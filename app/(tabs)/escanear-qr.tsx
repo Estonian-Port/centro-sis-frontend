@@ -18,6 +18,7 @@ import Toast from "react-native-toast-message";
 import { Acceso } from "@/model/model";
 import { accesoService } from "@/services/acceso.service";
 import IOSScannerOverlay from "@/components/ui/IosScannerOverlay";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 export default function EscanearQRScreen() {
   const { usuario } = useAuth();
@@ -60,7 +61,7 @@ export default function EscanearQRScreen() {
       Toast.show({
         type: "error",
         text1: "❌ Error",
-        text2: error?.response?.data?.message || "QR inválido",
+        text2: getErrorMessage(error) || "QR inválido",
         position: "bottom",
         visibilityTime: 4000,
       });

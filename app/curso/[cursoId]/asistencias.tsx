@@ -3,6 +3,7 @@ import { AsistenciaItem } from "@/components/curso/AsistenciaItem";
 import { TomarAsistenciaModal } from "@/components/curso/modals/TomarAsistenciaModal";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/authContext";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 import { Curso, ParteAsistencia, Rol } from "@/model/model";
 import { cursoService } from "@/services/curso.service";
 import { Ionicons } from "@expo/vector-icons";
@@ -48,7 +49,7 @@ export default function AsistenciasTab() {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudieron cargar los partes de asistencia",
+        text2: getErrorMessage(error) || "No se pudieron cargar los partes de asistencia",
         position: "bottom",
       });
     } finally {

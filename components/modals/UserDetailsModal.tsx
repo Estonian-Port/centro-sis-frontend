@@ -28,6 +28,7 @@ import * as Sharing from "expo-sharing"; // Para compartir en móvil
 // @ts-ignore
 import { captureRef } from "react-native-view-shot"; // Para capturar la vista como imagen
 import { AdultoResponsableModal } from "./AdultoResponsableModal";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 interface UserDetailModalProps {
   visible: boolean;
@@ -75,7 +76,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo obtener el usuario.",
+        text2: getErrorMessage(error) || "No se pudo obtener el usuario.",
         position: "bottom",
       });
     } finally {
@@ -107,7 +108,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo asignar el rol",
+        text2: getErrorMessage(error) || "No se pudo asignar el rol",
         position: "bottom",
       });
     }
@@ -148,7 +149,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo remover el rol",
+        text2: getErrorMessage(error) || "No se pudo remover el rol",
         position: "bottom",
       });
     }

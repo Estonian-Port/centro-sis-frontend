@@ -1,6 +1,6 @@
 import { useAuth } from "@/context/authContext";
 import { CursoAlumno, Curso, Rol, Estadistica } from "@/model/model";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Platform, StatusBar, StyleSheet, Text, View } from "react-native";
 import { administracionService } from "@/services/administracion.service";
 import { usuarioService } from "@/services/usuario.service";
@@ -8,6 +8,7 @@ import { DashboardProfesor } from "@/components/dashboard/DashboardProfesor";
 import { DashboardAlumno } from "@/components/dashboard/DashboardAlumno";
 import DashboardAdmin from "@/components/dashboard/DashboardAdmin";
 import DashboardPorteria from "@/components/dashboard/DashboardPorteria";
+import { useFocusEffect } from "expo-router";
 
 export default function HomeScreen() {
   const { selectedRole, usuario } = useAuth();
@@ -37,9 +38,9 @@ export default function HomeScreen() {
     }
   };
 
-  useEffect(() => {
+  useFocusEffect(() => {
     fetchData();
-  }, [selectedRole, usuario]);
+  });
 
   const renderContent = () => {
     switch (selectedRole) {
@@ -50,9 +51,9 @@ export default function HomeScreen() {
           <DashboardProfesor cursos={cursosProfesor} onRefresh={fetchData} />
         );
       case Rol.ADMINISTRADOR:
-        return <DashboardAdmin estadisticas={stats} />;
+        return <DashboardAdmin estadisticas={stats} onRefresh={fetchData} />;
       case Rol.OFICINA:
-        return <DashboardAdmin estadisticas={stats} />;
+        return <DashboardAdmin estadisticas={stats} onRefresh={fetchData} />;
       case Rol.PORTERIA:
         return <DashboardPorteria />;
       default:

@@ -18,6 +18,7 @@ import { useAuth } from "@/context/authContext";
 import { accesoService } from "@/services/acceso.service";
 import { AccesoItem } from "@/components/accesos/AccesoItem";
 import { RegistrarAccesoModal } from "@/components/accesos/RegistrarAccesoModal";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
@@ -101,7 +102,7 @@ export default function TodosAccesosScreen() {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudieron cargar los accesos",
+        text2: getErrorMessage(error) || "No se pudieron cargar los accesos",
         position: "bottom",
       });
     } finally {

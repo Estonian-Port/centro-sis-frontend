@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 interface EditarNombreCursoModalProps {
   visible: boolean;
@@ -67,7 +68,7 @@ export const EditarNombreCursoModal: React.FC<EditarNombreCursoModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo actualizar el nombre",
+        text2: getErrorMessage(error) || "No se pudo actualizar el nombre",
         position: "bottom",
       });
     } finally {

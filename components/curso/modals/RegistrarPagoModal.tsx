@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { pagoService } from "@/services/pago.service";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 // ✅ AGREGAR ESTA LÍNEA
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -76,7 +77,7 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
           Toast.show({
             type: "error",
             text1: "Error",
-            text2: "No se pudo cargar la información del pago",
+            text2: getErrorMessage(error) || "No se pudo cargar la información del pago",
             position: "bottom",
           });
           onClose();
@@ -103,7 +104,7 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
           Toast.show({
             type: "error",
             text1: "Error",
-            text2: "No se pudo cargar la información del pago",
+            text2: getErrorMessage(error) || "No se pudo cargar la información del pago",
             position: "bottom",
           });
           onClose();
@@ -138,7 +139,7 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: error.response?.data?.message || "No se pudo registrar el pago",
+        text2: getErrorMessage(error) || "No se pudo registrar el pago",
         position: "bottom",
       });
     } finally {
@@ -173,7 +174,6 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
       onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
-        {/* ✅ CAMBIO: Sin modalContainer intermedio */}
         <View style={styles.modal}>
           {/* Header */}
           <View style={styles.header}>
@@ -262,7 +262,7 @@ export const RegistrarPagoModal: React.FC<RegistrarPagoModalProps> = ({
                 <View style={{ flex: 1 }}>
                   <Text style={styles.checkboxLabel}>
                     Aplicar recargo por atraso (
-                    {preview.recargoPorcentaje.toFixed(0)}%)
+                    {preview.recargoPorcentaje}%)
                   </Text>
                   {preview.cuotasAtrasadas > 0 && (
                     <Text style={styles.checkboxHint}>
@@ -371,7 +371,6 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     fontWeight: "500",
   },
-  // ✅ CAMBIO CRÍTICO: modal directamente con height en píxeles
   modal: {
     backgroundColor: "#ffffff",
     borderRadius: 16,

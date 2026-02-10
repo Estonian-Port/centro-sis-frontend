@@ -18,8 +18,9 @@ import Toast from "react-native-toast-message";
 import { CreateCourseModal } from "@/components/modals/CreateCourseModal";
 import { router } from "expo-router";
 import { useAuth } from "@/context/authContext";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
-const DasboardAdmin = ({ estadisticas }: { estadisticas: Estadistica }) => {
+const DasboardAdmin = ({ estadisticas, onRefresh }: { estadisticas: Estadistica, onRefresh: () => void }) => {
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
   const { selectedRole } = useAuth();
@@ -46,11 +47,12 @@ const DasboardAdmin = ({ estadisticas }: { estadisticas: Estadistica }) => {
         text2: `La invitación ha sido enviada a ${nuevoUsuario.email}.`,
         position: "bottom",
       });
+      if (onRefresh) onRefresh();
     } catch (error) {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo crear el usuario.",
+        text2: getErrorMessage(error) || "No se pudo crear el usuario.",
         position: "bottom",
       });
     }
@@ -139,6 +141,9 @@ const DasboardAdmin = ({ estadisticas }: { estadisticas: Estadistica }) => {
         <CreateCourseModal
           visible={showCreateCourseModal}
           onClose={() => setShowCreateCourseModal(false)}
+          onSuccess={() => {
+            if (onRefresh) onRefresh();
+          }}
         />
       </ScrollView>
     </SafeAreaView>

@@ -21,6 +21,7 @@ import Toast from "react-native-toast-message";
 import { Tag } from "@/components/ui/Tag";
 import { estadoCursoToTagVariant, formatEstadoCurso } from "@/helper/funciones";
 import { CursoContext } from "@/context/cursoContext";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 export default function CursoLayout() {
   const { cursoId } = useLocalSearchParams();
@@ -55,7 +56,7 @@ export default function CursoLayout() {
         Toast.show({
           type: "error",
           text1: "Error",
-          text2: "No se pudo cargar el curso",
+          text2: getErrorMessage(error) || "No se pudo cargar el curso",
           position: "bottom",
         });
       } finally {

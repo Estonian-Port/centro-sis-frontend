@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
   
-  // ✅ Inicializar autenticación al montar (CORREGIDO)
+  // ✅ Inicializar autenticación al montar (CON MANEJO DE 403)
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -52,14 +52,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           // ✅ Configurar token antes de hacer la petición
           await authService.setAuthToken();
           
-          const currentUser = await authService.getCurrentUser();
-          setUsuario(currentUser);
-          setIsAuthenticated(true);
+          try {
+            const currentUser = await authService.getCurrentUser();
+            setUsuario(currentUser);
+            setIsAuthenticated(true);
 
-          // Restaurar rol seleccionado si existe
-          const savedRole = await AsyncStorage.getItem(STORAGE_KEY_SELECTED_ROLE);
-          if (savedRole && currentUser.listaRol.includes(savedRole as Rol)) {
-            setSelectedRoleState(savedRole as Rol);
+            // Restaurar rol seleccionado si existe
+            const savedRole = await AsyncStorage.getItem(STORAGE_KEY_SELECTED_ROLE);
+            if (savedRole && currentUser.listaRol.includes(savedRole as Rol)) {
+              setSelectedRoleState(savedRole as Rol);
+            }
+          } catch (userError: any) {
+            // ✅ Si el token es inválido (403/401), limpiar todo silenciosamente
+            if (userError?.response?.status === 403 || userError?.response?.status === 401) {
+              console.log("Token expirado, limpiando sesión...");
+              await AsyncStorage.removeItem(STORAGE_KEY_TOKEN);
+              await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
+              setUsuario(null);
+              setIsAuthenticated(false);
+              setSelectedRoleState(null);
+            } else {
+              // Otro error, re-lanzar
+              throw userError;
+            }
           }
         } else {
           // ✅ No hay token, estado inicial limpio
@@ -67,12 +82,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setIsAuthenticated(false);
         }
       } catch (e) {
-        console.error("Error al inicializar auth:", e);
-        // ✅ En caso de error, limpiar todo
+        console.error("Error crítico al inicializar auth:", e);
+        // ✅ En caso de error crítico, limpiar todo
         await AsyncStorage.removeItem(STORAGE_KEY_TOKEN);
         await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
         setUsuario(null);
         setIsAuthenticated(false);
+        setSelectedRoleState(null);
       } finally {
         setIsLoading(false);
       }

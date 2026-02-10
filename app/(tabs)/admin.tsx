@@ -35,6 +35,8 @@ import { AvisoInvitacionModal } from "@/components/modals/AvisoInvitacionModal";
 import { Ionicons } from "@expo/vector-icons";
 import { TIPOGRAFIA } from "@/util/tipografia";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 // ============================================
 // OPCIONES DE FILTROS
@@ -128,7 +130,7 @@ export default function AdminScreen() {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudieron cargar los usuarios",
+        text2: getErrorMessage(error) || "No se pudieron cargar los usuarios",
       });
     } finally {
       setLoading(false);
@@ -145,11 +147,10 @@ export default function AdminScreen() {
       const data = await cursoService.getAllCursos();
       setCourses(data);
     } catch (error) {
-      console.error("[fetchCourses] Error:", error);
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudieron cargar los cursos",
+        text2: getErrorMessage(error) || "No se pudieron cargar los cursos",
       });
     } finally {
       setLoading(false);
@@ -189,7 +190,7 @@ export default function AdminScreen() {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo dar de baja el curso.",
+        text2: getErrorMessage(error) || "No se pudo dar de baja el curso.",
         position: "bottom",
       });
     }
@@ -209,7 +210,7 @@ export default function AdminScreen() {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo crear el usuario.",
+        text2: getErrorMessage(error) || "No se pudo crear el usuario.",
         position: "bottom",
       });
     }

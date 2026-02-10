@@ -12,6 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { TipoPago } from "@/model/model";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 interface EditarModalidadesPagoModalProps {
   visible: boolean;
@@ -74,7 +75,7 @@ export const EditarModalidadesPagoModal: React.FC<
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudieron actualizar las modalidades",
+        text2: getErrorMessage(error) || "No se pudieron actualizar las modalidades",
         position: "bottom",
       });
     } finally {

@@ -18,6 +18,7 @@ import Toast from "react-native-toast-message";
 import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
 import { TIPOGRAFIA } from "@/util/tipografia";
 import { useAuth } from "@/context/authContext";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 export default function AlumnosTab() {
   const { cursoId } = useLocalSearchParams();
@@ -48,7 +49,7 @@ export default function AlumnosTab() {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo cargar el curso",
+        text2: getErrorMessage(error) || "No se pudo cargar el curso",
         position: "bottom",
       });
     } finally {

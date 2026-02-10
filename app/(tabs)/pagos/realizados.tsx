@@ -17,6 +17,7 @@ import { MultiSelect, MultiSelectOption } from "@/components/ui/MultiSelect";
 import { useAuth } from "@/context/authContext";
 import { pagoService } from "@/services/pago.service";
 import { pagoToDisplay } from "@/helper/funciones";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
@@ -134,7 +135,7 @@ export default function PagosRealizadosScreen() {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudieron cargar los pagos",
+        text2: getErrorMessage(error) || "No se pudieron cargar los pagos",
         position: "bottom",
       });
     } finally {

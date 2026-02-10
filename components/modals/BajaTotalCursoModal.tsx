@@ -10,6 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { Curso } from "@/model/model";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 interface BajaTotalCursoProps {
   visible: boolean;
@@ -42,7 +43,7 @@ export const BajaTotalCurso: React.FC<BajaTotalCursoProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo dar de baja el curso",
+        text2: getErrorMessage(error) || "No se pudo dar de baja el curso",
         position: "bottom",
       });
     } finally {

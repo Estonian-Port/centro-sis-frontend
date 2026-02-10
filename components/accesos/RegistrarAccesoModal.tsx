@@ -17,6 +17,7 @@ import Toast from "react-native-toast-message";
 import { useAuth } from "@/context/authContext";
 import { accesoService } from "@/services/acceso.service";
 import { usuarioService } from "@/services/usuario.service";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 interface Usuario {
   id: number;
@@ -69,7 +70,7 @@ export const RegistrarAccesoModal: React.FC<RegistrarAccesoModalProps> = ({
         Toast.show({
           type: "error",
           text1: "Error",
-          text2: "No se pudieron buscar usuarios",
+          text2: getErrorMessage(error) || "No se pudieron buscar usuarios",
           position: "bottom",
         });
       } finally {
@@ -105,7 +106,7 @@ export const RegistrarAccesoModal: React.FC<RegistrarAccesoModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo registrar el acceso",
+        text2: getErrorMessage(error) || "No se pudo registrar el acceso",
         position: "bottom",
       });
     } finally {

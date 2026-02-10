@@ -22,20 +22,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { DatePicker } from "@/components/pickers/DatePicker";
 import { COLORES } from "@/util/colores";
 import { LinearGradient } from "expo-linear-gradient";
-import TerminosCondicionesModal from "@/components/modals/TerminosCondiciones";
+import {
+  TerminosCondicionesModal,
+  ReglamentoModal,
+  DeclaracionJuradaModal,
+} from "@/components/modals/DocumentosLegales";
 import { usuarioService } from "@/services/usuario.service";
 import { CompleteProfileData } from "@/model/model";
-
-// ✅ HELPER PARA EXTRAER MENSAJE DE ERROR
-const getErrorMessage = (error: any): string | undefined => {
-  if (!error) return undefined;
-  if (typeof error === 'string') return error;
-  if (typeof error.message === 'string') return error.message;
-  return undefined;
-};
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 // Esquema de validación
-const getValidationSchema = (esMenorDeEdad: boolean, terminosLeidos: boolean) => {
+const getValidationSchema = (
+  esMenorDeEdad: boolean,
+  terminosLeidos: boolean,
+  reglamentoLeido: boolean,
+  declaracionLeida: boolean,
+) => {
   const baseSchema = {
     nombre: yup.string().required("El nombre es requerido"),
     apellido: yup.string().required("El apellido es requerido"),
@@ -70,7 +72,25 @@ const getValidationSchema = (esMenorDeEdad: boolean, terminosLeidos: boolean) =>
       .test(
         "terminos-leidos",
         "Debes leer los términos y condiciones antes de aceptarlos",
-        () => terminosLeidos
+        () => terminosLeidos,
+      ),
+    aceptaReglamento: yup
+      .boolean()
+      .oneOf([true], "Debes aceptar el reglamento interno")
+      .required("Debes aceptar el reglamento interno")
+      .test(
+        "reglamento-leido",
+        "Debes leer el reglamento interno antes de aceptarlo",
+        () => reglamentoLeido,
+      ),
+    aceptaDeclaracion: yup
+      .boolean()
+      .oneOf([true], "Debes aceptar la declaración jurada")
+      .required("Debes aceptar la declaración jurada")
+      .test(
+        "declaracion-leida",
+        "Debes leer la declaración jurada antes de aceptarla",
+        () => declaracionLeida,
       ),
   };
 
@@ -119,8 +139,16 @@ const isDatoTemporal = (valor: string | number): boolean => {
 export default function CompleteProfileScreen() {
   const { usuario, setUsuario } = useAuth();
 
+  // Estados para los modales
   const [showTerminosModal, setShowTerminosModal] = useState(false);
+  const [showReglamentoModal, setShowReglamentoModal] = useState(false);
+  const [showDeclaracionModal, setShowDeclaracionModal] = useState(false);
+
+  // Estados para tracking de lectura
   const [terminosLeidos, setTerminosLeidos] = useState(false);
+  const [reglamentoLeido, setReglamentoLeido] = useState(false);
+  const [declaracionLeida, setDeclaracionLeida] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -131,16 +159,31 @@ export default function CompleteProfileScreen() {
     watch,
     trigger,
   } = useForm<any>({
-    resolver: yupResolver(getValidationSchema(false, terminosLeidos)) as any,
+    resolver: yupResolver(
+      getValidationSchema(
+        false,
+        terminosLeidos,
+        reglamentoLeido,
+        declaracionLeida,
+      ),
+    ) as any,
     defaultValues: {
-      nombre: isDatoTemporal(usuario?.nombre || "") ? "" : usuario?.nombre || "",
-      apellido: isDatoTemporal(usuario?.apellido || "") ? "" : usuario?.apellido || "",
+      nombre: isDatoTemporal(usuario?.nombre || "")
+        ? ""
+        : usuario?.nombre || "",
+      apellido: isDatoTemporal(usuario?.apellido || "")
+        ? ""
+        : usuario?.apellido || "",
       dni: isDatoTemporal(usuario?.dni || "") ? "" : usuario?.dni || "",
-      celular: isDatoTemporal(usuario?.celular || 0) ? "" : String(usuario?.celular || ""),
+      celular: isDatoTemporal(usuario?.celular || 0)
+        ? ""
+        : String(usuario?.celular || ""),
       fechaNacimiento: "",
       password: "",
       confirmPassword: "",
       aceptaTerminos: false,
+      aceptaReglamento: false,
+      aceptaDeclaracion: false,
       responsableNombre: "",
       responsableApellido: "",
       responsableDni: "",
@@ -151,6 +194,8 @@ export default function CompleteProfileScreen() {
 
   const fechaNacimiento = watch("fechaNacimiento");
   const aceptaTerminos = watch("aceptaTerminos");
+  const aceptaReglamento = watch("aceptaReglamento");
+  const aceptaDeclaracion = watch("aceptaDeclaracion");
   const password = watch("password");
 
   // Calcular edad
@@ -188,6 +233,7 @@ export default function CompleteProfileScreen() {
 
   const passwordStrength = getPasswordStrength();
 
+  // Handlers para cerrar modales
   const handleCloseTerminos = () => {
     setShowTerminosModal(false);
     setTerminosLeidos(true);
@@ -196,13 +242,35 @@ export default function CompleteProfileScreen() {
     }, 100);
   };
 
+  const handleCloseReglamento = () => {
+    setShowReglamentoModal(false);
+    setReglamentoLeido(true);
+    setTimeout(() => {
+      trigger("aceptaReglamento");
+    }, 100);
+  };
+
+  const handleCloseDeclaracion = () => {
+    setShowDeclaracionModal(false);
+    setDeclaracionLeida(true);
+    setTimeout(() => {
+      trigger("aceptaDeclaracion");
+    }, 100);
+  };
+
   const onSubmit = async (data: any) => {
     try {
-      if (!terminosLeidos) {
+      // Validar que todos los documentos hayan sido leídos
+      if (!terminosLeidos || !reglamentoLeido || !declaracionLeida) {
+        const faltantes = [];
+        if (!terminosLeidos) faltantes.push("términos y condiciones");
+        if (!reglamentoLeido) faltantes.push("reglamento interno");
+        if (!declaracionLeida) faltantes.push("declaración jurada");
+
         Toast.show({
           type: "error",
-          text1: "Términos no leídos",
-          text2: "Debes abrir y leer los términos antes de aceptarlos",
+          text1: "Documentos no leídos",
+          text2: `Debes leer: ${faltantes.join(", ")}`,
           position: "bottom",
         });
         return;
@@ -263,7 +331,8 @@ export default function CompleteProfileScreen() {
         };
       }
 
-      const usuarioActualizado = await usuarioService.completarPerfil(profileData);
+      const usuarioActualizado =
+        await usuarioService.completarPerfil(profileData);
       Toast.show({
         type: "success",
         text1: "Perfil Completado",
@@ -281,7 +350,9 @@ export default function CompleteProfileScreen() {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: error?.response?.data?.message || "Hubo un error al actualizar tu perfil.",
+        text2:
+          getErrorMessage(error) ||
+          "Hubo un error al actualizar tu perfil.",
         position: "bottom",
       });
     }
@@ -675,64 +746,235 @@ export default function CompleteProfileScreen() {
                   />
                 </View>
 
-                {/* Términos y Condiciones */}
-                <View style={styles.terminosSection}>
-                  <Controller
-                    control={control}
-                    name="aceptaTerminos"
-                    render={({ field: { onChange, value } }) => (
-                      <>
-                        <TouchableOpacity
-                          style={[
-                            styles.terminosCheckbox,
-                            errors.aceptaTerminos &&
-                              styles.terminosCheckboxError,
-                          ]}
-                          onPress={() => onChange(!value)}
-                          activeOpacity={0.7}
-                        >
-                          <View
+                {/* ✅ SECCIÓN DE DOCUMENTOS LEGALES */}
+                <View style={styles.documentosSection}>
+                  <Text style={styles.sectionTitle}>Documentos Legales</Text>
+                  <View style={styles.avisoLegalContainer}>
+                    <Ionicons
+                      name="information-circle"
+                      size={20}
+                      color="#3b82f6"
+                    />
+                    <Text style={styles.avisoLegalTexto}>
+                      Es obligatorio leer y aceptar los siguientes documentos.
+                    </Text>
+                  </View>
+
+                  {/* 1. Reglamento Interno */}
+                  <View style={styles.documentoItem}>
+                    <Controller
+                      control={control}
+                      name="aceptaReglamento"
+                      render={({ field: { onChange, value } }) => (
+                        <>
+                          <TouchableOpacity
                             style={[
-                              styles.checkbox,
-                              value && styles.checkboxChecked,
+                              styles.checkboxContainer,
+                              errors.aceptaReglamento &&
+                                styles.checkboxContainerError,
                             ]}
+                            onPress={() => onChange(!value)}
+                            activeOpacity={0.7}
                           >
-                            {value && (
-                              <Ionicons
-                                name="checkmark"
-                                size={16}
-                                color="#ffffff"
-                              />
-                            )}
-                          </View>
-                          <View style={styles.terminosTextContainer}>
-                            <Text style={styles.terminosText}>
-                              Acepto los{" "}
-                              <Text
-                                style={styles.terminosLink}
-                                onPress={(e) => {
-                                  e.stopPropagation();
-                                  setShowTerminosModal(true);
-                                }}
-                              >
-                                términos y condiciones
-                              </Text>
-                              {terminosLeidos && (
-                                <Text style={styles.terminosLeidos}>
-                                  {" "}✓ Leídos
-                                </Text>
+                            <View
+                              style={[
+                                styles.checkbox,
+                                value && styles.checkboxChecked,
+                              ]}
+                            >
+                              {value && (
+                                <Ionicons
+                                  name="checkmark"
+                                  size={16}
+                                  color="#ffffff"
+                                />
                               )}
+                            </View>
+                            <View style={styles.checkboxTextContainer}>
+                              <View style={styles.documentoTitleRow}>
+                                <Ionicons
+                                  name="list"
+                                  size={18}
+                                  color="#8b5cf6"
+                                />
+                                <Text style={styles.checkboxText}>
+                                  Acepto el{" "}
+                                  <Text
+                                    style={styles.checkboxLink}
+                                    onPress={(e) => {
+                                      e.stopPropagation();
+                                      setShowReglamentoModal(true);
+                                    }}
+                                  >
+                                    Reglamento Interno
+                                  </Text>
+                                </Text>
+                              </View>
+                              {reglamentoLeido && (
+                                <View style={styles.leidoBadge}>
+                                  <Ionicons
+                                    name="checkmark-circle"
+                                    size={14}
+                                    color="#10b981"
+                                  />
+                                  <Text style={styles.leidoText}>Leído</Text>
+                                </View>
+                              )}
+                            </View>
+                          </TouchableOpacity>
+                          {errors.aceptaReglamento && (
+                            <Text style={styles.errorText}>
+                              {getErrorMessage(errors.aceptaReglamento)}
                             </Text>
-                          </View>
-                        </TouchableOpacity>
-                        {errors.aceptaTerminos && (
-                          <Text style={styles.errorText}>
-                            {getErrorMessage(errors.aceptaTerminos)}
-                          </Text>
-                        )}
-                      </>
-                    )}
-                  />
+                          )}
+                        </>
+                      )}
+                    />
+                  </View>
+
+                  {/* 2. Declaración Jurada */}
+                  <View style={styles.documentoItem}>
+                    <Controller
+                      control={control}
+                      name="aceptaDeclaracion"
+                      render={({ field: { onChange, value } }) => (
+                        <>
+                          <TouchableOpacity
+                            style={[
+                              styles.checkboxContainer,
+                              errors.aceptaDeclaracion &&
+                                styles.checkboxContainerError,
+                            ]}
+                            onPress={() => onChange(!value)}
+                            activeOpacity={0.7}
+                          >
+                            <View
+                              style={[
+                                styles.checkbox,
+                                value && styles.checkboxChecked,
+                              ]}
+                            >
+                              {value && (
+                                <Ionicons
+                                  name="checkmark"
+                                  size={16}
+                                  color="#ffffff"
+                                />
+                              )}
+                            </View>
+                            <View style={styles.checkboxTextContainer}>
+                              <View style={styles.documentoTitleRow}>
+                                <Ionicons
+                                  name="shield-checkmark"
+                                  size={18}
+                                  color="#f59e0b"
+                                />
+                                <Text style={styles.checkboxText}>
+                                  Acepto la{" "}
+                                  <Text
+                                    style={styles.checkboxLink}
+                                    onPress={(e) => {
+                                      e.stopPropagation();
+                                      setShowDeclaracionModal(true);
+                                    }}
+                                  >
+                                    Declaración Jurada
+                                  </Text>
+                                </Text>
+                              </View>
+                              {declaracionLeida && (
+                                <View style={styles.leidoBadge}>
+                                  <Ionicons
+                                    name="checkmark-circle"
+                                    size={14}
+                                    color="#10b981"
+                                  />
+                                  <Text style={styles.leidoText}>Leído</Text>
+                                </View>
+                              )}
+                            </View>
+                          </TouchableOpacity>
+                          {errors.aceptaDeclaracion && (
+                            <Text style={styles.errorText}>
+                              {getErrorMessage(errors.aceptaDeclaracion)}
+                            </Text>
+                          )}
+                        </>
+                      )}
+                    />
+                  </View>
+
+                  {/* 3. Términos y Condiciones */}
+                  <View style={styles.documentoItem}>
+                    <Controller
+                      control={control}
+                      name="aceptaTerminos"
+                      render={({ field: { onChange, value } }) => (
+                        <>
+                          <TouchableOpacity
+                            style={[
+                              styles.checkboxContainer,
+                              errors.aceptaTerminos &&
+                                styles.checkboxContainerError,
+                            ]}
+                            onPress={() => onChange(!value)}
+                            activeOpacity={0.7}
+                          >
+                            <View
+                              style={[
+                                styles.checkbox,
+                                value && styles.checkboxChecked,
+                              ]}
+                            >
+                              {value && (
+                                <Ionicons
+                                  name="checkmark"
+                                  size={16}
+                                  color="#ffffff"
+                                />
+                              )}
+                            </View>
+                            <View style={styles.checkboxTextContainer}>
+                              <View style={styles.documentoTitleRow}>
+                                <Ionicons
+                                  name="document-text"
+                                  size={18}
+                                  color="#3b82f6"
+                                />
+                                <Text style={styles.checkboxText}>
+                                  Acepto los{" "}
+                                  <Text
+                                    style={styles.checkboxLink}
+                                    onPress={(e) => {
+                                      e.stopPropagation();
+                                      setShowTerminosModal(true);
+                                    }}
+                                  >
+                                    Términos y Condiciones
+                                  </Text>
+                                </Text>
+                              </View>
+                              {terminosLeidos && (
+                                <View style={styles.leidoBadge}>
+                                  <Ionicons
+                                    name="checkmark-circle"
+                                    size={14}
+                                    color="#10b981"
+                                  />
+                                  <Text style={styles.leidoText}>Leído</Text>
+                                </View>
+                              )}
+                            </View>
+                          </TouchableOpacity>
+                          {errors.aceptaTerminos && (
+                            <Text style={styles.errorText}>
+                              {getErrorMessage(errors.aceptaTerminos)}
+                            </Text>
+                          )}
+                        </>
+                      )}
+                    />
+                  </View>
                 </View>
 
                 <Button
@@ -745,17 +987,25 @@ export default function CompleteProfileScreen() {
             </Card>
           </ScrollView>
         </KeyboardAvoidingView>
-        
+
+        {/* Modales */}
         <TerminosCondicionesModal
           visible={showTerminosModal}
           onClose={handleCloseTerminos}
+        />
+        <ReglamentoModal
+          visible={showReglamentoModal}
+          onClose={handleCloseReglamento}
+        />
+        <DeclaracionJuradaModal
+          visible={showDeclaracionModal}
+          onClose={handleCloseDeclaracion}
         />
       </SafeAreaView>
     </LinearGradient>
   );
 }
 
-// ... (todos los estilos igual que antes)
 const styles = StyleSheet.create({
   container: { flex: 1 },
   keyboardView: { flex: 1 },
@@ -833,6 +1083,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#ef4444",
     marginTop: 4,
+    marginLeft: 32,
   },
   edadBanner: {
     flexDirection: "row",
@@ -918,23 +1169,43 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#6b7280",
   },
-  terminosSection: {
+  documentosSection: {
     marginBottom: 24,
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: "#e5e7eb",
   },
-  terminosCheckbox: {
+  avisoLegalContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    padding: 14,
+    backgroundColor: "#eff6ff",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#bfdbfe",
+    marginBottom: 20,
+  },
+  avisoLegalTexto: {
+    flex: 1,
+    fontSize: 13,
+    color: "#1e40af",
+    lineHeight: 19,
+  },
+  documentoItem: {
+    marginBottom: 16,
+  },
+  checkboxContainer: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
-    padding: 12,
-    borderRadius: 8,
+    padding: 14,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: "#e5e7eb",
     backgroundColor: "#f9fafb",
   },
-  terminosCheckboxError: {
+  checkboxContainerError: {
     borderColor: "#ef4444",
     backgroundColor: "#fef2f2",
   },
@@ -953,23 +1224,40 @@ const styles = StyleSheet.create({
     backgroundColor: "#3b82f6",
     borderColor: "#3b82f6",
   },
-  terminosTextContainer: {
+  checkboxTextContainer: {
     flex: 1,
+    gap: 8,
   },
-  terminosText: {
+  documentoTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  checkboxText: {
     fontSize: 14,
     color: "#374151",
     lineHeight: 20,
+    flex: 1,
   },
-  terminosLink: {
+  checkboxLink: {
     color: "#3b82f6",
     fontWeight: "600",
     textDecorationLine: "underline",
   },
-  terminosLeidos: {
+  leidoBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+    backgroundColor: "#d1fae5",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  leidoText: {
+    fontSize: 12,
     color: "#10b981",
     fontWeight: "600",
-    fontSize: 12,
   },
   submitButton: {
     marginTop: 8,

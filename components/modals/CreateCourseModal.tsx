@@ -32,6 +32,7 @@ import Toast from "react-native-toast-message";
 import { DatePicker } from "../pickers/DatePicker";
 import { CuotasCalculadas } from "../pagos/CuotasCalculadas";
 import { calcularCuotas, calcularDiasTotales } from "@/util/calcularCuotas";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 interface FormValues {
   nombre: string;
@@ -48,6 +49,7 @@ interface FormValues {
 interface CreateCourseModalProps {
   visible: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 type Modalidad = "ALQUILER" | "COMISION";
@@ -201,6 +203,7 @@ const diasOrdenados: DayOfWeek[] = [
 export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   visible,
   onClose,
+  onSuccess,
 }) => {
   const [modalidad, setModalidad] = useState<Modalidad>("ALQUILER");
   const [showTimePicker, setShowTimePicker] = useState<{
@@ -389,6 +392,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   const crearCursoAlquiler = async (nuevoCurso: nuevoCursoAlquilerAdmin) => {
     try {
       const response = await cursoService.altaCursoAlquiler(nuevoCurso);
+      if (onSuccess) onSuccess();
       Toast.show({
         type: "success",
         text1: "Curso creado exitosamente",
@@ -399,7 +403,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo crear el curso.",
+        text2: getErrorMessage(error) || "No se pudo crear el curso.",
         position: "bottom",
       });
     }
@@ -408,6 +412,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   const crearCursoComision = async (nuevoCurso: nuevoCursoComision) => {
     try {
       const response = await cursoService.altaCursoComision(nuevoCurso);
+      if (onSuccess) onSuccess();
       Toast.show({
         type: "success",
         text1: "Curso creado exitosamente",
@@ -418,7 +423,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo crear el curso.",
+        text2: getErrorMessage(error) || "No se pudo crear el curso.",
         position: "bottom",
       });
     }

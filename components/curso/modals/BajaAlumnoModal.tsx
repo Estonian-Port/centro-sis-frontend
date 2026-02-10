@@ -11,6 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { Alumno, Usuario } from "@/model/model";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 interface ConfirmarBajaModalProps {
   visible: boolean;
@@ -45,7 +46,7 @@ export const ConfirmarBajaModal: React.FC<ConfirmarBajaModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudo dar de baja al alumno",
+        text2: getErrorMessage(error) || "No se pudo dar de baja al alumno",
         position: "bottom",
       });
     } finally {

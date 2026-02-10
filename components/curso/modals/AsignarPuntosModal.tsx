@@ -12,6 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { Alumno, Usuario } from "@/model/model";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 interface AsignarPuntosModalProps {
   visible: boolean;
@@ -60,7 +61,7 @@ export const AsignarPuntosModal: React.FC<AsignarPuntosModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudieron asignar los puntos",
+        text2: getErrorMessage(error) || "No se pudieron asignar los puntos",
         position: "bottom",
       });
     } finally {

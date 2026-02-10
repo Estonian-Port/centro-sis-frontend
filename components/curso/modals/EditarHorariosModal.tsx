@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { Horario, DayOfWeek } from "@/model/model";
 import { TimePickerModal } from "@/components/pickers/TimePicker";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 interface EditarHorariosModalProps {
   visible: boolean;
@@ -151,7 +152,7 @@ export const EditarHorariosModal: React.FC<EditarHorariosModalProps> = ({
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "No se pudieron actualizar los horarios",
+        text2: getErrorMessage(error) || "No se pudieron actualizar los horarios",
         position: "bottom",
       });
     } finally {
