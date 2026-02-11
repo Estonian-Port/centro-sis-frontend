@@ -1,31 +1,29 @@
-import axios from "axios";
-import { authManager } from './authManager.service';
-import { tokenStorage } from './token.service';
+import { Usuario } from '@/model/model';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../helper/auth.interceptor';
 
-const API_BASE_URL = process.env.BASE_URL || 'http://localhost:8080/api';
+const STORAGE_KEY_TOKEN = "token"
 
-export const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-});
+class AuthService {
 
-// Request interceptor: Agregar token a cada petición
-api.interceptors.request.use(async (config) => {
-  const token = await tokenStorage.getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+  login = async (username: string, password: string): Promise<string> => {
+    const response = await api.post('/login', { username, password });
+    return response.headers['authorization'];
+  };
 
-// Response interceptor: Manejar expiración de token
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      await tokenStorage.removeToken();
-      authManager.triggerLogout();
+  getCurrentUser = async (): Promise<Usuario> => {
+    const response = await api.get('/usuario/me');
+    return response.data.data;
+  };
+
+  setAuthToken = async () => {
+    const token = await AsyncStorage.getItem(STORAGE_KEY_TOKEN)
+    if (token) {
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    } else {
+      delete api.defaults.headers.common["Authorization"];
     }
-    return Promise.reject(error);
-  }
-);
+  };
+}
+
+export const authService = new AuthService();

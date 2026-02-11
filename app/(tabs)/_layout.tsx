@@ -1,167 +1,230 @@
-import { useAuth } from '@/context/authContext';
-import { Role } from '@/model/model';
-import { Ionicons } from '@expo/vector-icons';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { Tabs } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
-import { RoleSelectionModal } from '../../components/modals/RoleSelectionModal';
-import { DrawerContent } from '../../components/navigation/DrawerContent';
-import AccessesScreen from './accesses';
-import AdminScreen from './admin';
-import HomeScreen from './index';
-import PaymentsScreen from './payments';
-import ProfessorEarningsScreen from './professor-earnings';
-import ProfileScreen from './profile';
-import StudentPaymentsScreen from './student-payments';
+import { useAuth } from "@/context/authContext";
+import { Rol } from "@/model/model";
+import { Ionicons } from "@expo/vector-icons";
+import { Drawer } from "expo-router/drawer";
+import { Tabs } from "expo-router";
+import { useEffect, useState } from "react";
+import { Platform, View } from "react-native";
+import { RoleSelectionModal } from "../../components/modals/RoleSelectionModal";
+import { DrawerContent } from "../../components/navigation/DrawerContent";
+import { CustomDrawerHeader } from "../../components/navigation/CustomDrawerHeader";
 
-const Drawer = createDrawerNavigator();
-
-function DrawerNavigator() {
-  const { selectedRole } = useAuth();
-
-  return (
-    <Drawer.Navigator 
-      drawerContent={(props) => <DrawerContent {...props} />}
-      screenOptions={{ 
-        headerShown: true,
-        drawerStyle: {
-          width: 280,
-        },
-      }}
-    >
-      <Drawer.Screen 
-        name="Dashboard" 
-        component={HomeScreen}
-        options={{
-          title: 'Dashboard',
-        }}
-      />
-      
-      {selectedRole === 'ADMINISTRADOR' && (
-        <>
-          <Drawer.Screen name="Admin" component={AdminScreen} />
-          <Drawer.Screen name="Payments" component={PaymentsScreen} />
-        </>
-      )}
-      {selectedRole === 'ALUMNO' && (
-        <Drawer.Screen 
-          name="StudentPayments" 
-          component={StudentPaymentsScreen} 
-          options={{ title: 'Mis Pagos' }} />
-      )}
-      {selectedRole === 'PROFESOR' && (
-        <Drawer.Screen 
-          name="ProfessorEarnings" 
-          component={ProfessorEarningsScreen} 
-          options={{ title: 'Mis Cobros' }} />
-      )}
-
-      <Drawer.Screen 
-        name="Accesses" 
-        component={AccessesScreen}
-        options={{
-          title: 'Accesos',
-        }}
-      />
-      
-      <Drawer.Screen 
-        name="Profile" 
-        component={ProfileScreen}
-        options={{
-          title: 'Perfil',
-        }}
-      />
-    </Drawer.Navigator>
-  );
-}
-
-export default function TabLayout() {
-  const { user, selectedRole, setSelectedRole, hasMultipleRoles } = useAuth();
+function DrawerWithModal({ children }: { children: React.ReactNode }) {
+  const { usuario, selectedRole, setSelectedRole, hasMultipleRoles } =
+    useAuth();
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   useEffect(() => {
+    if (!usuario || hasInitialized) return;
+
     if (hasMultipleRoles() && !selectedRole) {
       setShowRoleModal(true);
+    } else if (!selectedRole && usuario.listaRol.length > 0) {
+      setSelectedRole(usuario.listaRol[0]);
     }
-  }, [hasMultipleRoles, selectedRole]);
 
-  const handleRoleSelection = (role: Role) => {
+    setHasInitialized(true);
+  }, [usuario]);
+
+  const handleRoleSelection = (role: Rol) => {
     setSelectedRole(role);
     setShowRoleModal(false);
   };
 
-  // Para web, usa el Drawer
-  if (Platform.OS === 'web') {
+  return (
+    <View style={{ flex: 1 }}>
+      {children}
+      <RoleSelectionModal
+        visible={showRoleModal}
+        roles={usuario?.listaRol || []}
+        onSelectRole={handleRoleSelection}
+      />
+    </View>
+  );
+}
+
+export default function TabLayout() {
+  const { selectedRole } = useAuth();
+  const isAdmin = selectedRole === Rol.ADMINISTRADOR;
+  const isOficina = selectedRole === Rol.OFICINA;
+  const isPorteria = selectedRole === Rol.PORTERIA;
+
+  // Para web, usa el Drawer de expo-router
+  if (Platform.OS === "web") {
     return (
-      <>
-        <DrawerNavigator />
-        <RoleSelectionModal
-          visible={showRoleModal}
-          roles={user?.roles || []}
-          onSelectRole={handleRoleSelection}
-        />
-      </>
+      <DrawerWithModal>
+        <Drawer
+          key={selectedRole || "no-role"}
+          drawerContent={(props) => <DrawerContent {...props} />}
+          screenOptions={{
+            headerShown: false,
+            drawerStyle: {
+              width: 280,
+            },
+          }}
+        >
+          <Drawer.Screen
+            name="index"
+            options={{
+              headerShown: true,
+              header: () => <CustomDrawerHeader title="Dashboard" />,
+              drawerLabel: "Dashboard",
+              drawerIcon: ({ color, size }) => (
+                <Ionicons name="home-outline" size={size} color={color} />
+              ),
+            }}
+          />
+
+          {(isAdmin || isOficina) && (
+            <Drawer.Screen
+              name="admin"
+              options={{
+                headerShown: true,
+                header: () => <CustomDrawerHeader title="Administración" />,
+                drawerLabel: "Administración",
+                drawerIcon: ({ color, size }) => (
+                  <Ionicons name="settings-outline" size={size} color={color} />
+                ),
+              }}
+            />
+          )}
+
+          {isPorteria && (
+            <Drawer.Screen
+              name="escanear-qr"
+              options={{
+                headerShown: true,
+                header: () => <CustomDrawerHeader title="Escanear QR" />,
+                drawerLabel: "Escanear QR",
+                drawerIcon: ({ color, size }) => (
+                  <Ionicons name="settings-outline" size={size} color={color} />
+                ),
+              }}
+            />
+          )}
+
+          <Drawer.Screen
+            name="accesos"
+            options={{
+              headerShown: false,
+              drawerLabel: "Accesos",
+              drawerIcon: ({ color, size }) => (
+                <Ionicons name="log-in-outline" size={size} color={color} />
+              ),
+            }}
+          />
+
+          <Drawer.Screen
+            name="pagos"
+            options={{
+              headerShown: false,
+              drawerLabel: "Pagos",
+              drawerIcon: ({ color, size }) => (
+                <Ionicons name="card-outline" size={size} color={color} />
+              ),
+            }}
+          />
+
+          <Drawer.Screen
+            name="profile"
+            options={{
+              headerShown: true,
+              header: () => <CustomDrawerHeader title="Perfil" />,
+              drawerLabel: "Perfil",
+              drawerIcon: ({ color, size }) => (
+                <Ionicons name="person-outline" size={size} color={color} />
+              ),
+            }}
+          />
+        </Drawer>
+      </DrawerWithModal>
     );
   }
 
   // Para móvil, usa Tabs
   return (
-    <>
+    <DrawerWithModal>
       <Tabs
+        key={`tabs-${selectedRole || "no-role"}`}
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#3b82f6',
+          tabBarActiveTintColor: "#3b82f6",
         }}
       >
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Inicio',
+            title: "Inicio",
             tabBarIcon: ({ size, color }) => (
               <Ionicons name="home-outline" size={size} color={color} />
             ),
           }}
         />
-        
-        {selectedRole === Role.ADMINISTRADOR && (
-          <Tabs.Screen
-            name="admin"
-            options={{
-              title: 'Admin',
-              tabBarIcon: ({ size, color }) => (
-                <Ionicons name="settings-outline" size={size} color={color} />
-              ),
-            }}
-          />
-        )}
-        
+
         <Tabs.Screen
-          name="payments"
+          name="admin"
           options={{
-            title: 'Pagos',
+            title: "Admin",
+            href: isAdmin || isOficina ? "/(tabs)/admin" : null,
+            tabBarIcon: ({ size, color }) => (
+              <Ionicons name="clipboard-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="accesos"
+          options={{
+            title: "Accesos",
+            tabBarIcon: ({ size, color }) => (
+              <Ionicons name="log-in-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="pagos"
+          options={{
+            title: "Pagos",
+            href: !isPorteria ? "/(tabs)/admin" : null,
             tabBarIcon: ({ size, color }) => (
               <Ionicons name="card-outline" size={size} color={color} />
             ),
           }}
         />
-        
+
+        <Tabs.Screen
+          name="mi-qr"
+          options={{
+            title: "Mi QR",
+            tabBarIcon: ({ size, color }) => (
+              <Ionicons name="qr-code-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="escanear-qr"
+          options={{
+            title: "Escanear",
+            href: isPorteria ? "/(tabs)/escanear-qr" : null,
+            tabBarIcon: ({ size, color }) => (
+              <Ionicons name="scan-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'Perfil',
+            title: "Perfil",
             tabBarIcon: ({ size, color }) => (
               <Ionicons name="person-outline" size={size} color={color} />
             ),
           }}
         />
       </Tabs>
-
-      <RoleSelectionModal
-        visible={showRoleModal}
-        roles={user?.roles || []}
-        onSelectRole={handleRoleSelection}
-      />
-    </>
+    </DrawerWithModal>
   );
 }

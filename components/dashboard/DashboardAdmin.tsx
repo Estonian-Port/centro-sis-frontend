@@ -1,0 +1,210 @@
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
+import { useState } from "react";
+import { Card } from "@/components/ui/Card";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { COLORES } from "@/util/colores";
+import { CreateUserModal } from "@/components/modals/CreateUserModal";
+import { TIPOGRAFIA } from "@/util/tipografia";
+import { Estadistica, NuevoUsuario, Rol } from "@/model/model";
+import { usuarioService } from "@/services/usuario.service";
+import Toast from "react-native-toast-message";
+import { CreateCourseModal } from "@/components/modals/CreateCourseModal";
+import { router } from "expo-router";
+import { useAuth } from "@/context/authContext";
+import { getErrorMessage } from "@/helper/auth.interceptor";
+
+const DasboardAdmin = ({ estadisticas, onRefresh }: { estadisticas: Estadistica, onRefresh: () => void }) => {
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+  const { selectedRole } = useAuth();
+  const isAdmin = selectedRole === Rol.ADMINISTRADOR;
+
+  const handleCrearUsuario = () => {
+    setShowCreateUserModal(true);
+  };
+
+  const handleCrearCurso = () => {
+    setShowCreateCourseModal(true);
+  };
+
+  const handleGestionarUsuarios = () => {
+    router.push("/(tabs)/admin");
+  };
+
+  const altaUsuario = async (nuevoUsuario: NuevoUsuario) => {
+    try {
+      const response = await usuarioService.altaUsuario(nuevoUsuario);
+      Toast.show({
+        type: "success",
+        text1: "Invitación enviada",
+        text2: `La invitación ha sido enviada a ${nuevoUsuario.email}.`,
+        position: "bottom",
+      });
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: getErrorMessage(error) || "No se pudo crear el usuario.",
+        position: "bottom",
+      });
+    }
+  };
+
+  const mesActual = new Date().toLocaleString("es-ES", { month: "long" });
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <ScrollView style={styles.container}>
+        <Text style={styles.title}>Dashboard</Text>
+        <View style={styles.statsGrid}>
+          <Card style={styles.statCard}>
+            <Text style={styles.statNumber}>{estadisticas.alumnosActivos}</Text>
+            <Text style={styles.statLabel}>Alumnos Activos</Text>
+          </Card>
+          <Card style={styles.statCard}>
+            <Text style={styles.statNumber}>{estadisticas.cursos}</Text>
+            <Text style={styles.statLabel}>Cursos Activos</Text>
+          </Card>
+          <Card style={styles.statCard}>
+            <Text style={styles.statNumber}>{estadisticas.profesores}</Text>
+            <Text style={styles.statLabel}>Profesores Activos</Text>
+          </Card>
+          {isAdmin && (
+            <Card style={styles.statCard}>
+              <Text style={styles.statNumber}>
+                {estadisticas.accesosMensuales}
+              </Text>
+              <Text style={styles.statLabel}>Accesos en {mesActual}</Text>
+            </Card>
+          )}
+        </View>
+        <Card>
+          <Text style={styles.cardTitle}>Acciones Rápidas</Text>
+          <TouchableOpacity
+            style={styles.actionItem}
+            onPress={handleCrearUsuario}
+          >
+            <Ionicons
+              name="person-add-outline"
+              size={20}
+              color={COLORES.resaltado}
+            />
+            <Text style={styles.actionText}>Crear Usuario</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORES.resaltado}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionItem}
+            onPress={handleCrearCurso}
+          >
+            <Ionicons
+              name="library-outline"
+              size={20}
+              color={COLORES.resaltado}
+            />
+            <Text style={styles.actionText}>Crear Curso</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORES.resaltado}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionItem}
+            onPress={handleGestionarUsuarios}
+          >
+            <Ionicons name="apps-outline" size={20} color={COLORES.resaltado} />
+            <Text style={styles.actionText}>Ver Usuarios y Cursos</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORES.resaltado}
+            />
+          </TouchableOpacity>
+        </Card>
+        <CreateUserModal
+          visible={showCreateUserModal}
+          onClose={() => setShowCreateUserModal(false)}
+          onSuccess={(nuevoUsuario: NuevoUsuario) => altaUsuario(nuevoUsuario)}
+        />
+        <CreateCourseModal
+          visible={showCreateCourseModal}
+          onClose={() => setShowCreateCourseModal(false)}
+          onSuccess={() => {
+            if (onRefresh) onRefresh();
+          }}
+        />
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
+export default DasboardAdmin;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORES.background,
+    padding: 16,
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f9fafb",
+  },
+  title: {
+    ...TIPOGRAFIA.titleL,
+    color: COLORES.textPrimary,
+    marginBottom: 20,
+  },
+  cardTitle: {
+    ...TIPOGRAFIA.titleL,
+    color: COLORES.textPrimary,
+    marginBottom: 16,
+  },
+  statsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
+    minWidth: 150,
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+  statNumber: {
+    ...TIPOGRAFIA.titleL,
+    color: COLORES.resaltado,
+    marginBottom: 4,
+  },
+  statLabel: {
+    ...TIPOGRAFIA.titleM,
+    color: COLORES.resaltado,
+    textAlign: "center",
+  },
+  actionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  actionText: {
+    flex: 1,
+    marginLeft: 12,
+    ...TIPOGRAFIA.subtitle,
+    color: COLORES.textPrimary,
+  },
+});

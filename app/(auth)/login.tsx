@@ -1,96 +1,107 @@
-import React from 'react';
-import { Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { LoginForm } from '../../components/forms/loginForm';
-import { Card } from '../../components/ui/Card';
-
+import { Card } from "@/components/ui/Card";
+import { useAuth } from "@/context/authContext";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+  KeyboardAvoidingView,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { TIPOGRAFIA } from "@/util/tipografia";
+import { COLORES } from "@/util/colores";
+import { LinearGradient } from "expo-linear-gradient";
+import { Logo } from "@/components/ui/Logo";
+import { LoginForm } from "@/components/forms/loginForm";
 
 export default function LoginScreen() {
-  const handleLoginSuccess = () => {
-    // No hacer nada, el layout maneja la navegación
-    console.log('Login exitoso');
-  };
-
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Centro-sis</Text>
-          <Text style={styles.subtitle}>Sistema de Gestión Educativa</Text>
-        </View>
-        <Card style={styles.loginCard}>
-          <Text style={styles.cardTitle}>Iniciar Sesión</Text>
-          <LoginForm onSuccess={handleLoginSuccess} />
-        </Card>
-        {process.env.EXPO_PUBLIC_MOCK_MODE === 'true' && (
-          <Card style={styles.demoCard}>
-            <Text style={styles.demoTitle}>Modo Demo</Text>
-            <Text style={styles.demoText}>
-              Credenciales de prueba:
-              {'\n'}• Alumno: alumno@test.com / 123456
-              {'\n'}• Profesor: profesor@test.com / 123456
-              {'\n'}• Admin: admin@test.com / 123456
-              {'\n'}• Profesor y Alumno: profesoralumno@test.com / 123456
-              {'\n'}• Todos: completo@test.com / 123456
-            </Text>
-          </Card>
-        )}
-      </View>
-    </SafeAreaView>
+    <LinearGradient
+      colors={[COLORES.violeta, COLORES.cobre]}
+      style={styles.container}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+    >
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {Platform.OS === "web" ? (
+              <View style={styles.content}>
+                <View style={styles.header}>
+                  <Logo size={200} color={COLORES.dorado} />
+                  <Text style={styles.title}>CENTRO SIS</Text>
+                  <Text style={styles.subtitle}>
+                    Sistema de Gestión Educativa
+                  </Text>
+                </View>
+                <Card style={styles.loginCard}>
+                  <LoginForm />
+                </Card>
+              </View>
+            ) : (
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={styles.content}>
+                  <View style={styles.header}>
+                    <Logo size={200} color={COLORES.dorado} />
+                    <Text style={styles.title}>CENTRO SIS</Text>
+                    <Text style={styles.subtitle}>
+                      Sistema de Gestión Educativa
+                    </Text>
+                  </View>
+                  <Card style={styles.loginCard}>
+                    <LoginForm />
+                  </Card>
+                </View>
+              </TouchableWithoutFeedback>
+            )}
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 20,
   },
   content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    maxWidth: Platform.OS === 'web' ? 400 : '100%',
-    alignSelf: 'center',
-    width: '100%',
+    width: "100%",
+    maxWidth: Platform.OS === "web" ? 400 : "100%",
+    alignSelf: "center",
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 32,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 8,
+    ...TIPOGRAFIA.titleXL,
+    color: COLORES.dorado,
+    textAlign: "center",
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
+    ...TIPOGRAFIA.subtitle,
+    color: COLORES.dorado,
+    textAlign: "center",
   },
   loginCard: {
     marginBottom: 20,
-  },
-  cardTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#1f2937',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  demoCard: {
-    backgroundColor: '#fef3c7',
-    borderColor: '#f59e0b',
-    borderWidth: 1,
-  },
-  demoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#92400e',
-    marginBottom: 8,
-  },
-  demoText: {
-    fontSize: 14,
-    color: '#92400e',
-    lineHeight: 20,
   },
 });

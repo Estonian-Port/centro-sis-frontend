@@ -1,46 +1,40 @@
-import { AuthProvider, useAuth } from '@/context/authContext';
-import { Stack, router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import React, { useEffect } from 'react';
+import { AuthProvider } from "@/context/authContext";
+import { SplashScreen, Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
+import { useFonts } from "expo-font";
+import Toast from "react-native-toast-message";
+import { Platform } from "react-native";
 
-function RootStack() {
-  const { isAuthenticated, isLoading, user } = useAuth();
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (!isAuthenticated) {
-        router.replace('/(auth)/login');
-      } else if (user?.firstLogin) {
-        // Si es el primer login, ir a completar perfil
-        router.replace('/(auth)/complete-profile');
-      } else {
-        // Si ya completó el perfil, ir a tabs
-        router.replace('/(tabs)' as any);
-      }
-    }
-  }, [isAuthenticated, isLoading, user?.firstLogin]);
-
-  // Mientras cargamos el token no mostramos nada
-  if (isLoading) {
-    return null;
-  }
-
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {/* Registramos todas las rutas */}
-      <Stack.Screen name="(auth)/login" />
-      <Stack.Screen name="(auth)/complete-profile" /> {/* AGREGAR ESTA LÍNEA */}
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="+not-found" />
-    </Stack>
-  );
-}
+export const Barlow = {
+  regular: "Barlow-Regular",
+  medium: "Barlow-Medium",
+  semiBold: "Barlow-SemiBold",
+};
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    "Barlow-Regular": require("../assets/fonts/Barlow-Regular.ttf"),
+    "Barlow-Medium": require("../assets/fonts/Barlow-Medium.ttf"),
+    "Barlow-SemiBold": require("../assets/fonts/Barlow-SemiBold.ttf"),
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (Platform.OS === "web") {
+    require("../global-styles.css");
+  }
+
+  if (!fontsLoaded) return null;
   return (
     <AuthProvider>
-      <RootStack />
+      <Stack screenOptions={{ headerShown: false }} />
       <StatusBar style="auto" />
+      <Toast />
     </AuthProvider>
   );
 }

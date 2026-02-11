@@ -1,0 +1,6 @@
+/* Eliminar outline de focus en inputs para web */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+}
