@@ -1,53 +1,54 @@
 {
   "expo": {
-    "name": "Centro-SIS",
+    "name": "Centro SIS",
     "slug": "centro-sis",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo-blanco.jpg",
-    "scheme": "centrosisfrontend",
+    "icon": "./assets/images/logo-centro.png",
+    "scheme": "centrosis",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+
+    "android": {
+      "package": "com.estonianport.centrosis",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logo-centro.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+
     "ios": {
+      "bundleIdentifier": "com.estonianport.centrosis",
+      "buildNumber": "1",
       "supportsTablet": true
     },
-    "android": {
-        "adaptiveIcon": {
-          "backgroundColor": "#2D3C59",
-          "foregroundImage": "./assets/images/logo.png"
-        },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
-    },
+
     "web": {
-      "output": "static",
       "bundler": "metro",
-      "favicon": "./assets/images/logo.png"
+      "output": "static",
+      "favicon": "./assets/images/logo-centro.png"
     },
+
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/logo.png",
-          "imageWidth": 200,
+          "image": "./assets/images/logo-centro.png",
           "resizeMode": "contain",
-          "backgroundColor": "#2D3C59",
-          "dark": {
-            "backgroundColor": "#2D3C59"
-          }
+          "backgroundColor": "#ffffff"
         }
       ],
       "expo-web-browser"
     ],
+
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     }
   }
 }
