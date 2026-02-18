@@ -3,7 +3,7 @@ import axios, { AxiosError } from "axios";
 
 export const API_BASE_URL = __DEV__
   ? //'http://192.168.100.130:8080' // Seba
-    "http://192.168.0.100:8080" // Gabi
+    "http://192.168.0.244:8080" // Gabi
   : "http://localhost:8080"; // Localhost
 //: //'http://172.20.10.2:8080'
 //'https://api.centrosis.tenri.com.ar'; // Producción

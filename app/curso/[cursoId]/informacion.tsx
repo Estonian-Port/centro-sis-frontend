@@ -22,6 +22,7 @@ import {
 import { useAuth } from "@/context/authContext";
 import { pagoService } from "@/services/pago.service";
 import { useEffect } from "react";
+import { EventBus } from "@/util/EventBus";
 
 export default function InformacionTab() {
   const { cursoId } = useLocalSearchParams();
@@ -367,6 +368,7 @@ export default function InformacionTab() {
         onGuardar={async (nombre) => {
           await cursoService.updateNombre(Number(cursoId), nombre);
           await fetchCurso(false);
+          EventBus.emit("cursoUpdated");
         }}
       />
 
@@ -377,6 +379,7 @@ export default function InformacionTab() {
         onGuardar={async (ids) => {
           await cursoService.updateProfesores(Number(cursoId), ids);
           await fetchCurso(false);
+          EventBus.emit("cursoUpdated");
         }}
         onBuscarProfesores={async (query) => {
           return await usuarioService.searchByRol(query, "PROFESOR");
@@ -390,6 +393,7 @@ export default function InformacionTab() {
         onGuardar={async (horarios) => {
           await cursoService.updateHorarios(Number(cursoId), horarios);
           await fetchCurso(false);
+          EventBus.emit("cursoUpdated");
         }}
       />
 
@@ -403,6 +407,7 @@ export default function InformacionTab() {
             modalidades,
           );
           await fetchCurso(false);
+          EventBus.emit("cursoUpdated");
         }}
       />
     </ScrollView>

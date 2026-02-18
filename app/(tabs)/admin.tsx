@@ -37,6 +37,7 @@ import { TIPOGRAFIA } from "@/util/tipografia";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 import { getErrorMessage } from "@/helper/auth.interceptor";
+import { EventBus } from "@/util/EventBus";
 
 // ============================================
 // OPCIONES DE FILTROS
@@ -116,6 +117,29 @@ export default function AdminScreen() {
     }
   }, [activeTab, usuario]);
 
+  useEffect(() => {
+    const handler = () => {
+      if (activeTab === "courses") fetchCourses();
+    };
+    EventBus.on("cursoUpdated", handler);
+    return () => {
+      EventBus.off("cursoUpdated", handler);
+    };
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handler = async ({ cursoId }: { cursoId: number }) => {
+      // Busca el curso actualizado
+      const updatedCurso = await cursoService.getById(cursoId);
+      // Actualiza solo ese curso en el array de courses
+      setCourses((prevCourses) =>
+        prevCourses.map((c) => (c.id === updatedCurso.id ? updatedCurso : c)),
+      );
+    };
+    EventBus.on("alumnoBaja", handler);
+    return () => EventBus.off("alumnoBaja", handler);
+  }, []);
+
   const fetchUsers = async () => {
     if (!usuario) {
       return;
@@ -141,6 +165,8 @@ export default function AdminScreen() {
     if (!usuario) {
       return;
     }
+
+    console.log("fetchCourses - usuario.id:", usuario.id);
 
     setLoading(true);
     try {

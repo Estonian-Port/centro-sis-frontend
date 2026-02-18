@@ -14,6 +14,8 @@ import { useState } from "react";
 import { BajaTotalUsuario } from "../modals/BajaTotalUsuario";
 import { usuarioService } from "@/services/usuario.service";
 import { useAuth } from "@/context/authContext";
+import Toast from "react-native-toast-message";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 const UserItem = ({
   user,
@@ -149,9 +151,20 @@ const UserItem = ({
         onConfirmar={async () => {
           try {
             await usuarioService.bajaTotal(user.id, usuario!.id);
+            Toast.show({
+              type: "success",
+              text1: "Usuario dado de baja",
+              position: "bottom",
+            });
             onRefresh();
           } catch (error) {
-            console.error("Error dando de baja al usuario:", error);
+            Toast.show({
+              type: "error",
+              text1: "Error",
+              text2:
+                getErrorMessage(error) || "No se pudo dar de baja al usuario",
+              position: "bottom",
+            });
           }
         }}
       />

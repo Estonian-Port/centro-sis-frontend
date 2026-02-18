@@ -269,7 +269,7 @@ export interface Acceso {
 
 export interface EstadisticasAcceso {
   totalHoy: number;
-  totalEstaSemana: number;
+  totalSemana: number;
   totalEsteMes: number;
   promedioDiario: number;
 }

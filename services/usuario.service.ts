@@ -115,8 +115,8 @@ class UsuarioService {
     return response.data.data;
   }
 
-  bajaTotal = async (id: number, adminId: number): Promise<void> => {
-    const response = await api.delete(`${USER}/delete/${id}/${adminId}`);
+  bajaTotal = async (id: number, eliminadoPorId: number): Promise<void> => {
+    const response = await api.delete(`${USER}/delete/${id}/${eliminadoPorId}`);
     return response.data.data;
   }
 

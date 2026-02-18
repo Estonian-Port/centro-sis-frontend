@@ -23,7 +23,7 @@ import { COLORES } from "@/util/colores";
 import { Tag } from "@/components/ui/Tag";
 import { Button } from "@/components/ui/Button";
 import {
-  estadoPagoToTagVariant, formatEstadoPago
+  estadoPagoToTagVariant, formatDateToDDMMYYYY, formatEstadoPago
 } from "@/helper/funciones";
 import { useAuth } from "@/context/authContext";
 import { AdultoResponsableModal } from "@/components/modals/AdultoResponsableModal";
@@ -282,7 +282,7 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                             ${pago.monto.toLocaleString()}
                           </Text>
                           <Text style={styles.pagoFecha}>
-                            {new Date(pago.fecha).toLocaleDateString("es-AR")}
+                            {formatDateToDDMMYYYY(pago.fecha)}
                           </Text>
                         </View>
                       </View>

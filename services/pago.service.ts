@@ -98,6 +98,7 @@ export const pagoService = {
       profesorId: number;
     }
   ): Promise<Pago> => {
+    console.log("Registrar pago comisión llamado con:", { usuarioId, data });
     const response = await api.post(`/pagos/comision/${usuarioId}`, data);
     return response.data;
   },

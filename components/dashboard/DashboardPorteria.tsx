@@ -13,13 +13,8 @@ import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TIPOGRAFIA } from "@/util/tipografia";
 import { COLORES } from "@/util/colores";
-
-interface EstadisticasAcceso {
-  totalHoy: number;
-  totalEstaSemana: number;
-  totalEsteMes: number;
-  promedioDiario: number;
-}
+import { EventBus } from "@/util/EventBus";
+import { EstadisticasAcceso } from "@/model/model";
 
 export default function DashboardPorteria() {
   const [estadisticas, setEstadisticas] = useState<EstadisticasAcceso | null>(
@@ -30,6 +25,14 @@ export default function DashboardPorteria() {
 
   useEffect(() => {
     loadEstadisticas();
+  }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      loadEstadisticas();
+    };
+    EventBus.on("accesoRegistrado", handler);
+    return () => EventBus.off("accesoRegistrado", handler);
   }, []);
 
   const loadEstadisticas = async () => {
@@ -79,15 +82,15 @@ export default function DashboardPorteria() {
               <Text style={styles.statLabel}>Hoy</Text>
             </View>
 
-            {/* Esta Semana */}
+            {/* Última Semana */}
             <View style={[styles.statCard, styles.statCardWeek]}>
               <View style={styles.statIconContainer}>
                 <Ionicons name="calendar" size={28} color="#10b981" />
               </View>
               <Text style={styles.statValue}>
-                {estadisticas?.totalEstaSemana || 0}
+                {estadisticas?.totalSemana || 0}
               </Text>
-              <Text style={styles.statLabel}>Esta Semana</Text>
+              <Text style={styles.statLabel}>Última Semana</Text>
             </View>
 
             {/* Este Mes */}

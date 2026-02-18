@@ -129,6 +129,9 @@ export const RegistrarPagoCursoModal: React.FC<
           throw new Error("No se pudo calcular el período");
         }
 
+        console.log("Profesores:", curso.profesores);
+        console.log("Profesor ID utilizado para registrar comisión:", profesorId);
+
         await pagoService.registrarPagoComision(usuarioId, {
           cursoId: curso.id,
           profesorId: profesorId,
