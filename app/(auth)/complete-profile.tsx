@@ -159,6 +159,8 @@ export default function CompleteProfileScreen() {
     watch,
     trigger,
   } = useForm<any>({
+    mode: "onSubmit",
+    reValidateMode: "onChange",
     resolver: yupResolver(
       getValidationSchema(
         false,
@@ -351,8 +353,7 @@ export default function CompleteProfileScreen() {
         type: "error",
         text1: "Error",
         text2:
-          getErrorMessage(error) ||
-          "Hubo un error al actualizar tu perfil.",
+          getErrorMessage(error) || "Hubo un error al actualizar tu perfil.",
         position: "bottom",
       });
     }
@@ -410,7 +411,7 @@ export default function CompleteProfileScreen() {
                         label="Nombre *"
                         value={value}
                         onChangeText={onChange}
-                        error={getErrorMessage(errors.nombre)}
+                        error={errors.nombre?.message?.toString()}
                         placeholder="Juan"
                       />
                     )}
@@ -424,7 +425,7 @@ export default function CompleteProfileScreen() {
                         label="Apellido *"
                         value={value}
                         onChangeText={onChange}
-                        error={getErrorMessage(errors.apellido)}
+                        error={errors.apellido?.message?.toString()}
                         placeholder="Pérez"
                       />
                     )}
@@ -439,7 +440,7 @@ export default function CompleteProfileScreen() {
                         value={value}
                         onChangeText={onChange}
                         keyboardType="numeric"
-                        error={getErrorMessage(errors.dni)}
+                        error={errors.dni?.message?.toString()}
                         placeholder="12345678"
                         maxLength={8}
                       />
@@ -455,7 +456,7 @@ export default function CompleteProfileScreen() {
                         value={value}
                         onChangeText={onChange}
                         keyboardType="phone-pad"
-                        error={getErrorMessage(errors.celular)}
+                        error={errors.celular?.message?.toString()}
                         placeholder="1123456789"
                         maxLength={10}
                       />
@@ -470,7 +471,7 @@ export default function CompleteProfileScreen() {
                         label="Fecha de Nacimiento *"
                         value={value}
                         onChange={onChange}
-                        error={getErrorMessage(errors.fechaNacimiento)}
+                        error={errors.fechaNacimiento?.message?.toString()}
                         maximumDate={new Date()}
                       />
                     )}
@@ -526,7 +527,7 @@ export default function CompleteProfileScreen() {
                           label="Nombre *"
                           value={value}
                           onChangeText={onChange}
-                          error={getErrorMessage(errors.responsableNombre)}
+                          error={errors.responsableNombre?.message?.toString()}
                           placeholder="María"
                         />
                       )}
@@ -540,7 +541,7 @@ export default function CompleteProfileScreen() {
                           label="Apellido *"
                           value={value}
                           onChangeText={onChange}
-                          error={getErrorMessage(errors.responsableApellido)}
+                          error={errors.responsableApellido?.message?.toString()}
                           placeholder="Pérez"
                         />
                       )}
@@ -555,7 +556,7 @@ export default function CompleteProfileScreen() {
                           value={value}
                           onChangeText={onChange}
                           keyboardType="numeric"
-                          error={getErrorMessage(errors.responsableDni)}
+                          error={errors.responsableDni?.message?.toString()}
                           placeholder="87654321"
                           maxLength={8}
                         />
@@ -571,7 +572,7 @@ export default function CompleteProfileScreen() {
                           value={value}
                           onChangeText={onChange}
                           keyboardType="phone-pad"
-                          error={getErrorMessage(errors.responsableCelular)}
+                          error={errors.responsableCelular?.message?.toString()}
                           placeholder="1123456789"
                           maxLength={10}
                         />
@@ -586,7 +587,7 @@ export default function CompleteProfileScreen() {
                           label="Relación *"
                           value={value}
                           onChangeText={onChange}
-                          error={getErrorMessage(errors.responsableRelacion)}
+                          error={errors.responsableRelacion?.message?.toString()}
                           placeholder="Madre / Padre / Tutor"
                         />
                       )}
@@ -608,7 +609,7 @@ export default function CompleteProfileScreen() {
                           value={value}
                           onChangeText={onChange}
                           secureTextEntry={!showPassword}
-                          error={getErrorMessage(errors.password)}
+                          error={errors.password?.message?.toString()}
                           placeholder="Mínimo 8 caracteres"
                           leftIcon="lock-closed-outline"
                           rightIcon={
@@ -730,7 +731,7 @@ export default function CompleteProfileScreen() {
                         value={value}
                         onChangeText={onChange}
                         secureTextEntry={!showConfirmPassword}
-                        error={getErrorMessage(errors.confirmPassword)}
+                        error={errors.confirmPassword?.message?.toString()}
                         placeholder="Repetir contraseña"
                         leftIcon="lock-closed-outline"
                         rightIcon={
@@ -824,7 +825,7 @@ export default function CompleteProfileScreen() {
                           </TouchableOpacity>
                           {errors.aceptaReglamento && (
                             <Text style={styles.errorText}>
-                              {getErrorMessage(errors.aceptaReglamento)}
+                              {errors.aceptaReglamento.message?.toString()}
                             </Text>
                           )}
                         </>
@@ -896,7 +897,7 @@ export default function CompleteProfileScreen() {
                           </TouchableOpacity>
                           {errors.aceptaDeclaracion && (
                             <Text style={styles.errorText}>
-                              {getErrorMessage(errors.aceptaDeclaracion)}
+                              {errors.aceptaDeclaracion.message?.toString()}
                             </Text>
                           )}
                         </>
@@ -968,7 +969,7 @@ export default function CompleteProfileScreen() {
                           </TouchableOpacity>
                           {errors.aceptaTerminos && (
                             <Text style={styles.errorText}>
-                              {getErrorMessage(errors.aceptaTerminos)}
+                              {errors.aceptaTerminos.message?.toString()}
                             </Text>
                           )}
                         </>

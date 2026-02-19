@@ -3,6 +3,7 @@ import {
   CompleteProfileData,
   Curso,
   CursoAlumno,
+  NuevoAlumno,
   NuevoUsuario,
   ProfesorLista,
   UpdatePerfilUsuario,
@@ -33,6 +34,11 @@ class UsuarioService {
     const response = await api.post(`${USER}/altaUsuario`, usuario);
     return response.data.data;
   };
+
+  registrarAlumno = async (nuevoAlumno: NuevoAlumno): Promise<void> => {
+    const response = await api.post(`${USER}/altaAlumno`, nuevoAlumno);
+    return response.data.data;
+  }
 
   getNombresProfesores = async (): Promise<ProfesorLista[]> => {
     const response = await api.get(`${USER}/profesores`);

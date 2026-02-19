@@ -65,6 +65,11 @@ export interface NuevoUsuario {
   roles: string[];
 }
 
+export interface NuevoAlumno {
+  email: string;
+  dni: string;
+}
+
 export interface Usuario {
   id: number;
   nombre: string;

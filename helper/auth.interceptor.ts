@@ -3,7 +3,7 @@ import axios, { AxiosError } from "axios";
 
 export const API_BASE_URL = __DEV__
   ? //'http://192.168.100.130:8080' // Seba
-    "http://192.168.0.244:8080" // Gabi
+    "http://192.168.0.100:8080" // Gabi
   : "http://localhost:8080"; // Localhost
 //: //'http://172.20.10.2:8080'
 //'https://api.centrosis.tenri.com.ar'; // Producción
@@ -94,12 +94,51 @@ api.interceptors.response.use(
   }
 );
 
-// ✅ HELPER: Extraer mensaje de error de forma segura
 export const getErrorMessage = (error: any): string => {
+
+  // Caso 1: Es un string directo
   if (typeof error === 'string') return error;
-  if (error?.message) return error.message;
+  
+  // Caso 2: Axios response con data.message (lo más común con CustomResponse)
   if (error?.response?.data?.message) return error.response.data.message;
+  
+  // Caso 3: Axios response con data.error
   if (error?.response?.data?.error) return error.response.data.error;
+  
+  // Caso 4: Response data es string directo
+  if (typeof error?.response?.data === 'string') return error.response.data;
+  
+  // Caso 5: AxiosError con mensaje pero SIN response
+  // Ejemplo: "Request failed with status code 403"
+  if (error?.message && error?.message.includes('status code')) {
+    const match = error.message.match(/status code (\d+)/);
+    if (match) {
+      const statusCode = match[1];
+      switch (statusCode) {
+        case '400': 
+          return 'Solicitud inválida. Verificá los datos ingresados.';
+        case '401': 
+          return 'No autorizado. Iniciá sesión nuevamente.';
+        case '403': 
+          return 'Acceso denegado. No tenés permisos para esta acción.';
+        case '404': 
+          return 'Recurso no encontrado.';
+        case '409': 
+          return 'El recurso ya existe en el sistema.';
+        case '500': 
+          return 'Error interno del servidor. Intentá nuevamente más tarde.';
+        default: 
+          return `Error del servidor (código ${statusCode})`;
+      }
+    }
+  }
+  
+  // Caso 6: Mensaje genérico de Axios
+  if (error?.message) return error.message;
+  
+  // Caso 7: StatusText de response
+  if (error?.response?.statusText) return error.response.statusText;
+  
   return 'Ocurrió un error inesperado';
 };
 
