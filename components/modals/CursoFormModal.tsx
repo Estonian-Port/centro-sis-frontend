@@ -58,34 +58,6 @@ const validarHorarios = (horarios: any[]): boolean => {
 
 // Esquema de validación
 const validationSchema = yup.object().shape({
-  horarios: yup
-    .array()
-    .of(
-      yup.object().shape({
-        dia: yup
-          .string()
-          .oneOf(Object.values(DayOfWeek), "Día inválido")
-          .required("El día es requerido"),
-        horaInicio: yup
-          .string()
-          .matches(/^\d{2}:\d{2}$/, "Formato inválido (HH:mm)")
-          .required("La hora de inicio es requerida"),
-        horaFin: yup
-          .string()
-          .matches(/^\d{2}:\d{2}$/, "Formato inválido (HH:mm)")
-          .required("La hora de fin es requerida"),
-      }),
-    )
-    .min(1, "Debe agregar al menos un horario")
-    .test(
-      "horarios-validos",
-      "La hora de fin debe ser posterior a la hora de inicio",
-      (value) => {
-        if (!value) return false;
-        return validarHorarios(value);
-      },
-    )
-    .required(),
   tipoPago: yup
     .array()
     .of(
@@ -169,19 +141,11 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
   } = useForm<FormValues>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
-      horarios: [
-        {
-          dia: DayOfWeek.MONDAY,
-          horaInicio: "",
-          horaFin: "",
-        },
-      ],
       tipoPago: [],
       recargo: null,
     },
   });
 
-  const horarios = watch("horarios") || [];
   const tiposPago = watch("tipoPago") || [];
 
   const cuotasCalculadas = useMemo(
@@ -218,34 +182,6 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
     return tipoPago?.monto || 0;
   };
 
-  const addHorario = (): void => {
-    setValue("horarios", [
-      ...horarios,
-      {
-        dia: DayOfWeek.MONDAY,
-        horaInicio: "",
-        horaFin: "",
-      },
-    ]);
-  };
-
-  const removeHorario = (index: number): void => {
-    setValue(
-      "horarios",
-      horarios.filter((_, i) => i !== index),
-    );
-  };
-
-  const updateHorario = (
-    index: number,
-    field: keyof HorarioDto,
-    value: string | DayOfWeek,
-  ): void => {
-    const newHorarios = [...horarios];
-    (newHorarios[index][field] as any) = value;
-    setValue("horarios", newHorarios);
-  };
-
   const toggleTipoPago = (tipo: PagoType): void => {
     const tieneActualmente = tieneTipoPago(tipo);
 
@@ -279,7 +215,6 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
       // Construir el objeto curso actualizado
       const cursoActualizado: nuevoCursoAlquilerProfesor = {
         id: curso.id,
-        horarios: data.horarios,
         tiposPago: tiposPagoConCuotas,
         recargo: data.recargo || 0,
       };
@@ -416,125 +351,45 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
 
             {/* Horarios */}
             <View style={styles.section}>
-              <View style={styles.subsectionHeader}>
-                <Text style={styles.subsectionLabel}>Horarios del Curso *</Text>
-                <TouchableOpacity onPress={addHorario} style={styles.addButton}>
-                  <Ionicons name="add-circle" size={20} color="#3b82f6" />
-                  <Text style={styles.addButtonText}>Agregar</Text>
-                </TouchableOpacity>
-              </View>
-
-              {horarios.map((horario, index) => (
-                <View key={index} style={styles.horarioCard}>
-                  {/* Selector de Días */}
-                  <View style={styles.daysContainer}>
-                    <Text style={styles.inputLabel}>Día de la semana</Text>
-                    <View style={styles.daysRow}>
-                      {diasOrdenados.map((dia) => (
-                        <TouchableOpacity
-                          key={dia}
-                          style={[
-                            styles.dayButton,
-                            horario.dia === dia && styles.dayButtonSelected,
-                          ]}
-                          onPress={() => updateHorario(index, "dia", dia)}
-                        >
-                          <Text
-                            style={[
-                              styles.dayButtonText,
-                              horario.dia === dia &&
-                                styles.dayButtonTextSelected,
-                            ]}
-                          >
-                            {diasSemanaMap[dia].substring(0, 3)}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
-
-                  {/* Horarios */}
-                  <View style={styles.timeRow}>
-                    <View style={styles.timeInput}>
-                      <Text style={styles.inputLabel}>Hora Inicio</Text>
-                      <TouchableOpacity
-                        style={[
-                          styles.timeButton,
-                          !horario.horaInicio && styles.timeButtonEmpty,
-                        ]}
-                        onPress={() =>
-                          setShowTimePicker({
-                            horarioIndex: index,
-                            field: "horaInicio",
-                          })
-                        }
-                      >
-                        <Ionicons
-                          name="time-outline"
-                          size={20}
-                          color="#9ca3af"
-                        />
-                        <Text
-                          style={[
-                            styles.timeButtonText,
-                            !horario.horaInicio && styles.timeButtonPlaceholder,
-                          ]}
-                        >
-                          {horario.horaInicio || "Ej: 14:00"}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.timeInput}>
-                      <Text style={styles.inputLabel}>Hora Fin</Text>
-                      <TouchableOpacity
-                        style={[
-                          styles.timeButton,
-                          !horario.horaFin && styles.timeButtonEmpty,
-                        ]}
-                        onPress={() =>
-                          setShowTimePicker({
-                            horarioIndex: index,
-                            field: "horaFin",
-                          })
-                        }
-                      >
-                        <Ionicons
-                          name="time-outline"
-                          size={20}
-                          color="#9ca3af"
-                        />
-                        <Text
-                          style={[
-                            styles.timeButtonText,
-                            !horario.horaFin && styles.timeButtonPlaceholder,
-                          ]}
-                        >
-                          {horario.horaFin || "Ej: 16:00"}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-
-                  {horarios.length > 1 && (
-                    <TouchableOpacity
-                      onPress={() => removeHorario(index)}
-                      style={styles.removeButtonCard}
-                    >
-                      <Ionicons
-                        name="trash-outline"
-                        size={18}
-                        color="#ef4444"
-                      />
-                      <Text style={styles.removeButtonText}>Eliminar</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ))}
-              {typeof errors.horarios?.message === "string" && (
-                <Text style={styles.errorText}>{errors.horarios.message}</Text>
-              )}
+  <Text style={styles.subsectionLabel}>Horarios del Curso</Text>
+  
+  {curso.horarios && curso.horarios.length > 0 ? (
+    <View style={styles.horariosReadonlyContainer}>
+      {curso.horarios.map((horario, index) => (
+        <View key={index} style={styles.horarioReadonlyCard}>
+          <View style={styles.horarioReadonlyHeader}>
+            <Ionicons name="calendar" size={18} color="#3b82f6" />
+            <Text style={styles.horarioReadonlyDia}>
+              {horario.dia}
+            </Text>
+          </View>
+          <View style={styles.horarioReadonlyTime}>
+            <View style={styles.horarioReadonlyTimeItem}>
+              <Ionicons name="time-outline" size={16} color="#6b7280" />
+              <Text style={styles.horarioReadonlyTimeText}>
+                {horario.horaInicio}
+              </Text>
             </View>
+            <Text style={styles.horarioReadonlyTimeSeparator}>-</Text>
+            <View style={styles.horarioReadonlyTimeItem}>
+              <Ionicons name="time-outline" size={16} color="#6b7280" />
+              <Text style={styles.horarioReadonlyTimeText}>
+                {horario.horaFin}
+              </Text>
+            </View>
+          </View>
+        </View>
+      ))}
+    </View>
+  ) : (
+    <View style={styles.noHorariosContainer}>
+      <Ionicons name="alert-circle" size={24} color="#f59e0b" />
+      <Text style={styles.noHorariosText}>
+        No hay horarios configurados para este curso
+      </Text>
+    </View>
+  )}
+</View>
 
             {/* Tipos de Pago */}
             <View style={styles.section}>
@@ -697,32 +552,6 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
           </View>
         </View>
       </View>
-
-      {/* Modal para Time Picker */}
-      <TimePickerModal
-        visible={showTimePicker !== null}
-        onClose={() => setShowTimePicker(null)}
-        onSelect={(time) => {
-          if (showTimePicker) {
-            updateHorario(
-              showTimePicker.horarioIndex,
-              showTimePicker.field,
-              time,
-            );
-            setShowTimePicker(null);
-          }
-        }}
-        title={
-          showTimePicker?.field === "horaInicio"
-            ? "Seleccionar Hora de Inicio"
-            : "Seleccionar Hora de Fin"
-        }
-        selectedTime={
-          showTimePicker
-            ? horarios[showTimePicker.horarioIndex]?.[showTimePicker.field]
-            : undefined
-        }
-      />
     </Modal>
   );
 };
@@ -896,106 +725,10 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     flex: 1,
   },
-  subsectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
   subsectionLabel: {
     fontSize: 15,
     fontWeight: "600",
     color: "#374151",
-  },
-  addButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  addButtonText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#3b82f6",
-  },
-  horarioCard: {
-    backgroundColor: "#ffffff",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-  },
-  daysContainer: {
-    marginBottom: 16,
-  },
-  daysRow: {
-    flexDirection: "row",
-    gap: 6,
-    flexWrap: "wrap",
-  },
-  dayButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#ffffff",
-    minWidth: 45,
-    alignItems: "center",
-  },
-  dayButtonSelected: {
-    borderColor: "#3b82f6",
-    backgroundColor: "#dbeafe",
-  },
-  dayButtonText: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#6b7280",
-  },
-  dayButtonTextSelected: {
-    color: "#3b82f6",
-    fontWeight: "600",
-  },
-  timeRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  timeInput: {
-    flex: 1,
-  },
-  timeButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 8,
-    backgroundColor: "#ffffff",
-    gap: 8,
-  },
-  timeButtonEmpty: {
-    borderColor: "#e5e7eb",
-  },
-  timeButtonText: {
-    fontSize: 14,
-    color: "#374151",
-    flex: 1,
-  },
-  timeButtonPlaceholder: {
-    color: "#b0b0b0",
-  },
-  removeButtonCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 12,
-    padding: 8,
-    gap: 6,
-  },
-  removeButtonText: {
-    fontSize: 14,
-    color: "#ef4444",
-    fontWeight: "500",
   },
   tipoPagoCard: {
     backgroundColor: "#ffffff",
@@ -1053,5 +786,65 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     flex: 2,
+  },
+    horariosReadonlyContainer: {
+    gap: 10,
+  },
+  horarioReadonlyCard: {
+    backgroundColor: "#f9fafb",
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  horarioReadonlyHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  horarioReadonlyDia: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#1f2937",
+  },
+  horarioReadonlyTime: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  horarioReadonlyTimeItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  horarioReadonlyTimeText: {
+    fontSize: 14,
+    color: "#374151",
+    fontWeight: "500",
+  },
+  horarioReadonlyTimeSeparator: {
+    fontSize: 14,
+    color: "#9ca3af",
+    fontWeight: "600",
+  },
+  noHorariosContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 16,
+    backgroundColor: "#fffbeb",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#fde68a",
+  },
+  noHorariosText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#92400e",
+    lineHeight: 20,
   },
 });

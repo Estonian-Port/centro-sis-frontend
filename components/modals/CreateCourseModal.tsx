@@ -106,6 +106,34 @@ const getValidationSchema = (modalidad: Modalidad): any => {
         .number()
         .positive("El monto debe ser mayor a 0")
         .required("El monto de alquiler es requerido"),
+      horarios: yup
+        .array()
+        .of(
+          yup.object().shape({
+            dia: yup
+              .string()
+              .oneOf(Object.values(DayOfWeek), "Día inválido")
+              .required("El día es requerido"),
+            horaInicio: yup
+              .string()
+              .matches(/^\d{2}:\d{2}$/, "Formato inválido (HH:mm)")
+              .required("La hora de inicio es requerida"),
+            horaFin: yup
+              .string()
+              .matches(/^\d{2}:\d{2}$/, "Formato inválido (HH:mm)")
+              .required("La hora de fin es requerida"),
+          }),
+        )
+        .min(1, "Debe agregar al menos un horario")
+        .test(
+          "horarios-validos",
+          "La hora de fin debe ser posterior a la hora de inicio",
+          (value) => {
+            if (!value) return false;
+            return validarHorarios(value);
+          },
+        )
+        .required(),
     });
   } else {
     return yup.object().shape({
@@ -442,6 +470,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
           profesoresId: data.profesoresId,
           fechaInicio: data.fechaInicio,
           fechaFin: data.fechaFin,
+          horarios: data.horarios || [],
         };
         await crearCursoAlquiler(requestData);
       } else {
@@ -483,13 +512,6 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
   const handleModalidadChange = (newModalidad: Modalidad): void => {
     setModalidad(newModalidad);
     if (newModalidad === "ALQUILER") {
-      setValue("horarios", [
-        {
-          dia: DayOfWeek.MONDAY,
-          horaInicio: "",
-          horaFin: "",
-        },
-      ]);
       setValue("tipoPago", []);
       setValue("recargo", null);
       setValue("comisionProfesor", null);
@@ -750,8 +772,8 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                 <View style={styles.warningBanner}>
                   <Ionicons name="alert-circle" size={20} color="#f59e0b" />
                   <Text style={styles.warningBannerText}>
-                    Un profesor a cargo debe completar los datos restantes
-                    (horarios y modalidades de pago) para activar el curso.
+                    Un profesor a cargo debe completar los datos restantes para
+                    activar el curso.
                   </Text>
                 </View>
 
@@ -789,6 +811,134 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                     ).toLocaleString()}
                   </Text>
                 )}
+                {/* ✅ NUEVO: Agregar sección de horarios */}
+                <View style={styles.subsection}>
+                  <View style={styles.subsectionHeader}>
+                    <Text style={styles.subsectionLabel}>Horarios *</Text>
+                    <TouchableOpacity
+                      onPress={addHorario}
+                      style={styles.addButton}
+                    >
+                      <Ionicons name="add-circle" size={20} color="#3b82f6" />
+                      <Text style={styles.addButtonText}>Agregar</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {horarios.map((horario, index) => (
+                    <View key={index} style={styles.horarioCard}>
+                      {/* Selector de Días */}
+                      <View style={styles.daysContainer}>
+                        <Text style={styles.inputLabel}>Día de la semana</Text>
+                        <View style={styles.daysRow}>
+                          {diasOrdenados.map((dia) => (
+                            <TouchableOpacity
+                              key={dia}
+                              style={[
+                                styles.dayButton,
+                                horario.dia === dia && styles.dayButtonSelected,
+                              ]}
+                              onPress={() => updateHorario(index, "dia", dia)}
+                            >
+                              <Text
+                                style={[
+                                  styles.dayButtonText,
+                                  horario.dia === dia &&
+                                    styles.dayButtonTextSelected,
+                                ]}
+                              >
+                                {diasSemanaMap[dia].substring(0, 3)}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+
+                      {/* Horarios */}
+                      <View style={styles.timeRow}>
+                        <View style={styles.timeInput}>
+                          <Text style={styles.inputLabel}>Hora Inicio</Text>
+                          <TouchableOpacity
+                            style={[
+                              styles.timeButton,
+                              !horario.horaInicio && styles.timeButtonEmpty,
+                            ]}
+                            onPress={() =>
+                              setShowTimePicker({
+                                horarioIndex: index,
+                                field: "horaInicio",
+                              })
+                            }
+                          >
+                            <Ionicons
+                              name="time-outline"
+                              size={20}
+                              color="#9ca3af"
+                            />
+                            <Text
+                              style={[
+                                styles.timeButtonText,
+                                !horario.horaInicio &&
+                                  styles.timeButtonPlaceholder,
+                              ]}
+                            >
+                              {horario.horaInicio || "Ej: 14:00"}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.timeInput}>
+                          <Text style={styles.inputLabel}>Hora Fin</Text>
+                          <TouchableOpacity
+                            style={[
+                              styles.timeButton,
+                              !horario.horaFin && styles.timeButtonEmpty,
+                            ]}
+                            onPress={() =>
+                              setShowTimePicker({
+                                horarioIndex: index,
+                                field: "horaFin",
+                              })
+                            }
+                          >
+                            <Ionicons
+                              name="time-outline"
+                              size={20}
+                              color="#9ca3af"
+                            />
+                            <Text
+                              style={[
+                                styles.timeButtonText,
+                                !horario.horaFin &&
+                                  styles.timeButtonPlaceholder,
+                              ]}
+                            >
+                              {horario.horaFin || "Ej: 16:00"}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      {horarios.length > 1 && (
+                        <TouchableOpacity
+                          onPress={() => removeHorario(index)}
+                          style={styles.removeButtonCard}
+                        >
+                          <Ionicons
+                            name="trash-outline"
+                            size={18}
+                            color="#ef4444"
+                          />
+                          <Text style={styles.removeButtonText}>Eliminar</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  ))}
+                  {typeof errors.horarios?.message === "string" && (
+                    <Text style={styles.errorText}>
+                      {errors.horarios.message}
+                    </Text>
+                  )}
+                </View>
               </View>
             )}
 

@@ -50,6 +50,10 @@ export const AccesoItem: React.FC<AccesoItemProps> = ({
             {acceso.usuarioNombre} {acceso.usuarioApellido}
           </Text>
           <Text style={styles.userDni}>DNI: {acceso.usuarioDni}</Text>
+          <View style={styles.accesoTipoBadge}>
+            <Ionicons name="qr-code" size={12} color="#10b981" />
+            <Text style={styles.accesoTipo}>{acceso.tipoAcceso}</Text>
+          </View>
         </View>
       )}
     </View>
@@ -117,5 +121,19 @@ const styles = StyleSheet.create({
   userDni: {
     fontSize: 13,
     color: "#6b7280",
+  },
+  accesoTipoBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#d1fae5",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  accesoTipo: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#10b981",
   },
 });

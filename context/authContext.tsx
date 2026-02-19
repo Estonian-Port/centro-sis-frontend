@@ -1,7 +1,13 @@
 import { Rol, Usuario } from "@/model/model";
 import { authService } from "@/services/api.service";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 export const STORAGE_KEY_TOKEN = "token";
 export const STORAGE_KEY_SELECTED_ROLE = "selectedRole";
@@ -30,8 +36,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [selectedRole, setSelectedRoleState] = useState<Rol | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  
-  // Wrapper para persistir el rol seleccionado
+
   const setSelectedRole = async (role: Rol | null) => {
     setSelectedRoleState(role);
     if (role) {
@@ -40,50 +45,52 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
     }
   };
-  
-  // ✅ Inicializar autenticación al montar (CON MANEJO DE 403)
+
+  // ✅ Inicializar autenticación (SILENCIOSO)
   useEffect(() => {
     const initAuth = async () => {
       try {
         const token = await AsyncStorage.getItem(STORAGE_KEY_TOKEN);
-        
-        // ✅ Solo intentar obtener usuario si hay token
+
         if (token) {
-          // ✅ Configurar token antes de hacer la petición
           await authService.setAuthToken();
-          
+
           try {
             const currentUser = await authService.getCurrentUser();
             setUsuario(currentUser);
             setIsAuthenticated(true);
 
-            // Restaurar rol seleccionado si existe
-            const savedRole = await AsyncStorage.getItem(STORAGE_KEY_SELECTED_ROLE);
+            const savedRole = await AsyncStorage.getItem(
+              STORAGE_KEY_SELECTED_ROLE,
+            );
             if (savedRole && currentUser.listaRol.includes(savedRole as Rol)) {
               setSelectedRoleState(savedRole as Rol);
             }
           } catch (userError: any) {
-            // ✅ Si el token es inválido (403/401), limpiar todo silenciosamente
-            if (userError?.response?.status === 403 || userError?.response?.status === 401) {
-              console.log("Token expirado, limpiando sesión...");
+            // ✅ Si es 403/401, limpiar SILENCIOSAMENTE (token expirado es normal)
+            if (
+              userError?.response?.status === 403 ||
+              userError?.response?.status === 401
+            ) {
               await AsyncStorage.removeItem(STORAGE_KEY_TOKEN);
               await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
               setUsuario(null);
               setIsAuthenticated(false);
               setSelectedRoleState(null);
+              // ✅ NO loggear - es un caso esperado
             } else {
-              // Otro error, re-lanzar
+              // ✅ SOLO loggear si es OTRO error inesperado
+              console.error("Error inesperado al obtener usuario:", userError);
               throw userError;
             }
           }
         } else {
-          // ✅ No hay token, estado inicial limpio
           setUsuario(null);
           setIsAuthenticated(false);
         }
       } catch (e) {
+        // ✅ Solo llega acá si hubo un error CRÍTICO (no 403/401)
         console.error("Error crítico al inicializar auth:", e);
-        // ✅ En caso de error crítico, limpiar todo
         await AsyncStorage.removeItem(STORAGE_KEY_TOKEN);
         await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
         setUsuario(null);
@@ -95,36 +102,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
     initAuth();
   }, []);
-  
-  const login = async (username: string, password: string): Promise<Usuario> => {
+
+  const login = async (
+    username: string,
+    password: string,
+  ): Promise<Usuario> => {
     try {
       setIsLoading(true);
-      
-      // 1. Obtener token del servidor
+
       const receivedToken = await authService.login(username, password);
-      
-      // 2. Guardar token en storage
       await AsyncStorage.setItem(STORAGE_KEY_TOKEN, receivedToken);
-      
-      // 3. Configurar headers del API con el token
       await authService.setAuthToken();
-      
-      // 4. Obtener datos del usuario actual
+
       const currentUser = await authService.getCurrentUser();
-      
-      // 5. Actualizar estado del contexto
+
       setUsuario(currentUser);
       setIsAuthenticated(true);
-      
-      // 6. Limpiar rol anterior (nuevo login)
+
       await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
       setSelectedRoleState(null);
-      
+
       return currentUser;
-      
     } catch (e) {
       console.error("Error en login:", e);
-      // Limpiar en caso de error
       setUsuario(null);
       setIsAuthenticated(false);
       throw e;
@@ -136,14 +136,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = async () => {
     try {
       setIsLoading(true);
-      
+
       await AsyncStorage.removeItem(STORAGE_KEY_TOKEN);
       await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
-      
+
       setUsuario(null);
       setIsAuthenticated(false);
       setSelectedRoleState(null);
-      
     } catch (e) {
       console.error("Error en logout:", e);
       throw e;
@@ -172,7 +171,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     hasRole,
     hasMultipleRoles,
   };
-  
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 

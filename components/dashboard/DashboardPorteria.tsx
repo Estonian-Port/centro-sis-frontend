@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import {
   View,
   Text,
@@ -15,13 +15,17 @@ import { TIPOGRAFIA } from "@/util/tipografia";
 import { COLORES } from "@/util/colores";
 import { EventBus } from "@/util/EventBus";
 import { EstadisticasAcceso } from "@/model/model";
+import { RegistrarInvitadoModal } from "../accesos/RegistrarInvitadoModal";
+import { useAuth } from "@/context/authContext";
 
 export default function DashboardPorteria() {
   const [estadisticas, setEstadisticas] = useState<EstadisticasAcceso | null>(
     null,
   );
   const [loading, setLoading] = useState(true);
+  const [showInvitadoModal, setShowInvitadoModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const { usuario } = useAuth();
 
   useEffect(() => {
     loadEstadisticas();
@@ -148,7 +152,37 @@ export default function DashboardPorteria() {
             <Ionicons name="chevron-forward" size={22} color="#ffffff" />
           </View>
         </TouchableOpacity>
+
+        {/* Botón Registrar Invitado */}
+        <TouchableOpacity
+          style={styles.invitadoButton}
+          onPress={() => setShowInvitadoModal(true)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.invitadoButtonContent}>
+            <View style={styles.invitadoIconContainer}>
+              <Ionicons name="person-add" size={28} color="#ffffff" />
+            </View>
+            <View style={styles.invitadoButtonText}>
+              <Text style={styles.invitadoButtonTitle}>Registrar Invitado</Text>
+              <Text style={styles.invitadoButtonSubtitle}>
+                Clase de prueba o visitante
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={22} color="#ffffff" />
+          </View>
+        </TouchableOpacity>
       </ScrollView>
+      {/* NUEVO: Modal */}
+      <RegistrarInvitadoModal
+        visible={showInvitadoModal}
+        onClose={() => setShowInvitadoModal(false)}
+        registradoPorId={usuario?.id || 0}
+        onRegistroExitoso={() => {
+          loadEstadisticas();
+          EventBus.emit("accesoRegistrado");
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -265,5 +299,41 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#6b7280",
     fontWeight: "500",
+  },
+  invitadoButton: {
+    backgroundColor: "#10b981",
+    borderRadius: 12,
+    shadowColor: "#10b981",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  invitadoButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+  },
+  invitadoIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  invitadoButtonText: {
+    flex: 1,
+  },
+  invitadoButtonTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#ffffff",
+    marginBottom: 2,
+  },
+  invitadoButtonSubtitle: {
+    fontSize: 12,
+    color: "rgba(255, 255, 255, 0.9)",
   },
 });

@@ -2,7 +2,11 @@ import { EditarHorariosModal } from "@/components/curso/modals/EditarHorariosMod
 import { EditarModalidadesPagoModal } from "@/components/curso/modals/EditarModalidadPagoModal";
 import { EditarNombreCursoModal } from "@/components/curso/modals/EditarNombreCursoModal";
 import { EditarProfesoresModal } from "@/components/curso/modals/EditarProfesoresModal";
-import { formatDateToDDMMYYYY, formatEstadoCurso, pagoToDisplay } from "@/helper/funciones";
+import {
+  formatDateToDDMMYYYY,
+  formatEstadoCurso,
+  pagoToDisplay,
+} from "@/helper/funciones";
 import { Pago } from "@/model/model";
 import { cursoService } from "@/services/curso.service";
 import { usuarioService } from "@/services/usuario.service";
@@ -58,18 +62,24 @@ export default function InformacionTab() {
     }
   };
 
-  const evaluarPorRol =
-    (curso?.tipoCurso === "COMISION" &&
-      selectedRole !== null &&
-      (selectedRole === "ADMINISTRADOR" || selectedRole === "OFICINA")) ||
-    (curso?.tipoCurso === "ALQUILER" &&
-      selectedRole !== null &&
-      (selectedRole === "ADMINISTRADOR" || selectedRole === "PROFESOR"));
+  const evaluarPorTipoCurso = (rol: string) => {
+    if (rol === "ADMINISTRADOR") return true; // Admin puede editar todo
+    if (curso?.tipoCurso === "ALQUILER") {
+      return rol === "PROFESOR";
+    } else if (curso?.tipoCurso === "COMISION") {
+      return rol === "OFICINA";
+    }
+  };
 
   const puedeEditar =
     (curso?.estado === "EN_CURSO" || curso?.estado === "POR_COMENZAR") &&
     curso?.estadoAlta === "ACTIVO" &&
-    evaluarPorRol;
+    evaluarPorTipoCurso(selectedRole!);
+
+  const puedeEditarHorarios =
+    (curso?.estado === "EN_CURSO" || curso?.estado === "POR_COMENZAR") &&
+    curso?.estadoAlta === "ACTIVO" &&
+    (selectedRole === "OFICINA" || selectedRole === "ADMINISTRADOR");
 
   if (!curso) {
     return (
@@ -153,7 +163,7 @@ export default function InformacionTab() {
           <Text style={styles.cardTitle}>
             Horarios ({curso.horarios.length})
           </Text>
-          {puedeEditar && (
+          {puedeEditarHorarios && (
             <TouchableOpacity onPress={() => setShowEditarHorariosModal(true)}>
               <Ionicons name="pencil" size={20} color="#8b5cf6" />
             </TouchableOpacity>
