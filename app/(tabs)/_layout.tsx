@@ -126,6 +126,19 @@ export default function TabLayout() {
             }}
           />
 
+          {isAdmin && (
+            <Drawer.Screen
+              name="finanzas"
+              options={{
+                headerShown: false,
+                drawerLabel: "Finanzas",
+                drawerIcon: ({ color, size }) => (
+                  <Ionicons name="stats-chart" size={size} color={color} />
+                ),
+              }}
+            />
+          )}
+
           <Drawer.Screen
             name="profile"
             options={{
@@ -211,6 +224,17 @@ export default function TabLayout() {
             href: isPorteria ? "/(tabs)/escanear-qr" : null,
             tabBarIcon: ({ size, color }) => (
               <Ionicons name="scan-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="finanzas"
+          options={{
+            title: "Finanzas",
+            href: isAdmin ? "/(tabs)/finanzas" : null,
+            tabBarIcon: ({ size, color }) => (
+              <Ionicons name="stats-chart" size={size} color={color} />
             ),
           }}
         />

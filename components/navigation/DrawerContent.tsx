@@ -3,10 +3,7 @@ import { useAuth } from "@/context/authContext";
 import { Rol } from "@/model/model";
 import { COLORES } from "@/util/colores";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  DrawerContentScrollView,
-  DrawerItem,
-} from "@react-navigation/drawer";
+import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -49,11 +46,11 @@ export const DrawerContent = (props: any) => {
       route: "/(tabs)/admin",
       roles: [Rol.ADMINISTRADOR, Rol.OFICINA], // Solo para admin y oficina
     },
-                {
+    {
       label: "Escanear QR",
       icon: "scan-outline",
       route: "/(tabs)/escanear-qr",
-      roles: [Rol.PORTERIA]
+      roles: [Rol.PORTERIA],
     },
     {
       label: "Accesos",
@@ -73,13 +70,18 @@ export const DrawerContent = (props: any) => {
       route: "/(tabs)/profile",
       roles: null, // Visible para todos
     },
-        {
+    {
       label: "Mi QR",
       icon: "qr-code-outline",
       route: "/(tabs)/mi-qr",
       roles: null, // Visible para todos
     },
-
+    {
+      label: "Finanzas",
+      icon: "stats-chart",
+      route: "/(tabs)/finanzas",
+      roles: [Rol.ADMINISTRADOR],
+    },
   ];
 
   // ✅ Filtrar items según el rol del usuario
@@ -105,7 +107,7 @@ export const DrawerContent = (props: any) => {
             {selectedRole ? getRolLabel(selectedRole) : "Sin rol"}
           </Text>
         </View>
-        
+
         {/* ✅ Renderizar items filtrados manualmente */}
         <View style={styles.menu}>
           {visibleItems.map((item, index) => (
@@ -115,7 +117,7 @@ export const DrawerContent = (props: any) => {
               icon={({ color, size }) => (
                 <Ionicons name={item.icon as any} size={size} color={color} />
               )}
-              focused={activeRoute === item.route.split('/').pop()}
+              focused={activeRoute === item.route.split("/").pop()}
               onPress={() => {
                 router.push(item.route as any);
                 // Cerrar el drawer después de navegar
@@ -126,7 +128,7 @@ export const DrawerContent = (props: any) => {
             />
           ))}
         </View>
-        
+
         <View style={styles.footer}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#ef4444" />
