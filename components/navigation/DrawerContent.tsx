@@ -65,10 +65,10 @@ export const DrawerContent = (props: any) => {
       roles: [Rol.ADMINISTRADOR, Rol.OFICINA, Rol.ALUMNO, Rol.PROFESOR],
     },
     {
-      label: "Perfil",
-      icon: "person-outline",
-      route: "/(tabs)/profile",
-      roles: null, // Visible para todos
+      label: "Finanzas",
+      icon: "stats-chart",
+      route: "/(tabs)/finanzas",
+      roles: [Rol.ADMINISTRADOR],
     },
     {
       label: "Mi QR",
@@ -77,10 +77,10 @@ export const DrawerContent = (props: any) => {
       roles: null, // Visible para todos
     },
     {
-      label: "Finanzas",
-      icon: "stats-chart",
-      route: "/(tabs)/finanzas",
-      roles: [Rol.ADMINISTRADOR],
+      label: "Perfil",
+      icon: "person-outline",
+      route: "/(tabs)/profile",
+      roles: null, // Visible para todos
     },
   ];
 

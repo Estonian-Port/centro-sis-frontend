@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/context/authContext";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
@@ -39,13 +40,7 @@ export default function FinanzasScreen() {
   const [mes, setMes] = useState(hoy.getMonth() + 1);
   const [anio, setAnio] = useState(hoy.getFullYear());
 
-  useEffect(() => {
-    if (usuario?.id) {
-      cargarReporte();
-    }
-  }, [mes, anio, usuario?.id]);
-
-  const cargarReporte = async () => {
+  const cargarReporte = useCallback(async () => {
     if (!usuario?.id) return;
 
     setLoading(true);
@@ -55,8 +50,10 @@ export default function FinanzasScreen() {
         mes,
         anio,
       );
+
       setReporte(data);
     } catch (error: any) {
+      console.error("❌ ERROR:", error);
       Toast.show({
         type: "error",
         text1: "Error al cargar reporte",
@@ -66,7 +63,19 @@ export default function FinanzasScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [usuario?.id, mes, anio]);
+
+  // Recargar cuando la pantalla gana foco
+  useFocusEffect(
+    useCallback(() => {
+      cargarReporte();
+    }, [cargarReporte]),
+  );
+
+  // También recargar cuando cambia mes/año
+  useEffect(() => {
+    cargarReporte();
+  }, [cargarReporte]);
 
   const handleCambiarMesAnio = (nuevoMes: number, nuevoAnio: number) => {
     setMes(nuevoMes);

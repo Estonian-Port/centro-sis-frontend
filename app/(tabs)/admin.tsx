@@ -57,7 +57,6 @@ const estadoUsuarioFilterOptions: FilterOption<Estado>[] = [
   { value: Estado.ACTIVO, label: "Activo", color: "#10b981" },
   { value: Estado.INACTIVO, label: "Inactivo", color: "#6b7280" },
   { value: Estado.PENDIENTE, label: "Pendiente", color: "#f59e0b" },
-  { value: Estado.BAJA, label: "Baja", color: "#ef4444" },
 ];
 
 // Filtros de ESTADO DE CURSO
@@ -109,13 +108,24 @@ export default function AdminScreen() {
     if (!usuario) {
       return;
     }
-
     if (activeTab === "users") {
       fetchUsers();
     } else {
       fetchCourses();
     }
   }, [activeTab, usuario]);
+
+  useEffect(() => {
+    setSearchQuery("");
+
+    // Limpiar filtros de usuarios
+    setFiltrosRol([]);
+    setFiltrosEstadoUsuario([]);
+
+    // Limpiar filtros de cursos
+    setFiltrosEstadoCurso([]);
+    setFiltrosEstadoAlta([]);
+  }, [activeTab]);
 
   useEffect(() => {
     const handler = () => {

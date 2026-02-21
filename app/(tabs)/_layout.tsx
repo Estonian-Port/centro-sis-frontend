@@ -130,7 +130,8 @@ export default function TabLayout() {
             <Drawer.Screen
               name="finanzas"
               options={{
-                headerShown: false,
+                headerShown: true,
+                header: () => <CustomDrawerHeader title="Finanzas" />,
                 drawerLabel: "Finanzas",
                 drawerIcon: ({ color, size }) => (
                   <Ionicons name="stats-chart" size={size} color={color} />
