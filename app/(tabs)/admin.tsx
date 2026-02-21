@@ -69,7 +69,6 @@ const estadoCursoFilterOptions: FilterOption<EstadoCurso>[] = [
 // Filtros de ESTADO DE ALTA (para cursos)
 const estadoAltaFilterOptions: FilterOption<Estado>[] = [
   { value: Estado.ACTIVO, label: "Activo", color: "#10b981" },
-  { value: Estado.INACTIVO, label: "Inactivo", color: "#6b7280" },
   { value: Estado.PENDIENTE, label: "Pendiente", color: "#f59e0b" },
   { value: Estado.BAJA, label: "Baja", color: "#ef4444" },
 ];
@@ -175,8 +174,6 @@ export default function AdminScreen() {
     if (!usuario) {
       return;
     }
-
-    console.log("fetchCourses - usuario.id:", usuario.id);
 
     setLoading(true);
     try {

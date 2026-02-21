@@ -768,50 +768,7 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                   <Text style={styles.specificTitle}>Datos de Alquiler</Text>
                 </View>
 
-                {/* Banner de advertencia */}
-                <View style={styles.warningBanner}>
-                  <Ionicons name="alert-circle" size={20} color="#f59e0b" />
-                  <Text style={styles.warningBannerText}>
-                    Un profesor a cargo debe completar los datos restantes para
-                    activar el curso.
-                  </Text>
-                </View>
-
-                <Controller
-                  control={control}
-                  name="montoAlquiler"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="Monto Mensual ($) *"
-                      value={value?.toString() || ""}
-                      onChangeText={(text) =>
-                        onChange(text ? parseFloat(text) : undefined)
-                      }
-                      keyboardType="numeric"
-                      placeholder="10000"
-                      error={errors.montoAlquiler?.message}
-                    />
-                  )}
-                />
-
-                {/* Componente CuotasCalculadas para Alquiler */}
-                <CuotasCalculadas
-                  fechaInicio={fechaInicio ? new Date(fechaInicio) : null}
-                  fechaFin={fechaFin ? new Date(fechaFin) : null}
-                  label="Cuotas de alquiler"
-                  helpText="El profesor debe pagar esta cantidad de cuotas al instituto"
-                />
-
-                {/* Total de alquiler */}
-                {watch("montoAlquiler") && cuotasCalculadas > 0 && (
-                  <Text style={styles.totalInfo}>
-                    Total de alquiler: $
-                    {(
-                      (watch("montoAlquiler") || 0) * cuotasCalculadas
-                    ).toLocaleString()}
-                  </Text>
-                )}
-                {/* ✅ NUEVO: Agregar sección de horarios */}
+                {/* Sección de horarios */}
                 <View style={styles.subsection}>
                   <View style={styles.subsectionHeader}>
                     <Text style={styles.subsectionLabel}>Horarios *</Text>
@@ -938,6 +895,49 @@ export const CreateCourseModal: React.FC<CreateCourseModalProps> = ({
                       {errors.horarios.message}
                     </Text>
                   )}
+                </View>
+
+                <Controller
+                  control={control}
+                  name="montoAlquiler"
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      label="Monto Mensual ($) *"
+                      value={value?.toString() || ""}
+                      onChangeText={(text) =>
+                        onChange(text ? parseFloat(text) : undefined)
+                      }
+                      keyboardType="numeric"
+                      placeholder="10000"
+                      error={errors.montoAlquiler?.message}
+                    />
+                  )}
+                />
+
+                {/* Componente CuotasCalculadas para Alquiler */}
+                <CuotasCalculadas
+                  fechaInicio={fechaInicio ? new Date(fechaInicio) : null}
+                  fechaFin={fechaFin ? new Date(fechaFin) : null}
+                  label="Cuotas de alquiler"
+                  helpText="El profesor debe pagar esta cantidad de cuotas al instituto"
+                />
+
+                {/* Total de alquiler */}
+                {watch("montoAlquiler") && cuotasCalculadas > 0 && (
+                  <Text style={styles.totalInfo}>
+                    Total de alquiler: $
+                    {(
+                      (watch("montoAlquiler") || 0) * cuotasCalculadas
+                    ).toLocaleString()}
+                  </Text>
+                )}
+                {/* Banner de advertencia */}
+                <View style={styles.warningBanner}>
+                  <Ionicons name="alert-circle" size={20} color="#f59e0b" />
+                  <Text style={styles.warningBannerText}>
+                    Un profesor a cargo debe completar los datos restantes para
+                    activar el curso.
+                  </Text>
                 </View>
               </View>
             )}

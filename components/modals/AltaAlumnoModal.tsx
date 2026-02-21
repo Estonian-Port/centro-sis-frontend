@@ -33,7 +33,7 @@ export const RegistroAlumnoModal: React.FC<RegistroAlumnoModalProps> = ({
   const [dni, setDni] = useState("");
   const [loading, setLoading] = useState(false);
   const [registroExitoso, setRegistroExitoso] = useState(false);
-  const [errorMensaje, setErrorMensaje] = useState<string | null>(null); // ✅ NUEVO
+  const [errorMensaje, setErrorMensaje] = useState<string | null>(null);
 
   const handleClose = () => {
     setEmail("");
@@ -95,7 +95,7 @@ export const RegistroAlumnoModal: React.FC<RegistroAlumnoModalProps> = ({
         handleClose();
       }, 3000);
     } catch (error: any) {
-      // ✅ Mostrar error en el modal
+      // Mostrar error en el modal
       setErrorMensaje(getErrorMessage(error));
     } finally {
       setLoading(false);
@@ -143,7 +143,7 @@ export const RegistroAlumnoModal: React.FC<RegistroAlumnoModalProps> = ({
                   </Text>
                 </View>
 
-                {/* ✅ Alerta de error inline */}
+                {/* Alerta de error inline */}
                 {errorMensaje && (
                   <View style={styles.errorAlert}>
                     <Ionicons name="alert-circle" size={20} color="#dc2626" />

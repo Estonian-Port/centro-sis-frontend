@@ -1,7 +1,5 @@
-// components/finanzas/ListaMovimientos.tsx
-
 import React from "react";
-import { View, Text, StyleSheet, FlatList, Platform } from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";  // ✅ Quitar FlatList
 import { Ionicons } from "@expo/vector-icons";
 import { MovimientoFinanciero } from "@/services/reporte-financiero.service";
 
@@ -49,12 +47,12 @@ export const ListaMovimientos: React.FC<ListaMovimientosProps> = ({ movimientos 
     }
   };
 
-  const renderMovimiento = ({ item }: { item: MovimientoFinanciero }) => {
+  const renderMovimiento = (item: MovimientoFinanciero) => {
     const color = item.tipo === 'INGRESO' ? '#10b981' : '#ef4444';
     const colorCategoria = getColorCategoria(item.categoria);
 
     return (
-      <View style={styles.movimientoCard}>
+      <View key={item.id} style={styles.movimientoCard}>
         {/* Icono y Fecha */}
         <View style={styles.movimientoHeader}>
           <View style={[styles.iconoContainer, { backgroundColor: `${colorCategoria}15` }]}>
@@ -118,19 +116,16 @@ export const ListaMovimientos: React.FC<ListaMovimientosProps> = ({ movimientos 
     <View style={styles.container}>
       <View style={styles.header}>
         <Ionicons name="list" size={20} color="#3b82f6" />
-        <Text style={styles.headerText}>Movimientos Detallados</Text>
+        <Text style={styles.headerText}>Últimos movimientos</Text>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{movimientos.length}</Text>
         </View>
       </View>
 
-      <FlatList
-        data={movimientos}
-        renderItem={renderMovimiento}
-        keyExtractor={(item) => item.id.toString()}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.lista}
-      />
+      {/* ✅ CAMBIO: map en lugar de FlatList */}
+      <View style={styles.lista}>
+        {movimientos.map(renderMovimiento)}
+      </View>
     </View>
   );
 };
