@@ -6,6 +6,7 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import {
   Curso,
@@ -38,6 +39,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 import { getErrorMessage } from "@/helper/auth.interceptor";
 import { EventBus } from "@/util/EventBus";
+import { administracionService } from "@/services/administracion.service";
 
 // ============================================
 // OPCIONES DE FILTROS
@@ -102,6 +104,7 @@ export default function AdminScreen() {
   const [showEditCourseModal, setShowEditCourseModal] = useState(false);
   const [selectedPendingCourse, setSelectedPendingCourse] =
     useState<Curso | null>(null);
+  const [descargandoQr, setDescargandoQr] = useState(false);
 
   useEffect(() => {
     if (!usuario) {
@@ -246,6 +249,30 @@ export default function AdminScreen() {
         text2: getErrorMessage(error) || "No se pudo crear el usuario.",
         position: "bottom",
       });
+    }
+  };
+
+  const handleDescargarTodosQr = async () => {
+    setDescargandoQr(true);
+    try {
+      await administracionService.descargarTodosQr();
+
+      Toast.show({
+        type: "success",
+        text1: "✅ QR Descargados",
+        text2: "Los códigos QR se están descargando",
+        position: "bottom",
+      });
+    } catch (error) {
+      console.error("Error descargando QR:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: getErrorMessage(error) || "No se pudieron descargar los QR",
+        position: "bottom",
+      });
+    } finally {
+      setDescargandoQr(false);
     }
   };
 
@@ -449,6 +476,20 @@ export default function AdminScreen() {
             onViewChange={setVistaActual}
             availableViews={["lista", "calendario"]}
           />
+        )}
+
+        {activeTab === "users" && Platform.OS === "web" && (
+          <TouchableOpacity
+            style={styles.downloadQrButton}
+            onPress={handleDescargarTodosQr}
+            disabled={descargandoQr}
+          >
+            <Ionicons name="qr-code-outline" size={14} color="#fff" />
+            <Text style={styles.downloadQrText}>
+              {descargandoQr ? "Generando" : "Descargar QR"}
+            </Text>
+            {descargandoQr && <ActivityIndicator size="small" color="#fff" />}
+          </TouchableOpacity>
         )}
 
         <Button
@@ -801,5 +842,19 @@ const styles = StyleSheet.create({
     ...TIPOGRAFIA.titleL,
     color: COLORES.textPrimary,
     marginBottom: 8,
+  },
+  downloadQrButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: COLORES.violeta,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  downloadQrText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#ffffff",
   },
 });
