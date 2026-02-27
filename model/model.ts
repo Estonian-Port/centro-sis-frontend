@@ -65,6 +65,11 @@ export interface NuevoUsuario {
   roles: string[];
 }
 
+export interface NuevoAlumno {
+  email: string;
+  dni: string;
+}
+
 export interface Usuario {
   id: number;
   nombre: string;
@@ -192,11 +197,11 @@ export interface nuevoCursoAlquilerAdmin {
   profesoresId: number[];
   fechaInicio: string; // formato "YYYY-MM-DD"
   fechaFin: string; // formato "YYYY-MM-DD"
+  horarios: HorarioDto[];
 }
 
 export interface nuevoCursoAlquilerProfesor {
   id: number;
-  horarios: HorarioDto[];
   tiposPago: TipoPago[];
   recargo: number;
 }
@@ -263,13 +268,18 @@ export interface Acceso {
   usuarioApellido: string;
   usuarioDni: string;
   fechaHora: string;
-  tipoAcceso: "QR" | "MANUAL";
+  tipoAcceso: "QR" | "MANUAL" | "INVITADO";
   alertaPagos?: AlertaPagos;
+}
+
+export interface RegistrarInvitadoRequest {
+  dni: string;
+  nombre?: string;
 }
 
 export interface EstadisticasAcceso {
   totalHoy: number;
-  totalEstaSemana: number;
+  totalSemana: number;
   totalEsteMes: number;
   promedioDiario: number;
 }

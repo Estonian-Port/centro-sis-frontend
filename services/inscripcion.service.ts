@@ -57,7 +57,7 @@ export const inscripcionService = {
    */
   eliminarInscripcion: async (inscripcionId: number) => {
     try {
-      const response = await api.delete(`${INSC}/${inscripcionId}`);
+      const response = await api.delete(`${INSC}/baja/${inscripcionId}`);
       return response.data.data;
     } catch (error: any) {
       throw new Error(
@@ -79,11 +79,10 @@ export const inscripcionService = {
     }
   },
 
-  actualizarBeneficio : async (inscripcionId: number, beneficio: number) => {
+  actualizarBeneficio : async (inscripcionId: number, usuarioId: number, beneficio: number) => {
     try {
       const response = await api.put(
-        `${INSC}/${inscripcionId}/actualizar-beneficio`,
-        { beneficio }
+        `${INSC}/editar-beneficio/${inscripcionId}/${usuarioId}`, {beneficio}
       );
       return response.data.data;
     } catch (error: any) {

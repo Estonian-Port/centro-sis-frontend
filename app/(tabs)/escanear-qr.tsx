@@ -19,6 +19,7 @@ import { Acceso } from "@/model/model";
 import { accesoService } from "@/services/acceso.service";
 import IOSScannerOverlay from "@/components/ui/IosScannerOverlay";
 import { getErrorMessage } from "@/helper/auth.interceptor";
+import { EventBus } from "@/util/EventBus";
 
 export default function EscanearQRScreen() {
   const { usuario } = useAuth();
@@ -44,8 +45,8 @@ export default function EscanearQRScreen() {
     try {
       const qrData = JSON.parse(data);
       const acceso = await accesoService.registrarAccesoQR(usuario!.id, qrData);
-
       setLastAcceso(acceso);
+      EventBus.emit("accesoRegistrado", acceso);
       setShowSuccess(true);
       setAccesosRecientes([acceso, ...accesosRecientes.slice(0, 49)]);
 

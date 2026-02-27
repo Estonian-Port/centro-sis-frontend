@@ -3,6 +3,7 @@ import {
   CompleteProfileData,
   Curso,
   CursoAlumno,
+  NuevoAlumno,
   NuevoUsuario,
   ProfesorLista,
   UpdatePerfilUsuario,
@@ -34,6 +35,11 @@ class UsuarioService {
     return response.data.data;
   };
 
+  registrarAlumno = async (nuevoAlumno: NuevoAlumno): Promise<void> => {
+    const response = await api.post(`${USER}/altaAlumno`, nuevoAlumno);
+    return response.data.data;
+  };
+
   getNombresProfesores = async (): Promise<ProfesorLista[]> => {
     const response = await api.get(`${USER}/profesores`);
     return response.data.data;
@@ -51,7 +57,7 @@ class UsuarioService {
 
   changePassword = async (
     usuario: UsuarioUpdatePassword,
-    id: number
+    id: number,
   ): Promise<void> => {
     const response = await api.post(`${USER}/update-password/${id}`, usuario);
     return response.data.data;
@@ -59,7 +65,7 @@ class UsuarioService {
 
   updateProfile = async (
     id: number,
-    usuario: UpdatePerfilUsuario
+    usuario: UpdatePerfilUsuario,
   ): Promise<Usuario> => {
     const response = await api.put(`${USER}/update-perfil/${id}`, usuario);
     return response.data.data;
@@ -68,27 +74,36 @@ class UsuarioService {
   searchByRol = async (
     query: string,
     rol: "ALUMNO" | "PROFESOR" | "ADMIN" | "OFICINA",
-    cursoId?: number
+    cursoId?: number,
+    limit: number = 20,
   ): Promise<Usuario[]> => {
     try {
       if (query.length < 2) {
         return [];
       }
 
+      const params: any = {
+        q: query,
+        rol,
+        limit,
+      };
+
+      if (cursoId !== undefined) {
+        params.cursoId = cursoId;
+      }
+
       const response = await api.get(`${USER}/search-by-rol`, {
-        params: { q: query, rol , cursoId },
+        params: params,
       });
       return response.data.data;
     } catch (error: any) {
       throw new Error(
-        error.response?.data?.message || "Error al buscar usuarios"
+        error.response?.data?.message || "Error al buscar usuarios",
       );
     }
   };
 
-    search = async (
-    query: string,
-  ): Promise<Usuario[]> => {
+  search = async (query: string): Promise<Usuario[]> => {
     try {
       if (query.length < 2) {
         return [];
@@ -100,28 +115,25 @@ class UsuarioService {
       return response.data.data;
     } catch (error: any) {
       throw new Error(
-        error.response?.data?.message || "Error al buscar usuarios"
+        error.response?.data?.message || "Error al buscar usuarios",
       );
     }
   };
 
-  completarPerfil = async (
-    usuario: CompleteProfileData
-  ): Promise<Usuario> => {
-    const response = await api.put(
-      `${USER}/registro`,
-      usuario
-    );
+  completarPerfil = async (usuario: CompleteProfileData): Promise<Usuario> => {
+    const response = await api.put(`${USER}/registro`, usuario);
     return response.data.data;
-  }
+  };
 
-  bajaTotal = async (id: number, adminId: number): Promise<void> => {
-    const response = await api.delete(`${USER}/delete/${id}/${adminId}`);
+  bajaTotal = async (id: number, eliminadoPorId: number): Promise<void> => {
+    const response = await api.delete(`${USER}/delete/${id}/${eliminadoPorId}`);
     return response.data.data;
-  }
+  };
 
   reenviarInvitacion = async (id: number, adminId: number): Promise<void> => {
-    const response = await api.post(`${USER}/reenviar-invitacion/${id}/${adminId}`);
+    const response = await api.post(
+      `${USER}/reenviar-invitacion/${id}/${adminId}`,
+    );
     return response.data.data;
   };
 
@@ -131,8 +143,8 @@ class UsuarioService {
   };
 
   removerRol = async (usuarioId: number, rol: string): Promise<void> => {
-  await api.delete(`${USER}/${usuarioId}/remover-rol/${rol}`);
-};
+    await api.delete(`${USER}/${usuarioId}/remover-rol/${rol}`);
+  };
 }
 
 export const usuarioService = new UsuarioService();

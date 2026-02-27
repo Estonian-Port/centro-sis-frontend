@@ -60,6 +60,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
   const qrRef = useRef<any>(null);
 
   const esAdmin = usuario!.listaRol.includes(Rol.ADMINISTRADOR);
+  const esOficina = usuario!.listaRol.includes(Rol.OFICINA);
 
   useEffect(() => {
     if (visible && idUsuario) {
@@ -299,7 +300,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
   const esAlumno = user.listaRol.includes(Rol.ALUMNO);
   const esProfesor = user.listaRol.includes(Rol.PROFESOR);
   const esAdminUsuario = user.listaRol.includes(Rol.ADMINISTRADOR);
-  const esOficina = user.listaRol.includes(Rol.OFICINA);
+  const esOficinaUsuario = user.listaRol.includes(Rol.OFICINA);
 
   const rolesDisponibles = Object.values(Rol).filter(
     (rol) => !user.listaRol.includes(rol),
@@ -701,7 +702,7 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
             )}
 
             {/* Solo roles administrativos sin info adicional */}
-            {(esAdminUsuario || esOficina) && !esAlumno && !esProfesor && (
+            {(esAdminUsuario || esOficinaUsuario) && !esAlumno && !esProfesor && (
               <View style={styles.section}>
                 <Card style={styles.adminCard}>
                   <View style={styles.adminInfo}>

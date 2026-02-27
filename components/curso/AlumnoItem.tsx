@@ -17,6 +17,7 @@ import { RegistrarPagoModal } from "./modals/RegistrarPagoModal";
 import { ConfirmarBajaModal } from "./modals/BajaAlumnoModal";
 import { estadoPagoToTagVariant, formatEstadoPago } from "@/helper/funciones";
 import { useAuth } from "@/context/authContext";
+import { EventBus } from "@/util/EventBus";
 
 interface AlumnoItemProps {
   inscripcion: Inscripcion;
@@ -187,6 +188,7 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         onGuardar={async (beneficio) => {
           await inscripcionService.actualizarBeneficio(
             inscripcion.id,
+            usuario.id,
             beneficio,
           );
           await onRefresh();
@@ -218,6 +220,7 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         curso={curso.nombre}
         onConfirmar={async () => {
           await inscripcionService.eliminarInscripcion(inscripcion.id);
+          EventBus.emit("alumnoBaja", { cursoId: curso.id, alumnoId: inscripcion.alumno.id });
           await onRefresh();
         }}
       />

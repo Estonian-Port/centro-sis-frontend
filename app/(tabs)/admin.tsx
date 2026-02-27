@@ -37,6 +37,7 @@ import { TIPOGRAFIA } from "@/util/tipografia";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 import { getErrorMessage } from "@/helper/auth.interceptor";
+import { EventBus } from "@/util/EventBus";
 
 // ============================================
 // OPCIONES DE FILTROS
@@ -56,7 +57,6 @@ const estadoUsuarioFilterOptions: FilterOption<Estado>[] = [
   { value: Estado.ACTIVO, label: "Activo", color: "#10b981" },
   { value: Estado.INACTIVO, label: "Inactivo", color: "#6b7280" },
   { value: Estado.PENDIENTE, label: "Pendiente", color: "#f59e0b" },
-  { value: Estado.BAJA, label: "Baja", color: "#ef4444" },
 ];
 
 // Filtros de ESTADO DE CURSO
@@ -69,7 +69,6 @@ const estadoCursoFilterOptions: FilterOption<EstadoCurso>[] = [
 // Filtros de ESTADO DE ALTA (para cursos)
 const estadoAltaFilterOptions: FilterOption<Estado>[] = [
   { value: Estado.ACTIVO, label: "Activo", color: "#10b981" },
-  { value: Estado.INACTIVO, label: "Inactivo", color: "#6b7280" },
   { value: Estado.PENDIENTE, label: "Pendiente", color: "#f59e0b" },
   { value: Estado.BAJA, label: "Baja", color: "#ef4444" },
 ];
@@ -108,13 +107,47 @@ export default function AdminScreen() {
     if (!usuario) {
       return;
     }
-
     if (activeTab === "users") {
       fetchUsers();
     } else {
       fetchCourses();
     }
   }, [activeTab, usuario]);
+
+  useEffect(() => {
+    setSearchQuery("");
+
+    // Limpiar filtros de usuarios
+    setFiltrosRol([]);
+    setFiltrosEstadoUsuario([]);
+
+    // Limpiar filtros de cursos
+    setFiltrosEstadoCurso([]);
+    setFiltrosEstadoAlta([]);
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handler = () => {
+      if (activeTab === "courses") fetchCourses();
+    };
+    EventBus.on("cursoUpdated", handler);
+    return () => {
+      EventBus.off("cursoUpdated", handler);
+    };
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handler = async ({ cursoId }: { cursoId: number }) => {
+      // Busca el curso actualizado
+      const updatedCurso = await cursoService.getById(cursoId);
+      // Actualiza solo ese curso en el array de courses
+      setCourses((prevCourses) =>
+        prevCourses.map((c) => (c.id === updatedCurso.id ? updatedCurso : c)),
+      );
+    };
+    EventBus.on("alumnoBaja", handler);
+    return () => EventBus.off("alumnoBaja", handler);
+  }, []);
 
   const fetchUsers = async () => {
     if (!usuario) {

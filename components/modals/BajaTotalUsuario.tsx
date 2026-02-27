@@ -29,26 +29,9 @@ export const BajaTotalUsuario: React.FC<BajaTotalUsuarioProps> = ({
 
   const handleConfirmar = async () => {
     setLoading(true);
-    try {
-      await onConfirmar();
-      Toast.show({
-        type: "success",
-        text1: "Usuario dado de baja",
-        text2: `${usuario.nombre} ${usuario.apellido} fue dado de baja del sistema`,
-        position: "bottom",
-      });
-      onClose();
-    } catch (error) {
-      console.error("Error dando de baja:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: getErrorMessage(error) || "No se pudo dar de baja al usuario",
-        position: "bottom",
-      });
-    } finally {
-      setLoading(false);
-    }
+    await onConfirmar();
+    onClose();
+    setLoading(false);
   };
 
   return (
@@ -81,7 +64,7 @@ export const BajaTotalUsuario: React.FC<BajaTotalUsuarioProps> = ({
           <View style={styles.warningBox}>
             <Ionicons name="information-circle" size={20} color="#f59e0b" />
             <Text style={styles.warningText}>
-              Esta acción no se puede deshacer. El alumno perderá acceso al
+              Esta acción no se puede deshacer. El usuario perderá acceso al
               sistema.
             </Text>
           </View>

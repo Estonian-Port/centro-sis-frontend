@@ -103,7 +103,7 @@ export const pagoService = {
   },
 
   // ========================================
-  // PREVIEW - CURSO (ya lo tenías)
+  // PREVIEW - CURSO 
   // ========================================
   
   calcularPreviewPagoCurso: async (
