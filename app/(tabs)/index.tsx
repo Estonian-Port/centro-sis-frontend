@@ -1,6 +1,6 @@
 import { useAuth } from "@/context/authContext";
 import { CursoAlumno, Curso, Rol, Estadistica } from "@/model/model";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Platform, StatusBar, StyleSheet, Text, View } from "react-native";
 import { administracionService } from "@/services/administracion.service";
 import { usuarioService } from "@/services/usuario.service";
@@ -21,7 +21,7 @@ export default function HomeScreen() {
     accesosMensuales: 0,
   });
 
-  const fetchData = async () => {
+    const fetchData = useCallback(async () => {
     if (usuario != null && selectedRole === Rol.ALUMNO) {
       let listaCursos = await usuarioService.getAllCoursesByAlumno(usuario.id);
       setCursosAlumno(listaCursos);
@@ -36,11 +36,13 @@ export default function HomeScreen() {
       const stats = await administracionService.getEstadisticas();
       setStats(stats);
     }
-  };
+  }, [usuario, selectedRole]);
 
-  useFocusEffect(() => {
-    fetchData();
-  });
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
 
   const renderContent = () => {
     switch (selectedRole) {
