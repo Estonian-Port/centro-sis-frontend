@@ -70,26 +70,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             // ✅ Si es 403/401, limpiar SILENCIOSAMENTE (token expirado es normal)
             if (
               userError?.response?.status === 403 ||
-              userError?.response?.status === 401
+              userError?.response?.status === 401 ||
+              userError?.status === 403 ||
+              userError?.status === 401
             ) {
+              // Token expirado o inválido - SILENCIOSO
               await AsyncStorage.removeItem(STORAGE_KEY_TOKEN);
               await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
               setUsuario(null);
               setIsAuthenticated(false);
               setSelectedRoleState(null);
-              // ✅ NO loggear - es un caso esperado
+              // ✅ NO loggear, NO lanzar - es un caso esperado
             } else {
               // ✅ SOLO loggear si es OTRO error inesperado
               console.error("Error inesperado al obtener usuario:", userError);
-              throw userError;
+              // ✅ TAMPOCO lanzar - manejar localmente
+              await AsyncStorage.removeItem(STORAGE_KEY_TOKEN);
+              await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
+              setUsuario(null);
+              setIsAuthenticated(false);
+              setSelectedRoleState(null);
             }
           }
-        } else {
-          setUsuario(null);
-          setIsAuthenticated(false);
         }
       } catch (e) {
-        // ✅ Solo llega acá si hubo un error CRÍTICO (no 403/401)
+        // ✅ Solo llega acá si hubo un error CRÍTICO (AsyncStorage, etc)
         console.error("Error crítico al inicializar auth:", e);
         await AsyncStorage.removeItem(STORAGE_KEY_TOKEN);
         await AsyncStorage.removeItem(STORAGE_KEY_SELECTED_ROLE);
