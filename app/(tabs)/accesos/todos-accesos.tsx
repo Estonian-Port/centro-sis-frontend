@@ -19,11 +19,12 @@ import { accesoService } from "@/services/acceso.service";
 import { AccesoItem } from "@/components/accesos/AccesoItem";
 import { RegistrarAccesoModal } from "@/components/accesos/RegistrarAccesoModal";
 import { getErrorMessage } from "@/helper/auth.interceptor";
+import { router } from "expo-router";
 
 type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export default function TodosAccesosScreen() {
-  const { usuario } = useAuth();
+  const { usuario, selectedRole, isLoading } = useAuth();
 
   const [accesos, setAccesos] = useState<Acceso[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +40,12 @@ export default function TodosAccesosScreen() {
 
   // Modal
   const [showRegistrarModal, setShowRegistrarModal] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && selectedRole !== Rol.ADMINISTRADOR) {
+      router.replace("/(tabs)"); // ← REDIRECT
+    }
+  }, [selectedRole, isLoading]);
 
   const PAGE_SIZE = 20;
 

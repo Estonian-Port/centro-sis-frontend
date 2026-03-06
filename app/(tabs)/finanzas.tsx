@@ -27,13 +27,21 @@ import {
   TablaDetalleIngresos,
 } from "@/components/finanzas/TablaDetalle";
 import { ListaMovimientos } from "@/components/finanzas/ListaMovimientos";
+import { Rol } from "@/model/model";
+import { router } from "expo-router";
 
 export default function FinanzasScreen() {
-  const { usuario } = useAuth();
+  const { usuario, selectedRole, isLoading } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [exportando, setExportando] = useState(false);
   const [reporte, setReporte] = useState<ReporteFinancieroMensual | null>(null);
+
+  useEffect(() => {
+    if (!isLoading && selectedRole !== Rol.ADMINISTRADOR) {
+      router.replace("/(tabs)"); // ← REDIRECT
+    }
+  }, [selectedRole, isLoading]);
 
   // Mes y año actual por defecto
   const hoy = new Date();
@@ -53,13 +61,7 @@ export default function FinanzasScreen() {
 
       setReporte(data);
     } catch (error: any) {
-      console.error("❌ ERROR:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error al cargar reporte",
-        text2: error?.response?.data?.message || "Intente nuevamente",
-        position: "bottom",
-      });
+      console.error("ERROR:", error);
     } finally {
       setLoading(false);
     }

@@ -13,14 +13,15 @@ import { CameraView, Camera } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/context/authContext";
 import Toast from "react-native-toast-message";
-import { Acceso } from "@/model/model";
+import { Acceso, Rol } from "@/model/model";
 import { accesoService } from "@/services/acceso.service";
 import IOSScannerOverlay from "@/components/ui/IosScannerOverlay";
 import { getErrorMessage } from "@/helper/auth.interceptor";
 import { EventBus } from "@/util/EventBus";
+import { router } from "expo-router";
 
 export default function EscanearQRScreen() {
-  const { usuario } = useAuth();
+  const { usuario, selectedRole, isLoading } = useAuth();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanning, setScanning] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -28,15 +29,21 @@ export default function EscanearQRScreen() {
   const [loadingAccesos, setLoadingAccesos] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastAcceso, setLastAcceso] = useState<Acceso | null>(null);
-    const [showWebModal, setShowWebModal] = useState(false);
+  const [showWebModal, setShowWebModal] = useState(false);
 
   useEffect(() => {
     // Solo pedir permisos si NO es web
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== "web") {
       requestCameraPermission();
     }
     loadAccesosRecientes();
   }, []);
+
+  useEffect(() => {
+    if (!isLoading && selectedRole !== Rol.PORTERIA) {
+      router.replace("/(tabs)"); // ← REDIRECT
+    }
+  }, [selectedRole, isLoading]);
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
     if (processing) return;
@@ -92,14 +99,14 @@ export default function EscanearQRScreen() {
 
   // Handler para botón de escaneo
   const handleScanPress = () => {
-    if (Platform.OS === 'web') {
+    if (Platform.OS === "web") {
       setShowWebModal(true);
     } else {
       setScanning(true);
     }
   };
 
-  if (Platform.OS !== 'web' && hasPermission === null) {
+  if (Platform.OS !== "web" && hasPermission === null) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#3b82f6" />
@@ -108,7 +115,7 @@ export default function EscanearQRScreen() {
     );
   }
 
-  if (Platform.OS !== 'web' && hasPermission === false) {
+  if (Platform.OS !== "web" && hasPermission === false) {
     return (
       <View style={styles.container}>
         <Ionicons name="alert" size={64} color="#ef4444" />
@@ -127,16 +134,16 @@ export default function EscanearQRScreen() {
         <Ionicons name="scan" size={32} color="#3b82f6" />
         <Text style={styles.title}>Registrar Accesos</Text>
         <Text style={styles.subtitle}>
-          {Platform.OS === 'web' 
-            ? 'Descargá la app para escanear QR' 
-            : 'Escanea el QR del usuario'}
+          {Platform.OS === "web"
+            ? "Descargá la app para escanear QR"
+            : "Escanea el QR del usuario"}
         </Text>
       </View>
 
       {/* Botón Escanear */}
       <TouchableOpacity
         style={styles.scanButton}
-        onPress={handleScanPress}  // ✅ Cambiado
+        onPress={handleScanPress} // ✅ Cambiado
         disabled={processing}
       >
         <Ionicons name="qr-code-outline" size={48} color="#ffffff" />
@@ -177,7 +184,8 @@ export default function EscanearQRScreen() {
                     {new Date(acceso.fechaHora).toLocaleDateString("es-AR", {
                       day: "2-digit",
                       month: "2-digit",
-                    })}{" - "}
+                    })}
+                    {" - "}
                     {new Date(acceso.fechaHora).toLocaleTimeString("es-AR", {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -194,7 +202,7 @@ export default function EscanearQRScreen() {
         )}
       </View>
 
-      {Platform.OS === 'web' && (
+      {Platform.OS === "web" && (
         <Modal
           visible={showWebModal}
           transparent
@@ -205,17 +213,20 @@ export default function EscanearQRScreen() {
             <View style={styles.webModalContent}>
               {/* Icono */}
               <View style={styles.webModalIcon}>
-                <Ionicons name="phone-portrait-outline" size={64} color="#3b82f6" />
+                <Ionicons
+                  name="phone-portrait-outline"
+                  size={64}
+                  color="#3b82f6"
+                />
               </View>
 
               {/* Título */}
-              <Text style={styles.webModalTitle}>
-                Descargá la App Móvil
-              </Text>
+              <Text style={styles.webModalTitle}>Descargá la App Móvil</Text>
 
               {/* Descripción */}
               <Text style={styles.webModalDescription}>
-                El escaneo de códigos QR está disponible únicamente en la aplicación móvil.
+                El escaneo de códigos QR está disponible únicamente en la
+                aplicación móvil.
               </Text>
 
               {/* Iconos de plataformas */}
@@ -271,7 +282,7 @@ export default function EscanearQRScreen() {
       )}
 
       {/* Modal Escáner Android */}
-      {scanning && Platform.OS !== "ios" && Platform.OS !== 'web' && (
+      {scanning && Platform.OS !== "ios" && Platform.OS !== "web" && (
         <Modal
           visible={scanning}
           animationType="slide"
@@ -498,7 +509,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#10b981",
   },
-    webModalOverlay: {
+  webModalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
@@ -582,7 +593,7 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     textAlign: "center",
   },
-  
+
   scannerContainer: {
     flex: 1,
     position: "relative",
