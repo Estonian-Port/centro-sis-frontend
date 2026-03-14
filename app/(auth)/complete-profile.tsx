@@ -31,6 +31,15 @@ import { usuarioService } from "@/services/usuario.service";
 import { CompleteProfileData } from "@/model/model";
 import { getErrorMessage } from "@/helper/auth.interceptor";
 
+const NOMBRE_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+
+const LIMITS = {
+  NOMBRE_MIN: 2,
+  NOMBRE_MAX: 50,
+  APELLIDO_MIN: 2,
+  APELLIDO_MAX: 50,
+};
+
 // Esquema de validación
 const getValidationSchema = (
   esMenorDeEdad: boolean,
@@ -39,8 +48,18 @@ const getValidationSchema = (
   declaracionLeida: boolean,
 ) => {
   const baseSchema = {
-    nombre: yup.string().required("El nombre es requerido"),
-    apellido: yup.string().required("El apellido es requerido"),
+    nombre: yup
+      .string()
+      .required("El nombre es requerido")
+      .min(LIMITS.NOMBRE_MIN, `Mínimo ${LIMITS.NOMBRE_MIN} caracteres`)
+      .max(LIMITS.NOMBRE_MAX, `Máximo ${LIMITS.NOMBRE_MAX} caracteres`)
+      .matches(NOMBRE_REGEX, "Solo se permiten letras, espacios y acentos"),
+    apellido: yup
+      .string()
+      .required("El apellido es requerido")
+      .min(LIMITS.APELLIDO_MIN, `Mínimo ${LIMITS.APELLIDO_MIN} caracteres`)
+      .max(LIMITS.APELLIDO_MAX, `Máximo ${LIMITS.APELLIDO_MAX} caracteres`)
+      .matches(NOMBRE_REGEX, "Solo se permiten letras, espacios y acentos"),
     dni: yup
       .string()
       .matches(/^\d{7,8}$/, "El DNI debe tener 7 u 8 dígitos")

@@ -44,24 +44,18 @@ const CourseItem = ({
   const [showBajaModal, setShowBajaModal] = useState(false);
   const [showRegistrarPagoModal, setShowRegistrarPagoModal] = useState(false);
 
-  // Determinar si es CursoAlumno (tiene estadoPago)
   const esCursoAlumno = (curso: Curso | CursoAlumno): curso is CursoAlumno => {
     return "estadoPago" in curso;
   };
 
-  // Determinar si el curso es PENDIENTE
   const esPendiente = course.estadoAlta === Estado.PENDIENTE;
 
-  // Determinar si el alumno tiene deuda
   const tieneDeuda =
     esCursoAlumno(course) && course.estadoPago === EstadoPago.ATRASADO;
 
-  // LÓGICA DE COLORES
   const getEstilosCurso = () => {
-    // ALUMNO: Fondo blanco excepto si tiene deuda
     if (selectedRole === Rol.ALUMNO) {
       if (tieneDeuda) {
-        // Curso con deuda: fondo rojo suave
         return {
           bg: "#fee2e2",
           border: "#ef4444",
@@ -69,7 +63,6 @@ const CourseItem = ({
           borderWidth: 2,
         };
       }
-      // Curso sin deuda: fondo blanco
       return {
         bg: "#ffffff",
         border: "#e5e7eb",
@@ -78,7 +71,6 @@ const CourseItem = ({
       };
     }
 
-    // ADMIN/PROFESOR/OFICINA: Colores por tipo de curso
     const coloresTipo = {
       [TipoCurso.ALQUILER]: {
         bg: "#dbeafe",
@@ -99,7 +91,6 @@ const CourseItem = ({
 
   const estilos = getEstilosCurso();
 
-  // Colores para cursos pendientes (naranja/amarillo) - SOLO ADMIN/PROFESOR
   const estilosPendiente =
     esPendiente && selectedRole !== Rol.ALUMNO
       ? {
@@ -109,7 +100,6 @@ const CourseItem = ({
         }
       : {};
 
-  // Colores para cursos dados de baja (gris, opaco, texto deshabilitado)
   const estilosBaja =
     course.estadoAlta === Estado.BAJA
       ? {
@@ -134,27 +124,25 @@ const CourseItem = ({
     }
   };
 
-  // Determinar si mostrar botones de acción
   const mostrarBotonesAccion =
     (selectedRole === Rol.ADMINISTRADOR || selectedRole === Rol.OFICINA) &&
-    !esCursoAlumno(course); // Solo para CursoAlquiler, no CursoAlumno
+    !esCursoAlumno(course);
 
-  // Texto del botón de pago según tipo de curso
   const getTextoPago = () => {
     if (course.tipoCurso === TipoCurso.ALQUILER) {
-      return "Alquiler"; // Profesor paga al instituto
+      return "Alquiler";
     } else {
-      return "Comisión"; // Instituto paga al profesor
+      return "Comisión";
     }
   };
 
   const handleRegistrarPago = (e: any) => {
-    e.stopPropagation(); // Evitar que abra el curso
+    e.stopPropagation();
     setShowRegistrarPagoModal(true);
   };
 
   const handleDarDeBaja = (e: any) => {
-    e.stopPropagation(); // Evitar que abra el curso
+    e.stopPropagation();
     setShowBajaModal(true);
   };
 
@@ -185,31 +173,31 @@ const CourseItem = ({
         onPress={handlePress}
         activeOpacity={0.7}
       >
-        {/* Indicador visual de curso pendiente (borde izquierdo)*/}
         {esPendiente && selectedRole !== Rol.ALUMNO && (
           <View style={styles.pendingIndicator} />
         )}
 
-        {/* Indicador visual de DEUDA (borde izquierdo rojo) */}
         {tieneDeuda && selectedRole === Rol.ALUMNO && (
           <View style={styles.deudaIndicator} />
         )}
 
         <View style={styles.courseContent}>
-          {/* COLUMNA IZQUIERDA - 3 Filas */}
+          {/* COLUMNA IZQUIERDA */}
           <View style={styles.courseLeftColumn}>
             {/* FILA 1: Nombre del Curso */}
             <View style={styles.courseHeader}>
-              <Text style={[styles.courseName, { color: estilos.text }]}>
+              <Text 
+                style={[styles.courseName, { color: estilos.text }]}
+                numberOfLines={1}  
+                ellipsizeMode="tail"
+              >
                 {course.nombre}
               </Text>
 
-              {/* Icono de advertencia para pendientes */}
               {esPendiente && selectedRole !== Rol.ALUMNO && (
                 <Ionicons name="alert-circle" size={20} color="#f59e0b" />
               )}
 
-              {/* Icono de deuda */}
               {tieneDeuda && selectedRole === Rol.ALUMNO && (
                 <View style={styles.deudaBadge}>
                   <Ionicons name="warning" size={16} color="#ef4444" />
@@ -222,7 +210,11 @@ const CourseItem = ({
             <View style={styles.profesoresRow}>
               <Ionicons name="person-outline" size={14} color="#6b7280" />
               {course.profesores.length > 0 ? (
-                <Text style={styles.profesoresText}>
+                <Text 
+                  style={styles.profesoresText}
+                  numberOfLines={1}  
+                  ellipsizeMode="tail"
+                >
                   {course.profesores
                     .map((p) => `${p.nombre} ${p.apellido}`)
                     .join(", ")}
@@ -257,18 +249,16 @@ const CourseItem = ({
             </View>
           </View>
 
-          {/* COLUMNA DERECHA - 2 Filas */}
+          {/* COLUMNA DERECHA */}
           <View style={styles.courseRightColumn}>
             {/* FILA 1: Tags */}
             <View style={styles.tagsRow}>
-              {/* ALUMNO: Mostrar estado de pago si tiene deuda */}
               {selectedRole === Rol.ALUMNO &&
               esCursoAlumno(course) &&
               tieneDeuda ? (
                 <Tag label={course.estadoPago} variant="danger" size="small" />
               ) : (
                 <>
-                  {/* NO ALUMNO: Mostrar estado del curso */}
                   {selectedRole !== Rol.ALUMNO && (
                     <Tag
                       label={formatEstadoCurso(course.estado)}
@@ -277,7 +267,6 @@ const CourseItem = ({
                     />
                   )}
 
-                  {/* Tag de Estado Alta - SOLO si es PENDIENTE o BAJA y NO ALUMNO */}
                   {selectedRole !== Rol.ALUMNO &&
                     (course.estadoAlta === Estado.PENDIENTE ||
                       course.estadoAlta === Estado.BAJA) && (
@@ -291,7 +280,7 @@ const CourseItem = ({
               )}
             </View>
 
-            {/* FILA 2: Alumnos (solo para no-alumnos) */}
+            {/* FILA 2: Alumnos */}
             {selectedRole !== Rol.ALUMNO && (
               <View style={styles.alumnosRow}>
                 <Ionicons name="people" size={16} color="#6b7280" />
@@ -302,12 +291,11 @@ const CourseItem = ({
               </View>
             )}
 
-            {/* FILA 3: Botones de Acción (solo Admin/Oficina) */}
+            {/* FILA 3: Botones de Acción */}
             {mostrarBotonesAccion &&
               course.estadoAlta !== Estado.PENDIENTE &&
               course.estadoAlta !== Estado.BAJA && (
                 <View style={styles.actionButtons}>
-                  {/* Botón Registrar Pago */}
                   <TouchableOpacity
                     style={[
                       styles.actionButton,
@@ -346,7 +334,6 @@ const CourseItem = ({
                     </Text>
                   </TouchableOpacity>
 
-                  {/* Botón Dar de Baja */}
                   <TouchableOpacity
                     style={[styles.actionButton, styles.bajaButton]}
                     onPress={handleDarDeBaja}
@@ -360,7 +347,6 @@ const CourseItem = ({
         </View>
       </TouchableOpacity>
 
-      {/* Modal Informativo para Admin/Oficina */}
       <Modal
         visible={showPendingModal}
         transparent
@@ -459,12 +445,11 @@ const styles = StyleSheet.create({
     gap: 16,
     alignItems: "flex-start",
   },
-  // COLUMNA IZQUIERDA - 3 Filas
   courseLeftColumn: {
     flex: 1,
     gap: 8,
+    minWidth: 0, 
   },
-  // Fila 1: Nombre
   courseHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -474,6 +459,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     flex: 1,
+    minWidth: 0,
   },
   deudaBadge: {
     flexDirection: "row",
@@ -485,13 +471,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#ef4444",
+    flexShrink: 0, 
   },
   deudaText: {
     fontSize: 11,
     fontWeight: "700",
     color: "#ef4444",
   },
-  // Fila 2: Profesores
   profesoresRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -503,8 +489,8 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     flex: 1,
     lineHeight: 18,
+    minWidth: 0, 
   },
-  // Fila 3: Horarios
   horariosRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -527,20 +513,18 @@ const styles = StyleSheet.create({
     borderColor: "#d1d5db",
     fontWeight: "500",
   },
-  // COLUMNA DERECHA - 2 Filas
   courseRightColumn: {
     gap: 10,
     alignItems: "flex-end",
     minWidth: 140,
+    flexShrink: 0, 
   },
-  // Fila 1: Tags
   tagsRow: {
     flexDirection: "row",
     gap: 6,
     flexWrap: "wrap",
     justifyContent: "flex-end",
   },
-  // Fila 2: Alumnos
   alumnosRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -551,6 +535,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     borderColor: "#e5e7eb",
+    flexShrink: 0, 
   },
   alumnosCount: {
     fontSize: 13,
@@ -570,6 +555,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 6,
     borderWidth: 1,
+    flexShrink: 0,
     ...Platform.select({
       web: {
         cursor: "pointer",
@@ -577,7 +563,6 @@ const styles = StyleSheet.create({
     }),
   },
   pagoButton: {
-    // El backgroundColor se define dinámicamente
     borderColor: "transparent",
   },
   actionButtonText: {
@@ -589,7 +574,6 @@ const styles = StyleSheet.create({
     borderColor: "#fecaca",
     paddingHorizontal: 8,
   },
-  // Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",

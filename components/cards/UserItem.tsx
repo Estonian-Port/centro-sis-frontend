@@ -51,11 +51,21 @@ const UserItem = ({
           {/* Info del usuario (izquierda) */}
           <View style={styles.userMainInfo}>
             {user.estado !== Estado.PENDIENTE && (
-              <Text style={styles.userName}>
+              <Text 
+                style={styles.userName}
+                numberOfLines={1}  
+                ellipsizeMode="tail" 
+              >
                 {user.nombre} {user.apellido}
               </Text>
             )}
-            <Text style={styles.userEmail}>{user.email}</Text>
+            <Text 
+              style={styles.userEmail}
+              numberOfLines={1}  
+              ellipsizeMode="tail"  
+            >
+              {user.email}
+            </Text>
           </View>
 
           {/* Tags (centro-derecha) */}
@@ -98,11 +108,21 @@ const UserItem = ({
           <View style={styles.topRow}>
             <View style={styles.userMainInfo}>
               {user.estado !== Estado.PENDIENTE && (
-                <Text style={styles.userName}>
+                <Text 
+                  style={styles.userName}
+                  numberOfLines={1}  
+                  ellipsizeMode="tail"  
+                >
                   {user.nombre} {user.apellido}
                 </Text>
               )}
-              <Text style={styles.userEmail}>{user.email}</Text>
+              <Text 
+                style={styles.userEmail}
+                numberOfLines={1}  
+                ellipsizeMode="tail"  
+              >
+                {user.email}
+              </Text>
             </View>
 
             {/* Icono de borrar */}
@@ -216,6 +236,7 @@ const styles = StyleSheet.create({
   },
   userMainInfo: {
     flex: 1,
+    minWidth: 0,
   },
   userName: {
     fontSize: 15,
@@ -229,6 +250,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     padding: 4,
+    flexShrink: 0,
   },
   tagsRow: {
     flexDirection: "row",
@@ -254,5 +276,6 @@ const styles = StyleSheet.create({
     gap: 6,
     marginLeft: "auto",
     marginRight: 8,
+    flexShrink: 0,
   },
 });
