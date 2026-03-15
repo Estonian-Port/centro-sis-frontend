@@ -21,8 +21,12 @@
           "backgroundColor": "#2D3C59",
           "foregroundImage": "./assets/images/logo.png"
         },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+        "navigationBar": {
+        "backgroundColor": "#ffffff",
+        "barStyle": "dark-content"
+        },
+        "edgeToEdgeEnabled": true,
+        "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",

@@ -179,9 +179,6 @@ export default function PagosRealizadosScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.title}>Pagos Realizados</Text>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{totalElements}</Text>
-          </View>
         </View>
 
         <SearchBar
@@ -299,17 +296,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     color: "#1f2937",
-  },
-  badge: {
-    backgroundColor: "#dbeafe",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#3b82f6",
   },
   searchBar: {
     marginBottom: 16,
