@@ -99,7 +99,7 @@ export default function AdminScreen() {
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
   const [showModalDetailsUser, setShowModalDetailsUser] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { usuario } = useAuth();
+  const { usuario, selectedRole, isLoading } = useAuth();
   const [modalInvitacionVisible, setModalInvitacionVisible] = useState(false);
   const [showEditCourseModal, setShowEditCourseModal] = useState(false);
   const [selectedPendingCourse, setSelectedPendingCourse] =
@@ -151,6 +151,16 @@ export default function AdminScreen() {
     EventBus.on("alumnoBaja", handler);
     return () => EventBus.off("alumnoBaja", handler);
   }, []);
+
+  useEffect(() => {
+    if (
+      !isLoading &&
+      selectedRole !== Rol.ADMINISTRADOR &&
+      selectedRole !== Rol.OFICINA
+    ) {
+      router.replace("/(tabs)"); // ← REDIRECT
+    }
+  }, [selectedRole, isLoading]);
 
   const fetchUsers = async () => {
     if (!usuario) {

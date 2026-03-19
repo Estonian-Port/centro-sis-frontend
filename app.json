@@ -12,10 +12,16 @@
     "android": {
       "package": "com.estonianport.centrosis",
       "versionCode": 3,
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo-centro.png",
-        "backgroundColor": "#ffffff"
-      }
+        "adaptiveIcon": {
+          "backgroundColor": "#2D3C59",
+          "foregroundImage": "./assets/images/logo.png"
+        },
+        "navigationBar": {
+        "backgroundColor": "#ffffff",
+        "barStyle": "dark-content"
+        },
+        "edgeToEdgeEnabled": true,
+        "predictiveBackGestureEnabled": false
     },
 
     "ios": {
@@ -23,7 +29,6 @@
       "buildNumber": "3",
       "supportsTablet": true
     },
-
     "web": {
       "bundler": "metro",
       "output": "static",

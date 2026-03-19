@@ -16,28 +16,39 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { UpdatePerfilUsuario } from "@/model/model";
 
+const NOMBRE_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+
 // Esquema de validación
 const schema = yup.object().shape({
   nombre: yup
     .string()
     .required("El nombre es requerido")
-    .min(2, "El nombre debe tener al menos 2 caracteres"),
+    .min(2, "Mínimo 2 caracteres")
+    .max(50, "Máximo 50 caracteres")
+    .matches(NOMBRE_REGEX, "Solo se permiten letras, espacios y acentos"),
   apellido: yup
     .string()
     .required("El apellido es requerido")
-    .min(2, "El apellido debe tener al menos 2 caracteres"),
-  email: yup.string().required("El email es requerido").email("Email inválido"),
+    .min(2, "Mínimo 2 caracteres")
+    .max(50, "Máximo 50 caracteres")
+    .matches(NOMBRE_REGEX, "Solo se permiten letras, espacios y acentos"),
+  email: yup
+    .string()
+    .required("El email es requerido")
+    .email("Email inválido")
+    .max(100, "Máximo 100 caracteres"),
   dni: yup
     .string()
     .required("El DNI es requerido")
     .matches(/^[0-9]+$/, "El DNI debe contener solo números")
-    .min(7, "El DNI debe tener al menos 7 dígitos")
-    .max(8, "El DNI debe tener máximo 8 dígitos"),
+    .min(7, "Mínimo 7 dígitos")
+    .max(8, "Máximo 8 dígitos"),
   celular: yup
     .string()
     .required("El celular es requerido")
     .matches(/^[0-9]+$/, "El celular debe contener solo números")
-    .min(10, "El celular debe tener al menos 10 dígitos"),
+    .min(10, "Mínimo 10 dígitos")
+    .max(15, "Máximo 15 dígitos"),
 });
 
 interface EditProfileModalProps {
@@ -63,7 +74,6 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     defaultValues: initialData,
   });
 
-  // Reset form cuando cambian los datos iniciales
   useEffect(() => {
     if (visible) {
       reset(initialData);
@@ -118,6 +128,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     onChangeText={onChange}
                     error={errors.nombre?.message}
                     leftIcon="person-outline"
+                    maxLength={50}
                   />
                 )}
               />
@@ -136,6 +147,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     onChangeText={onChange}
                     error={errors.apellido?.message}
                     leftIcon="person-outline"
+                    maxLength={50}
                   />
                 )}
               />
@@ -156,6 +168,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     leftIcon="mail-outline"
                     keyboardType="email-address"
                     autoCapitalize="none"
+                    maxLength={100}
                   />
                 )}
               />

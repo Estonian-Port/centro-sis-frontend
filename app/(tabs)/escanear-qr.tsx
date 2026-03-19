@@ -1,5 +1,3 @@
-// app/(tabs)/escanear-qr.tsx - CON MODAL EN iOS PARA OCULTAR TABS
-
 import { useState, useEffect } from "react";
 import {
   View,
@@ -15,14 +13,15 @@ import { CameraView, Camera } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/context/authContext";
 import Toast from "react-native-toast-message";
-import { Acceso } from "@/model/model";
+import { Acceso, Rol } from "@/model/model";
 import { accesoService } from "@/services/acceso.service";
 import IOSScannerOverlay from "@/components/ui/IosScannerOverlay";
 import { getErrorMessage } from "@/helper/auth.interceptor";
 import { EventBus } from "@/util/EventBus";
+import { router } from "expo-router";
 
 export default function EscanearQRScreen() {
-  const { usuario } = useAuth();
+  const { usuario, selectedRole, isLoading } = useAuth();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanning, setScanning] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -30,11 +29,21 @@ export default function EscanearQRScreen() {
   const [loadingAccesos, setLoadingAccesos] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastAcceso, setLastAcceso] = useState<Acceso | null>(null);
+  const [showWebModal, setShowWebModal] = useState(false);
 
   useEffect(() => {
-    requestCameraPermission();
+    // Solo pedir permisos si NO es web
+    if (Platform.OS !== "web") {
+      requestCameraPermission();
+    }
     loadAccesosRecientes();
   }, []);
+
+  useEffect(() => {
+    if (!isLoading && selectedRole !== Rol.PORTERIA) {
+      router.replace("/(tabs)"); // ← REDIRECT
+    }
+  }, [selectedRole, isLoading]);
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
     if (processing) return;
@@ -88,37 +97,16 @@ export default function EscanearQRScreen() {
     }
   };
 
-  if (Platform.OS === "web") {
-    return (
-      <View
-        style={{
-          justifyContent: "center",
-          alignItems: "center",
-          flex: 1,
-          backgroundColor: "#f9fafb",
-          padding: 20,
-        }}
-      >
-        <Ionicons
-          name="alert"
-          size={72}
-          color="#ef4444"
-          style={{ marginBottom: 12 }}
-        />
-        <Text
-          style={[styles.errorTitle, { textAlign: "center", marginTop: 0 }]}
-        >
-          Funcionalidad no disponible
-        </Text>
-        <Text style={[styles.errorText, { maxWidth: 420, marginTop: 4 }]}>
-          La funcionalidad de escaneo de QR no está disponible en la versión
-          web.
-        </Text>
-      </View>
-    );
-  }
+  // Handler para botón de escaneo
+  const handleScanPress = () => {
+    if (Platform.OS === "web") {
+      setShowWebModal(true);
+    } else {
+      setScanning(true);
+    }
+  };
 
-  if (hasPermission === null) {
+  if (Platform.OS !== "web" && hasPermission === null) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#3b82f6" />
@@ -127,7 +115,7 @@ export default function EscanearQRScreen() {
     );
   }
 
-  if (hasPermission === false) {
+  if (Platform.OS !== "web" && hasPermission === false) {
     return (
       <View style={styles.container}>
         <Ionicons name="alert" size={64} color="#ef4444" />
@@ -145,13 +133,17 @@ export default function EscanearQRScreen() {
       <View style={styles.header}>
         <Ionicons name="scan" size={32} color="#3b82f6" />
         <Text style={styles.title}>Registrar Accesos</Text>
-        <Text style={styles.subtitle}>Escanea el QR del usuario</Text>
+        <Text style={styles.subtitle}>
+          {Platform.OS === "web"
+            ? "Descargá la app para escanear QR"
+            : "Escanea el QR del usuario"}
+        </Text>
       </View>
 
       {/* Botón Escanear */}
       <TouchableOpacity
         style={styles.scanButton}
-        onPress={() => setScanning(true)}
+        onPress={handleScanPress} // ✅ Cambiado
         disabled={processing}
       >
         <Ionicons name="qr-code-outline" size={48} color="#ffffff" />
@@ -189,6 +181,11 @@ export default function EscanearQRScreen() {
                 </View>
                 <View style={styles.accesoMeta}>
                   <Text style={styles.accesoHora}>
+                    {new Date(acceso.fechaHora).toLocaleDateString("es-AR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                    })}
+                    {" - "}
                     {new Date(acceso.fechaHora).toLocaleTimeString("es-AR", {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -205,12 +202,68 @@ export default function EscanearQRScreen() {
         )}
       </View>
 
-      {/* ✅ MODAL PARA iOS - FULLSCREEN PARA OCULTAR TABS */}
+      {Platform.OS === "web" && (
+        <Modal
+          visible={showWebModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowWebModal(false)}
+        >
+          <View style={styles.webModalOverlay}>
+            <View style={styles.webModalContent}>
+              {/* Icono */}
+              <View style={styles.webModalIcon}>
+                <Ionicons
+                  name="phone-portrait-outline"
+                  size={64}
+                  color="#3b82f6"
+                />
+              </View>
+
+              {/* Título */}
+              <Text style={styles.webModalTitle}>Descargá la App Móvil</Text>
+
+              {/* Descripción */}
+              <Text style={styles.webModalDescription}>
+                El escaneo de códigos QR está disponible únicamente en la
+                aplicación móvil.
+              </Text>
+
+              {/* Iconos de plataformas */}
+              <View style={styles.platformsContainer}>
+                <View style={styles.platformItem}>
+                  <Ionicons name="logo-apple" size={32} color="#000" />
+                  <Text style={styles.platformText}>iOS</Text>
+                </View>
+                <View style={styles.platformItem}>
+                  <Ionicons name="logo-android" size={32} color="#3ddc84" />
+                  <Text style={styles.platformText}>Android</Text>
+                </View>
+              </View>
+
+              {/* Instrucción */}
+              <Text style={styles.webModalInstruccion}>
+                Descargá la app en tu dispositivo móvil para usar esta función
+              </Text>
+
+              {/* Botón Cerrar */}
+              <TouchableOpacity
+                style={styles.webModalButton}
+                onPress={() => setShowWebModal(false)}
+              >
+                <Text style={styles.webModalButtonText}>Entendido</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* MODAL PARA iOS - FULLSCREEN PARA OCULTAR TABS */}
       {scanning && Platform.OS === "ios" && (
         <Modal
           visible={scanning}
           animationType="slide"
-          presentationStyle="fullScreen" // ✅ CLAVE: Oculta las tabs
+          presentationStyle="fullScreen"
         >
           <View style={styles.iosScannerContainer}>
             <CameraView
@@ -229,7 +282,7 @@ export default function EscanearQRScreen() {
       )}
 
       {/* Modal Escáner Android */}
-      {scanning && Platform.OS !== "ios" && (
+      {scanning && Platform.OS !== "ios" && Platform.OS !== "web" && (
         <Modal
           visible={scanning}
           animationType="slide"
@@ -456,6 +509,91 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#10b981",
   },
+  webModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  webModalContent: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    padding: 32,
+    alignItems: "center",
+    width: "100%",
+    maxWidth: 450,
+    ...Platform.select({
+      web: {
+        boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+      },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.3,
+        shadowRadius: 20,
+        elevation: 10,
+      },
+    }),
+  },
+  webModalIcon: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: "#eff6ff",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  webModalTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#1f2937",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  webModalDescription: {
+    fontSize: 16,
+    color: "#6b7280",
+    textAlign: "center",
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  platformsContainer: {
+    flexDirection: "row",
+    gap: 32,
+    marginBottom: 24,
+  },
+  platformItem: {
+    alignItems: "center",
+    gap: 8,
+  },
+  platformText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6b7280",
+  },
+  webModalInstruccion: {
+    fontSize: 14,
+    color: "#9ca3af",
+    textAlign: "center",
+    fontStyle: "italic",
+    marginBottom: 24,
+  },
+  webModalButton: {
+    backgroundColor: "#3b82f6",
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    width: "100%",
+  },
+  webModalButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#ffffff",
+    textAlign: "center",
+  },
+
   scannerContainer: {
     flex: 1,
     position: "relative",

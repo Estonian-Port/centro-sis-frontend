@@ -18,11 +18,12 @@ import { useAuth } from "@/context/authContext";
 import { pagoService } from "@/services/pago.service";
 import { pagoToDisplay } from "@/helper/funciones";
 import { getErrorMessage } from "@/helper/auth.interceptor";
+import { router } from "expo-router";
 
 type Mes = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export default function PagosRecibidosScreen() {
-  const { usuario, selectedRole } = useAuth();
+  const { usuario, selectedRole, isLoading } = useAuth();
 
   const [pagos, setPagos] = useState<Pago[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +31,17 @@ export default function PagosRecibidosScreen() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+
+  useEffect(() => {
+    if (
+      !isLoading &&
+      selectedRole !== Rol.ADMINISTRADOR &&
+      selectedRole !== Rol.OFICINA &&
+      selectedRole !== Rol.PROFESOR
+    ) {
+      router.replace("/(tabs)"); // ← REDIRECT
+    }
+  }, [selectedRole, isLoading]);
 
   // Filtros
   const [searchQuery, setSearchQuery] = useState("");

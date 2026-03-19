@@ -8,6 +8,7 @@ import {
   Modal,
   ScrollView,
   Pressable,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -145,6 +146,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             {/* Lista Compacta con Scroll */}
             <ScrollView 
               style={styles.scrollView}
+              contentContainerStyle={styles.scrollViewContent}  // ✅ NUEVO
               showsVerticalScrollIndicator={true}
             >
               {items.map((item) => (
@@ -291,7 +293,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: 400, // ← Altura máxima compacta
+    maxHeight: 400,
+    // ✅ NUEVO: Padding bottom para botones de navegación
+    paddingBottom: Platform.select({
+      ios: 34,      // iPhone con notch/home indicator
+      android: 20,  // Android con botones de navegación
+      default: 0,
+    }),
   },
   pickerHeader: {
     flexDirection: "row",
@@ -308,13 +316,20 @@ const styles = StyleSheet.create({
     color: "#1f2937",
   },
   scrollView: {
-    maxHeight: 350, // ← Scroll compacto
+    maxHeight: 350,
+  },
+  scrollViewContent: {
+    paddingBottom: Platform.select({
+      ios: 20,    
+      android: 80, 
+      default: 20,
+    }),
   },
   option: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 14, // ← Reducido de 16 a 14
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",

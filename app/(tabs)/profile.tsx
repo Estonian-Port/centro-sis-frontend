@@ -446,6 +446,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#ffffff",
     marginBottom: 4,
+    textAlign: "center",
   },
   userEmail: {
     fontSize: 16,

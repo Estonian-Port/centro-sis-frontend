@@ -46,10 +46,20 @@ export const AccesoItem: React.FC<AccesoItemProps> = ({
       {/* Info del Usuario (solo admin) */}
       {showUserInfo && (
         <View style={styles.userInfo}>
-          <Text style={styles.userName}>
+          <Text 
+            style={styles.userName}
+            numberOfLines={1} 
+            ellipsizeMode="tail" 
+          >
             {acceso.usuarioNombre} {acceso.usuarioApellido}
           </Text>
-          <Text style={styles.userDni}>DNI: {acceso.usuarioDni}</Text>
+          <Text 
+            style={styles.userDni}
+            numberOfLines={1} 
+            ellipsizeMode="tail"  
+          >
+            DNI: {acceso.usuarioDni}
+          </Text>
           <View style={styles.accesoTipoBadge}>
             <Ionicons name="qr-code" size={12} color="#10b981" />
             <Text style={styles.accesoTipo}>{acceso.tipoAcceso}</Text>
@@ -71,6 +81,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderWidth: 1,
     borderColor: "#e5e7eb",
+    gap: 12, 
     ...Platform.select({
       web: {
         boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
@@ -88,6 +99,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    flexShrink: 0, 
   },
   iconContainer: {
     width: 48,
@@ -96,9 +108,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#d1fae5",
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0, 
   },
   dateTimeContainer: {
     gap: 4,
+    minWidth: 80, 
   },
   fecha: {
     fontSize: 16,
@@ -111,16 +125,20 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     alignItems: "flex-end",
+    flex: 1,  
+    minWidth: 0, 
   },
   userName: {
     fontSize: 14,
     fontWeight: "600",
     color: "#1f2937",
     marginBottom: 2,
+    textAlign: "right",  
   },
   userDni: {
     fontSize: 13,
     color: "#6b7280",
+    textAlign: "right",  
   },
   accesoTipoBadge: {
     flexDirection: "row",
@@ -130,6 +148,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
+    marginTop: 4,
+    flexShrink: 0, 
   },
   accesoTipo: {
     fontSize: 11,

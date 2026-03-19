@@ -30,7 +30,6 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
   curso,
   onRefresh,
 }) => {
-  // Estados de modales
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showPuntosModal, setShowPuntosModal] = useState(false);
   const [showBeneficioModal, setShowBeneficioModal] = useState(false);
@@ -44,13 +43,11 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
 
   return (
     <>
-      {/* Card Clickeable */}
       <TouchableOpacity
         style={styles.card}
         onPress={() => setShowDetailModal(true)}
         activeOpacity={0.7}
       >
-        {/* Layout diferente según plataforma */}
         {Platform.OS === "web" ? (
           // WEB: Todo en una fila horizontal
           <View style={styles.contentWeb}>
@@ -63,12 +60,22 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
                 </Text>
               </View>
               <View style={styles.alumnoDetails}>
-                <Text style={styles.alumnoName}>
+                <Text 
+                  style={styles.alumnoName}
+                  numberOfLines={1}  
+                  ellipsizeMode="tail"
+                >
                   {alumno.nombre} {alumno.apellido}
                 </Text>
                 <View style={styles.alumnoMeta}>
                   <Ionicons name="mail-outline" size={14} color="#6b7280" />
-                  <Text style={styles.alumnoMetaText}>{alumno.email}</Text>
+                  <Text 
+                    style={styles.alumnoMetaText}
+                    numberOfLines={1}  
+                    ellipsizeMode="tail"
+                  >
+                    {alumno.email}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -104,12 +111,22 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
                   </Text>
                 </View>
                 <View style={styles.alumnoDetails}>
-                  <Text style={styles.alumnoName}>
+                  <Text 
+                    style={styles.alumnoName}
+                    numberOfLines={1}  
+                    ellipsizeMode="tail"
+                  >
                     {alumno.nombre} {alumno.apellido}
                   </Text>
                   <View style={styles.alumnoMeta}>
                     <Ionicons name="mail-outline" size={14} color="#6b7280" />
-                    <Text style={styles.alumnoMetaText}>{alumno.email}</Text>
+                    <Text 
+                      style={styles.alumnoMetaText}
+                      numberOfLines={1}  
+                      ellipsizeMode="tail"
+                    >
+                      {alumno.email}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -132,7 +149,6 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         )}
       </TouchableOpacity>
 
-      {/* Modal de Detalle */}
       <AlumnoDetailModal
         visible={showDetailModal}
         onClose={() => setShowDetailModal(false)}
@@ -156,7 +172,6 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         }}
       />
 
-      {/* Modal Asignar Puntos */}
       <AsignarPuntosModal
         visible={showPuntosModal}
         onClose={() => {
@@ -175,7 +190,6 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         }}
       />
 
-      {/* Modal Editar Beneficio */}
       <EditarBeneficioModal
         visible={showBeneficioModal}
         onClose={() => {
@@ -195,7 +209,6 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         }}
       />
 
-      {/* Modal Registrar Pago */}
       <RegistrarPagoModal
         visible={showPagoModal}
         onClose={() => {
@@ -209,7 +222,6 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         }}
       />
 
-      {/* Modal Confirmar Baja */}
       <ConfirmarBajaModal
         visible={showBajaModal}
         onClose={() => {
@@ -251,17 +263,18 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  // MÓVIL: Layout vertical
   topRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 12, 
   },
   alumnoInfo: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     flex: 1,
+    minWidth: 0, 
   },
   alumnoAvatar: {
     width: 48,
@@ -270,6 +283,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#3b82f6",
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
   avatarText: {
     fontSize: 18,
@@ -278,6 +292,7 @@ const styles = StyleSheet.create({
   },
   alumnoDetails: {
     flex: 1,
+    minWidth: 0, 
   },
   alumnoName: {
     fontSize: 16,
@@ -311,13 +326,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#fef3c7",
+    flexShrink: 0, 
   },
   puntosText: {
     fontSize: 13,
     fontWeight: "600",
     color: "#92400e",
   },
-  // WEB: Layout horizontal
   contentWeb: {
     flexDirection: "row",
     alignItems: "center",
@@ -329,5 +344,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     marginLeft: "auto",
+    flexShrink: 0, 
   },
 });

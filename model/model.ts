@@ -268,7 +268,7 @@ export interface Acceso {
   usuarioApellido: string;
   usuarioDni: string;
   fechaHora: string;
-  tipoAcceso: "QR" | "MANUAL" | "INVITADO";
+  tipoAcceso: "QR" | "MANUAL" | "INVITADO" | "TURNO";
   alertaPagos?: AlertaPagos;
 }
 
@@ -282,6 +282,8 @@ export interface EstadisticasAcceso {
   totalSemana: number;
   totalEsteMes: number;
   promedioDiario: number;
+  turnoRegistradoHoy: boolean;
+  horaTurnoHoy?: string;
 }
 
 export interface ParteAsistencia {

@@ -123,9 +123,10 @@ export const accesoService = {
   /**
    * Obtener estadísticas de accesos
    */
-  getEstadisticas: async (dias: number = 30): Promise<EstadisticasAcceso> => {
-    const response = await api.get("/accesos/estadisticas", {
-      params: { dias },
+  getEstadisticas: async (idPortero: number): Promise<EstadisticasAcceso> => {
+    const dias = 30;
+    const response = await api.get(`/accesos/estadisticas/${idPortero}`, {
+      params: { dias, idPortero },
     });
     return response.data;
   },
@@ -140,4 +141,12 @@ export const accesoService = {
     );
     return response.data;
   },
+
+  comenzarTurno : async (usuarioId: number): Promise<Acceso> => {
+    const response = await api.post(`/accesos/comenzar-turno`, {
+      usuarioId: usuarioId
+    });
+    return response.data.data;
+  },
+
 };

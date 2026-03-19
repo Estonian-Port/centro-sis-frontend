@@ -32,19 +32,18 @@ export const DrawerContent = (props: any) => {
     setShowLogoutModal(false);
   };
 
-  // ✅ Definir items del menú con sus permisos
   const menuItems = [
     {
       label: "Dashboard",
       icon: "home-outline",
       route: "/(tabs)",
-      roles: null, // null = visible para todos
+      roles: null,
     },
     {
       label: "Administración",
       icon: "settings-outline",
       route: "/(tabs)/admin",
-      roles: [Rol.ADMINISTRADOR, Rol.OFICINA], // Solo para admin y oficina
+      roles: [Rol.ADMINISTRADOR, Rol.OFICINA],
     },
     {
       label: "Escanear QR",
@@ -56,7 +55,7 @@ export const DrawerContent = (props: any) => {
       label: "Accesos",
       icon: "log-in-outline",
       route: "/(tabs)/accesos",
-      roles: null, // Visible para todos
+      roles: null,
     },
     {
       label: "Pagos",
@@ -74,25 +73,21 @@ export const DrawerContent = (props: any) => {
       label: "Mi QR",
       icon: "qr-code-outline",
       route: "/(tabs)/mi-qr",
-      roles: null, // Visible para todos
+      roles: null,
     },
     {
       label: "Perfil",
       icon: "person-outline",
       route: "/(tabs)/profile",
-      roles: null, // Visible para todos
+      roles: null,
     },
   ];
 
-  // ✅ Filtrar items según el rol del usuario
   const visibleItems = menuItems.filter((item) => {
-    // Si no tiene restricción de roles, siempre visible
     if (!item.roles) return true;
-    // Si tiene restricción, verificar que el usuario tenga el rol
     return selectedRole && item.roles.includes(selectedRole);
   });
 
-  // ✅ Obtener la ruta activa actual
   const activeRoute = props.state?.routes[props.state?.index]?.name;
 
   return (
@@ -100,15 +95,22 @@ export const DrawerContent = (props: any) => {
       <DrawerContentScrollView {...props}>
         <View style={styles.header}>
           <Logo size={100} color={COLORES.dorado} />
-          <Text style={styles.userName}>
+          <Text 
+            style={styles.userName}
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
             {usuario?.nombre} {usuario?.apellido}
           </Text>
-          <Text style={styles.userRole}>
+          <Text 
+            style={styles.userRole}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {selectedRole ? getRolLabel(selectedRole) : "Sin rol"}
           </Text>
         </View>
 
-        {/* ✅ Renderizar items filtrados manualmente */}
         <View style={styles.menu}>
           {visibleItems.map((item, index) => (
             <DrawerItem
@@ -120,7 +122,6 @@ export const DrawerContent = (props: any) => {
               focused={activeRoute === item.route.split("/").pop()}
               onPress={() => {
                 router.push(item.route as any);
-                // Cerrar el drawer después de navegar
                 if (props.navigation?.closeDrawer) {
                   props.navigation.closeDrawer();
                 }
@@ -157,10 +158,14 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#ffffff",
     margin: 4,
+    textAlign: "center",
+    width: "100%",
+    paddingHorizontal: 10,
   },
   userRole: {
     fontSize: 14,
     color: "#dbeafe",
+    textAlign: "center",
   },
   menu: {
     flex: 1,

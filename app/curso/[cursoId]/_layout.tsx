@@ -16,12 +16,13 @@ import {
 import { COLORES } from "@/util/colores";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { cursoService } from "@/services/curso.service";
-import { Curso } from "@/model/model";
+import { Curso, Rol } from "@/model/model";
 import Toast from "react-native-toast-message";
 import { Tag } from "@/components/ui/Tag";
 import { estadoCursoToTagVariant, formatEstadoCurso } from "@/helper/funciones";
 import { CursoContext } from "@/context/cursoContext";
 import { getErrorMessage } from "@/helper/auth.interceptor";
+import { useAuth } from "@/context/authContext";
 
 export default function CursoLayout() {
   const { cursoId } = useLocalSearchParams();
@@ -29,6 +30,7 @@ export default function CursoLayout() {
   const pathname = usePathname();
   const [curso, setCurso] = useState<Curso | null>(null);
   const [loading, setLoading] = useState(true);
+  const { usuario, selectedRole, isLoading } = useAuth();
 
   // Derivar activeTab del pathname en lugar de estado local
   const getActiveTab = (): "alumnos" | "informacion" | "asistencias" => {
@@ -42,6 +44,15 @@ export default function CursoLayout() {
   useEffect(() => {
     fetchCurso();
   }, [cursoId]);
+
+  useEffect(() => {
+    if (
+      (!isLoading && selectedRole === Rol.PORTERIA) ||
+      (!isLoading && selectedRole === Rol.ALUMNO)
+    ) {
+      router.replace("/(tabs)"); // ← REDIRECT
+    }
+  }, [selectedRole, isLoading]);
 
   const fetchCurso = useCallback(
     async (showLoading = true) => {
