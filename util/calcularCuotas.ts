@@ -1,18 +1,10 @@
-// util/calcularCuotas.ts - ✅ VERSIÓN UNIFICADA FINAL
+// util/calcularCuotas.ts - ✅ VERSIÓN REFACTORIZADA: MESES CALENDARIO
 
 /**
- * ✅ CRITERIO DE CÁLCULO DE CUOTAS:
- * - Se cobra 1 cuota por cada mes (30 días)
- * - Si hay más de 15 días adicionales, se cobra cuota extra
- * - INCLUYE el día final en el cálculo
- * 
- * Ejemplos con 1 Enero a 1 Febrero:
- * - Días totales: 32 (incluye ambos días)
- * - 32 días = 1 mes + 2 días → 1 cuota
- * 
- * Ejemplos con 1 Enero a 16 Febrero:
- * - Días totales: 47 (incluye ambos días)
- * - 47 días = 1 mes + 17 días → 2 cuotas ✅ (más de 15 días extra)
+ * ✅ CRITERIO DE CÁLCULO DE CUOTAS (MESES CALENDARIO):
+ * - Se cobra el mes de inicio, el mes de fin y todos los meses intermedios.
+ * - No importa el día del mes (ej. del 20 de Enero al 3 de Marzo = 3 cuotas).
+ * - Se basa puramente en la posición del mes en el calendario.
  */
 export function calcularCuotas(
   fechaInicio: Date | string | null,
@@ -20,80 +12,46 @@ export function calcularCuotas(
 ): number {
   if (!fechaInicio || !fechaFin) return 0;
 
-  // Convertir a Date si es string
+  // Convertir a objeto Date para extraer año y mes
   const inicio = typeof fechaInicio === 'string' ? new Date(fechaInicio) : fechaInicio;
   const fin = typeof fechaFin === 'string' ? new Date(fechaFin) : fechaFin;
 
-  // ✅ CALCULAR DÍAS INCLUYENDO DÍA FINAL
-  const diferenciaMs = fin.getTime() - inicio.getTime();
-  const diasTotales = Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24)) + 1;
+  // Validar que la fecha de fin no sea anterior al inicio (en términos de mes/año)
+  if (fin < inicio && 
+      (fin.getFullYear() < inicio.getFullYear() || 
+      (fin.getFullYear() === inicio.getFullYear() && fin.getMonth() < inicio.getMonth()))) {
+    return 0;
+  }
 
-  // Validar que fechaFin sea mayor o igual que fechaInicio
-  if (diasTotales <= 0) return 0;
+  // Cálculo: (AñoFin * 12 + MesFin) - (AñoInicio * 12 + MesInicio)
+  // Nota: getMonth() devuelve 0-11, lo cual funciona perfecto para esta resta
+  const mesesDiferencia = (fin.getFullYear() * 12 + fin.getMonth()) - 
+                          (inicio.getFullYear() * 12 + inicio.getMonth());
 
-  // Calcular meses completos (cada 30 días)
-  const mesesCompletos = Math.floor(diasTotales / 30);
-  
-  // Calcular días restantes después de los meses completos
-  const diasRestantes = diasTotales % 30;
+  // Sumamos 1 para incluir el mes inicial
+  const totalCuotas = mesesDiferencia + 1;
 
-  // ✅ Si hay más de 15 días restantes, se cobra una cuota adicional
-  const cuotasAdicionales = diasRestantes > 15 ? 1 : 0;
-
-  const totalCuotas = mesesCompletos + cuotasAdicionales;
-
-  return Math.max(1, totalCuotas); // Mínimo 1 cuota
+  return Math.max(1, totalCuotas); // Mínimo 1 cuota si el curso existe
 }
 
 /**
- * ✅ Formatea la duración del curso en texto legible
- * INCLUYE el día final en el cálculo
+ * ✅ Formatea la duración del curso en texto legible basado en meses calendario
  */
 export function calcularDuracionEnTexto(
   fechaInicio: Date | string,
   fechaFin: Date | string
 ): string {
-  const inicio = typeof fechaInicio === 'string' ? new Date(fechaInicio) : fechaInicio;
-  const fin = typeof fechaFin === 'string' ? new Date(fechaFin) : fechaFin;
-
-  // ✅ MISMO CÁLCULO QUE calcularCuotas (incluye día final)
-  const diferenciaMs = fin.getTime() - inicio.getTime();
-  const diasTotales = Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24)) + 1;
-
-  // Calcular meses y días (usando 30 días por mes)
-  const meses = Math.floor(diasTotales / 30);
-  const dias = diasTotales % 30;
-
-  if (meses === 0) {
-    return `${diasTotales} ${diasTotales === 1 ? "día" : "días"}`;
-  } else if (dias === 0) {
-    return `${meses} ${meses === 1 ? "mes" : "meses"}`;
-  } else {
-    return `${meses} ${meses === 1 ? "mes" : "meses"} y ${dias} ${dias === 1 ? "día" : "días"}`;
-  }
-}
-
-/**
- * ✅ Verifica si se está cobrando una cuota adicional por los días extras
- */
-export function tieneCuotaAdicional(
-  fechaInicio: Date | string,
-  fechaFin: Date | string
-): boolean {
-  const inicio = typeof fechaInicio === 'string' ? new Date(fechaInicio) : fechaInicio;
-  const fin = typeof fechaFin === 'string' ? new Date(fechaFin) : fechaFin;
-
-  // ✅ MISMO CÁLCULO (incluye día final)
-  const diferenciaMs = fin.getTime() - inicio.getTime();
-  const diasTotales = Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24)) + 1;
-  const diasRestantes = diasTotales % 30;
+  const cuotas = calcularCuotas(fechaInicio, fechaFin);
   
-  return diasRestantes > 15;
+  if (cuotas <= 0) return "0 meses";
+  if (cuotas === 1) return "1 mes (mes corriente)";
+  
+  return `${cuotas} meses (período calendario)`;
 }
 
 /**
  * ✅ Obtiene información completa sobre el cálculo de cuotas
- * Útil para debugging y mostrar detalles al usuario
+ * Mantenemos la firma por compatibilidad con tus componentes de UI
  */
 export function obtenerInfoCuotas(
   fechaInicio: Date | string | null,
@@ -102,37 +60,34 @@ export function obtenerInfoCuotas(
   if (!fechaInicio || !fechaFin) {
     return {
       cuotas: 0,
-      diasTotales: 0,
-      mesesCompletos: 0,
-      diasRestantes: 0,
+      mesesCalendario: 0,
+      duracionTexto: "Sin definir",
       tieneCuotaAdicional: false,
-      duracionTexto: "",
     };
   }
 
-  const inicio = typeof fechaInicio === 'string' ? new Date(fechaInicio) : fechaInicio;
-  const fin = typeof fechaFin === 'string' ? new Date(fechaFin) : fechaFin;
-
-  // ✅ MISMO CÁLCULO EN TODOS LADOS
-  const diferenciaMs = fin.getTime() - inicio.getTime();
-  const diasTotales = Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24)) + 1;
-  const mesesCompletos = Math.floor(diasTotales / 30);
-  const diasRestantes = diasTotales % 30;
-  const cuotasAdicionales = diasRestantes > 15 ? 1 : 0;
+  const cuotas = calcularCuotas(fechaInicio, fechaFin);
 
   return {
-    cuotas: Math.max(1, mesesCompletos + cuotasAdicionales),
-    diasTotales,
-    mesesCompletos,
-    diasRestantes,
-    tieneCuotaAdicional: diasRestantes > 15,
-    duracionTexto: calcularDuracionEnTexto(inicio, fin),
+    cuotas: cuotas,
+    mesesCalendario: cuotas,
+    duracionTexto: calcularDuracionEnTexto(fechaInicio, fechaFin),
+    // Estas propiedades quedan por compatibilidad, pero ya no aplican lógica de "días"
+    tieneCuotaAdicional: false,
+    diasTotales: 0 
   };
 }
 
 /**
- * ✅ Helper para obtener solo los días totales (con día final incluido)
- * Útil cuando solo necesitas el número de días
+ * ✅ Verifica si se cobra cuota adicional
+ * Con la nueva lógica de meses calendario, ya no existe el concepto de "día 15"
+ */
+export function tieneCuotaAdicional(): boolean {
+  return false;
+}
+
+/**
+ * ✅ Helper para calcular días totales si todavía lo necesitas para alguna UI
  */
 export function calcularDiasTotales(
   fechaInicio: Date | string,
@@ -142,5 +97,5 @@ export function calcularDiasTotales(
   const fin = typeof fechaFin === 'string' ? new Date(fechaFin) : fechaFin;
 
   const diferenciaMs = fin.getTime() - inicio.getTime();
-  return Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24)) + 1;
+  return Math.max(0, Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24)) + 1);
 }
