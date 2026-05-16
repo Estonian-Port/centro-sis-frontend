@@ -3,12 +3,13 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as yup from "yup";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { TIPOGRAFIA } from "@/util/tipografia";
 import { COLORES } from "@/util/colores";
+import { Ionicons } from "@expo/vector-icons";
 
 const schema = yup.object().shape({
   email: yup.string().email("Email inválido").required("El email es requerido"),
@@ -97,6 +98,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         textStyle={{ ...TIPOGRAFIA.subtitle, color: COLORES.blanco }}
         disabled={isSubmitting || isLoading}
       />
+
+      <TouchableOpacity
+        onPress={() => router.push("/(auth)/forgot-password")}
+        style={styles.forgotLink}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -139,6 +148,15 @@ const styles = StyleSheet.create({
   loginButton: {
     marginTop: 8,
     backgroundColor: COLORES.violeta,
+  },
+  forgotLink: {
+    alignItems: "center",
+    marginTop: 14,
+  },
+  forgotText: {
+    ...TIPOGRAFIA.body,
+    color: COLORES.violeta,
+    fontWeight: "600",
   },
   textInput: {
     ...TIPOGRAFIA.body,

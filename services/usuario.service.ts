@@ -145,6 +145,10 @@ class UsuarioService {
   removerRol = async (usuarioId: number, rol: string): Promise<void> => {
     await api.delete(`${USER}/${usuarioId}/remover-rol/${rol}`);
   };
+
+  solicitarRecuperarPassword = async (email: string): Promise<void> => {
+    await api.post(`${USER}/recuperar-password`, { email });
+  };
 }
 
 export const usuarioService = new UsuarioService();
