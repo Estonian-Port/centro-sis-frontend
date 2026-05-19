@@ -82,7 +82,8 @@ export default function LoginScreen() {
                   <Card style={styles.loginCard}>
                     <LoginForm />
                   </Card>
-
+                  
+                  {/* El botón de registro se comenta temporalmente
                   <TouchableOpacity
                     style={styles.registroButton}
                     onPress={() => setShowRegistroModal(true)}
@@ -93,16 +94,16 @@ export default function LoginScreen() {
                       Registrarse como Alumno
                     </Text>
                   </TouchableOpacity>
-
+                  */}
+                  
                   <Text style={styles.registroHint}>
-                    ¿Sos alumno nuevo? Registrate para acceder al sistema
+                    La contraseña es sensible a Mayúsculas y Minúsculas
                   </Text>
                 </View>
               </TouchableWithoutFeedback>
             )}
           </ScrollView>
         </KeyboardAvoidingView>
-
         <RegistroAlumnoModal
           visible={showRegistroModal}
           onClose={() => setShowRegistroModal(false)}
