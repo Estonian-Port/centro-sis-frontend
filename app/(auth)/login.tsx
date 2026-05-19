@@ -67,6 +67,7 @@ export default function LoginScreen() {
                 </TouchableOpacity>*/}
 
                 <Text style={styles.registroHint}>
+                  La contraseña es sensible a Mayúsculas y Minúsculas
                 </Text>
               </View>
             ) : (
@@ -164,9 +165,10 @@ const styles = StyleSheet.create({
     color: "#ffffff",
   },
   registroHint: {
-    fontSize: 13,
+    fontSize: 15,
     color: "#ffffff",
     textAlign: "center",
     opacity: 0.9,
+    fontWeight: "bold",
   },
 });
