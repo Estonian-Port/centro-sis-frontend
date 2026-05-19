@@ -1,5 +1,4 @@
 import { Card } from "@/components/ui/Card";
-import { useState } from "react";
 import {
   Platform,
   StyleSheet,
@@ -9,21 +8,16 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
-  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TIPOGRAFIA } from "@/util/tipografia";
 import { COLORES } from "@/util/colores";
 import { LinearGradient } from "expo-linear-gradient";
 import { Logo } from "@/components/ui/Logo";
-import { LoginForm } from "@/components/forms/loginForm";
-import { RegistroAlumnoModal } from "@/components/modals/AltaAlumnoModal";
-import { Ionicons } from "@expo/vector-icons";
+import { ForgotPasswordForm } from "@/components/forms/ForgotPasswordForm";
 import Toast from "react-native-toast-message";
 
-export default function LoginScreen() {
-  const [showRegistroModal, setShowRegistroModal] = useState(false);
-
+export default function ForgotPasswordScreen() {
   return (
     <LinearGradient
       colors={[COLORES.violeta, COLORES.cobre]}
@@ -47,27 +41,11 @@ export default function LoginScreen() {
                 <View style={styles.header}>
                   <Logo size={200} color={COLORES.dorado} />
                   <Text style={styles.title}>CENTRO SIS</Text>
-                  <Text style={styles.subtitle}>
-                    Sistema de Gestión Educativa
-                  </Text>
+                  <Text style={styles.subtitle}>Recuperar contraseña</Text>
                 </View>
-                <Card style={styles.loginCard}>
-                  <LoginForm />
+                <Card style={styles.card}>
+                  <ForgotPasswordForm />
                 </Card>
-
-                {/*<TouchableOpacity
-                  style={styles.registroButton}
-                  onPress={() => setShowRegistroModal(true)}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons name="person-add" size={20} color="#ffffff" />
-                  <Text style={styles.registroButtonText}>
-                    Registrarse como Alumno
-                  </Text>
-                </TouchableOpacity>*/}
-
-                <Text style={styles.registroHint}>
-                </Text>
               </View>
             ) : (
               <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -75,38 +53,17 @@ export default function LoginScreen() {
                   <View style={styles.header}>
                     <Logo size={200} color={COLORES.dorado} />
                     <Text style={styles.title}>CENTRO SIS</Text>
-                    <Text style={styles.subtitle}>
-                      Sistema de Gestión Educativa
-                    </Text>
+                    <Text style={styles.subtitle}>Recuperar contraseña</Text>
                   </View>
-                  <Card style={styles.loginCard}>
-                    <LoginForm />
+                  <Card style={styles.card}>
+                    <ForgotPasswordForm />
                   </Card>
-
-                  <TouchableOpacity
-                    style={styles.registroButton}
-                    onPress={() => setShowRegistroModal(true)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="person-add" size={20} color="#ffffff" />
-                    <Text style={styles.registroButtonText}>
-                      Registrarse como Alumno
-                    </Text>
-                  </TouchableOpacity>
-
-                  <Text style={styles.registroHint}>
-                    ¿Sos alumno nuevo? Registrate para acceder al sistema
-                  </Text>
                 </View>
               </TouchableWithoutFeedback>
             )}
           </ScrollView>
         </KeyboardAvoidingView>
-
-        <RegistroAlumnoModal
-          visible={showRegistroModal}
-          onClose={() => setShowRegistroModal(false)}
-        />
+        <Toast />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -141,31 +98,7 @@ const styles = StyleSheet.create({
     color: COLORES.dorado,
     textAlign: "center",
   },
-  loginCard: {
+  card: {
     marginBottom: 20,
-  },
-  registroButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.3)",
-    marginBottom: 12,
-  },
-  registroButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#ffffff",
-  },
-  registroHint: {
-    fontSize: 13,
-    color: "#ffffff",
-    textAlign: "center",
-    opacity: 0.9,
   },
 });
