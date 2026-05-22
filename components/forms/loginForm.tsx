@@ -3,19 +3,20 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as yup from "yup";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { TIPOGRAFIA } from "@/util/tipografia";
 import { COLORES } from "@/util/colores";
-import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
+import { getErrorMessage } from "@/helper/auth.interceptor";
 
 const schema = yup.object().shape({
   email: yup.string().email("Email inválido").required("El email es requerido"),
   password: yup
     .string()
-    .min(3, "La contraseña debe tener al menos 6 caracteres")
+    .min(3, "La contraseña debe tener al menos 3 caracteres") // Ajustado a 3 como tu min actual o 6 según tu string de error
     .required("La contraseña es requerida"),
 });
 
@@ -57,7 +58,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
       onSuccess?.();
     } catch (error) {
       console.error("Error en login:", error);
-      Alert.alert("Error", "Credenciales inválidas");
+      
+      const mensajeError = getErrorMessage(error);
+
+      Toast.show({
+        type: "error",
+        text1: "Error de Ingreso",
+        text2: mensajeError,
+        position: "top",
+        visibilityTime: 4000,
+      });
     }
   };
 
@@ -81,7 +91,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         )}
       />
 
-      {/** Mostrar/ocultar contraseña con icono de ojo */}
       <PasswordController
         control={control}
         error={errors.password?.message}
@@ -110,7 +119,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   );
 };
 
-// Componente auxiliar para el campo de contraseña
 const PasswordController: React.FC<{
   control: any;
   error?: string;

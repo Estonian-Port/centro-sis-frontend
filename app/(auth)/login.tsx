@@ -9,7 +9,6 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
-  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TIPOGRAFIA } from "@/util/tipografia";
@@ -18,11 +17,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Logo } from "@/components/ui/Logo";
 import { LoginForm } from "@/components/forms/loginForm";
 import { RegistroAlumnoModal } from "@/components/modals/AltaAlumnoModal";
-import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
+import packageJson from "../../package.json"; 
 
 export default function LoginScreen() {
   const [showRegistroModal, setShowRegistroModal] = useState(false);
+  const appVersion = packageJson.version;
 
   return (
     <LinearGradient
@@ -31,7 +31,7 @@ export default function LoginScreen() {
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 1 }}
     >
-      <SafeAreaView style={styles.container} edges={["top"]}>
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <KeyboardAvoidingView
           style={styles.container}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -55,17 +55,6 @@ export default function LoginScreen() {
                   <LoginForm />
                 </Card>
 
-                {/*<TouchableOpacity
-                  style={styles.registroButton}
-                  onPress={() => setShowRegistroModal(true)}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons name="person-add" size={20} color="#ffffff" />
-                  <Text style={styles.registroButtonText}>
-                    Registrarse como Alumno
-                  </Text>
-                </TouchableOpacity>*/}
-
                 <Text style={styles.registroHint}>
                   La contraseña es sensible a Mayúsculas y Minúsculas
                 </Text>
@@ -84,19 +73,6 @@ export default function LoginScreen() {
                     <LoginForm />
                   </Card>
                   
-                  {/* El botón de registro se comenta temporalmente
-                  <TouchableOpacity
-                    style={styles.registroButton}
-                    onPress={() => setShowRegistroModal(true)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="person-add" size={20} color="#ffffff" />
-                    <Text style={styles.registroButtonText}>
-                      Registrarse como Alumno
-                    </Text>
-                  </TouchableOpacity>
-                  */}
-                  
                   <Text style={styles.registroHint}>
                     La contraseña es sensible a Mayúsculas y Minúsculas
                   </Text>
@@ -105,10 +81,17 @@ export default function LoginScreen() {
             )}
           </ScrollView>
         </KeyboardAvoidingView>
+
+        <View style={styles.versionFooter}>
+          <Text style={styles.versionText}>v{appVersion}</Text>
+        </View>
+
         <RegistroAlumnoModal
           visible={showRegistroModal}
           onClose={() => setShowRegistroModal(false)}
         />
+
+        <Toast />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -122,7 +105,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 40,
   },
   content: {
     width: "100%",
@@ -146,29 +129,30 @@ const styles = StyleSheet.create({
   loginCard: {
     marginBottom: 20,
   },
-  registroButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.3)",
-    marginBottom: 12,
-  },
-  registroButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#ffffff",
-  },
   registroHint: {
     fontSize: 15,
     color: "#ffffff",
     textAlign: "center",
     opacity: 0.9,
     fontWeight: "bold",
+  },
+  versionFooter: {
+    position: "absolute",
+    bottom: Platform.OS === "web" ? 20 : 10,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    ...Platform.select({
+      web: {
+        pointerEvents: "none", // Evita capas invisibles bloqueando clics en web
+      },
+    }),
+  },
+  versionText: {
+    fontSize: 12,
+    color: "rgba(255, 255, 255, 0.4)",
+    fontFamily: Platform.OS === "ios" ? "Helvetica" : "sans-serif",
+    letterSpacing: 0.5,
   },
 });

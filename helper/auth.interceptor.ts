@@ -1,14 +1,24 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios, { AxiosError } from "axios";
+import { Platform } from "react-native";
 
-export const API_BASE_URL = 'https://api.centrosis.estonianport.com.ar'; // Producción
+export const getBaseUrl = (): string => {
+  const envUrl = process.env.EXPO_PUBLIC_API_URL || '';
+
+  if (__DEV__ && Platform.OS !== 'web' && envUrl.includes('localhost')) {
+    return envUrl;
+  }
+
+  return envUrl;
+};
+
+export const API_BASE_URL = getBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
 });
 
-// ✅ INTERCEPTOR DE REQUEST (ya lo tenías)
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem("token");
@@ -22,47 +32,45 @@ api.interceptors.request.use(
   },
 );
 
-// ✅ NUEVO: INTERCEPTOR DE RESPONSE (extrae mensajes del backend)
 api.interceptors.response.use(
-  // Respuestas exitosas (2xx) pasan directamente
   (response) => response,
-  
-  // Errores se procesan aquí
   (error: AxiosError<any>) => {
-    // Estructura del error mejorada
     const enhancedError = {
-      message: 'Error desconocido',
+      message: 'Ocurrió un error inesperado',
       status: error.response?.status,
       data: error.response?.data,
       originalError: error,
     };
 
     if (error.response) {
-      // ✅ El servidor respondió con un código de error (4xx, 5xx)
-      
-      // Caso 1: Backend envía CustomResponse con mensaje
-      if (error.response.data?.message) {
-        enhancedError.message = error.response.data.message;
-      }
-      // Caso 2: Backend envía solo un string
-      else if (typeof error.response.data === 'string') {
-        enhancedError.message = error.response.data;
-      }
-      // Caso 3: Spring Boot error estándar
-      else if (error.response.data?.error) {
-        enhancedError.message = error.response.data.error;
-      }
-      // Caso 4: Mensaje genérico según status
+      const status = error.response.status;
+      const data = error.response.data;
+
+      if (status === 403) {
+        enhancedError.message = 'Servidor en mantenimiento, aguarde y pruebe nuevamente';
+      } 
+      else if (status === 401) {
+        if (data && typeof data === 'object' && data.error) {
+          enhancedError.message = data.error;
+        } else if (typeof data === 'string') {
+          enhancedError.message = data;
+        } else {
+          enhancedError.message = 'Usuario o password incorrectos';
+        }
+      } 
+      else if (data?.message) {
+        enhancedError.message = data.message;
+      } 
+      else if (data?.error) {
+        enhancedError.message = data.error;
+      } 
+      else if (typeof data === 'string') {
+        enhancedError.message = data;
+      } 
       else {
-        switch (error.response.status) {
+        switch (status) {
           case 400:
             enhancedError.message = 'Datos inválidos';
-            break;
-          case 401:
-            enhancedError.message = 'No autorizado';
-            break;
-          case 403:
-            enhancedError.message = 'Acceso denegado';
             break;
           case 404:
             enhancedError.message = 'Recurso no encontrado';
@@ -71,17 +79,15 @@ api.interceptors.response.use(
             enhancedError.message = 'Conflicto - El recurso ya existe';
             break;
           case 500:
-            enhancedError.message = 'Error del servidor';
+            enhancedError.message = 'Error interno del servidor';
             break;
           default:
-            enhancedError.message = `Error ${error.response.status}`;
+            enhancedError.message = `Error ${status}`;
         }
       }
     } else if (error.request) {
-      // ✅ La petición se hizo pero no hubo respuesta (timeout, red caída)
       enhancedError.message = 'Sin conexión al servidor';
     } else {
-      // ✅ Error al configurar la petición
       enhancedError.message = error.message || 'Error al realizar la petición';
     }
 
@@ -90,50 +96,17 @@ api.interceptors.response.use(
 );
 
 export const getErrorMessage = (error: any): string => {
-
-  // Caso 1: Es un string directo
+  if (!error) return 'Ocurrió un error inesperado';
   if (typeof error === 'string') return error;
+  if (error.message) return error.message;
   
-  // Caso 2: Axios response con data.message (lo más común con CustomResponse)
-  if (error?.response?.data?.message) return error.response.data.message;
-  
-  // Caso 3: Axios response con data.error
-  if (error?.response?.data?.error) return error.response.data.error;
-  
-  // Caso 4: Response data es string directo
-  if (typeof error?.response?.data === 'string') return error.response.data;
-  
-  // Caso 5: AxiosError con mensaje pero SIN response
-  // Ejemplo: "Request failed with status code 403"
-  if (error?.message && error?.message.includes('status code')) {
-    const match = error.message.match(/status code (\d+)/);
-    if (match) {
-      const statusCode = match[1];
-      switch (statusCode) {
-        case '400': 
-          return 'Solicitud inválida. Verificá los datos ingresados.';
-        case '401': 
-          return 'No autorizado. Iniciá sesión nuevamente.';
-        case '403': 
-          return 'Acceso denegado. No tenés permisos para esta acción.';
-        case '404': 
-          return 'Recurso no encontrado.';
-        case '409': 
-          return 'El recurso ya existe en el sistema.';
-        case '500': 
-          return 'Error interno del servidor. Intentá nuevamente más tarde.';
-        default: 
-          return `Error del servidor (código ${statusCode})`;
-      }
-    }
+  if (error?.response?.status === 403) {
+    return 'Servidor en mantenimiento, aguarde y pruebe nuevamente';
   }
-  
-  // Caso 6: Mensaje genérico de Axios
-  if (error?.message) return error.message;
-  
-  // Caso 7: StatusText de response
-  if (error?.response?.statusText) return error.response.statusText;
-  
+  if (error?.response?.data?.error) return error.response.data.error;
+  if (error?.response?.data?.message) return error.response.data.message;
+  if (typeof error?.response?.data === 'string') return error.response.data;
+
   return 'Ocurrió un error inesperado';
 };
 
