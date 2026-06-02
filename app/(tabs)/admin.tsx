@@ -28,6 +28,7 @@ import { useAuth } from "@/context/authContext";
 import { cursoService } from "@/services/curso.service";
 import UserItem from "@/components/cards/UserItem";
 import { UserDetailModal } from "@/components/modals/UserDetailsModal";
+import { ConfigurarMatriculaModal } from "@/components/modals/ConfigurarMatriculaModal";
 import { CreateUserModal } from "@/components/modals/CreateUserModal";
 import { CreateCourseModal } from "@/components/modals/CreateCourseModal";
 import { COLORES } from "@/util/colores";
@@ -93,6 +94,7 @@ export default function AdminScreen() {
   const [filtrosEstadoAlta, setFiltrosEstadoAlta] = useState<Estado[]>([]);
 
   const [courses, setCourses] = useState<Curso[]>([]);
+  const [showConfigMatricula, setShowConfigMatricula] = useState(false);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
   const [users, setUsers] = useState<Usuario[]>([]);
@@ -502,6 +504,15 @@ export default function AdminScreen() {
           </TouchableOpacity>
         )}
 
+        {activeTab === "users" && selectedRole === Rol.ADMINISTRADOR && (
+          <Button
+            title="Matrícula"
+            variant="outline"
+            size="small"
+            onPress={() => setShowConfigMatricula(true)}
+          />
+        )}
+
         <Button
           title={`Crear ${activeTab === "users" ? "Usuario" : "Curso"}`}
           variant="primary"
@@ -673,6 +684,12 @@ export default function AdminScreen() {
         )}
 
         {/* Modals */}
+        <ConfigurarMatriculaModal
+          visible={showConfigMatricula}
+          onClose={() => setShowConfigMatricula(false)}
+          usuarioId={usuario.id}
+        />
+
         <CreateUserModal
           visible={showCreateUserModal}
           onClose={() => setShowCreateUserModal(false)}

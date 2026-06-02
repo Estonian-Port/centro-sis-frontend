@@ -34,6 +34,7 @@ export enum TipoPagoConcepto {
   CURSO = "CURSO",
   ALQUILER = "ALQUILER",
   COMISION = "COMISION",
+  MATRICULA = "MATRICULA",
 }
 
 export enum TipoCurso {
@@ -410,6 +411,44 @@ export interface PagoComisionPreview {
   mensajeError?: string;
 }
 
+/*=======================
+        MATRÍCULA
+=========================*/
+
+// Si anio se omite, el backend usa el año actual.
+export interface PagoMatriculaRequest {
+  alumnoId: number;
+  anio?: number;
+}
+
+export interface PagoMatriculaPreview {
+  alumnoId: number;
+  alumnoNombre: string;
+  anio: number;
+  monto?: number | null;
+  yaPago: boolean;
+  puedeRegistrar: boolean;
+  mensajeError?: string | null;
+}
+
+export interface EstadoMatricula {
+  alumnoId: number;
+  anio: number;
+  pagada: boolean;
+  monto?: number | null;
+  fechaPago?: string | null;
+}
+
+export interface ConfiguracionMatricula {
+  anio: number;
+  monto?: number | null;
+}
+
+export interface ConfiguracionMatriculaRequest {
+  anio: number;
+  monto: number;
+}
+
 // DTO que viene del backend
 export interface PagoDTO {
   id: number;
@@ -419,8 +458,8 @@ export interface PagoDTO {
   observaciones?: string | null;
   tipo: TipoPagoConcepto;
 
-  // Curso
-  cursoId: number;
+  // Curso (null para matrícula, que no está atada a un curso)
+  cursoId?: number | null;
   cursoNombre: string;
 
   // Usuario que PAGA

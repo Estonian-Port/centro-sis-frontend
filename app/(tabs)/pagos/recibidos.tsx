@@ -60,13 +60,18 @@ export default function PagosRecibidosScreen() {
     const isProfesor = roles.includes(Rol.PROFESOR);
 
     if (isAdminOrOficina) {
-      // Admin/Oficina ve CURSO (alumnos) y ALQUILER (profesores)
+      // Admin/Oficina ve CURSO (alumnos), ALQUILER (profesores) y MATRICULA (alumnos)
       return [
         { value: TipoPagoConcepto.CURSO, label: "Cursos", color: "#3b82f6" },
         {
           value: TipoPagoConcepto.ALQUILER,
           label: "Alquiler",
           color: "#10b981",
+        },
+        {
+          value: TipoPagoConcepto.MATRICULA,
+          label: "Matrícula",
+          color: "#8b5cf6",
         },
       ];
     }

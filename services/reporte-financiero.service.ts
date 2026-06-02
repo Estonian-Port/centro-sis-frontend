@@ -22,6 +22,7 @@ export interface ResumenFinanciero {
 export interface DetalleIngresos {
   pagosAlumnos: ConceptoFinanciero;
   alquileresProfesores: ConceptoFinanciero;
+  matriculasAlumnos: ConceptoFinanciero;
   total: number;
 }
 
@@ -40,7 +41,7 @@ export interface MovimientoFinanciero {
   id: number;
   fecha: string;
   tipo: 'INGRESO' | 'EGRESO';
-  categoria: 'PAGO_ALUMNO' | 'ALQUILER_PROFESOR' | 'COMISION_PROFESOR';
+  categoria: 'PAGO_ALUMNO' | 'ALQUILER_PROFESOR' | 'COMISION_PROFESOR' | 'MATRICULA_ALUMNO';
   concepto: string;
   monto: number;
   alumno: string | null;

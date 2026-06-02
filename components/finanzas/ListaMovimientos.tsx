@@ -28,6 +28,7 @@ export const ListaMovimientos: React.FC<ListaMovimientosProps> = ({ movimientos 
       case 'PAGO_ALUMNO': return 'person';
       case 'ALQUILER_PROFESOR': return 'home';
       case 'COMISION_PROFESOR': return 'cash';
+      case 'MATRICULA_ALUMNO': return 'ribbon';
     }
   };
 
@@ -36,6 +37,7 @@ export const ListaMovimientos: React.FC<ListaMovimientosProps> = ({ movimientos 
       case 'PAGO_ALUMNO': return '#3b82f6';
       case 'ALQUILER_PROFESOR': return '#8b5cf6';
       case 'COMISION_PROFESOR': return '#f59e0b';
+      case 'MATRICULA_ALUMNO': return '#a855f7';
     }
   };
 
@@ -44,6 +46,7 @@ export const ListaMovimientos: React.FC<ListaMovimientosProps> = ({ movimientos 
       case 'PAGO_ALUMNO': return 'Pago Alumno';
       case 'ALQUILER_PROFESOR': return 'Alquiler';
       case 'COMISION_PROFESOR': return 'Comisión';
+      case 'MATRICULA_ALUMNO': return 'Matrícula';
     }
   };
 
