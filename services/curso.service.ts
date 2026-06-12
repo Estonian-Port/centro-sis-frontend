@@ -1,19 +1,50 @@
 import api from "@/helper/auth.interceptor";
 import {
   Curso,
+  EstadoCurso,
+  Estado,
   Horario,
   nuevoCursoAlquilerAdmin,
   nuevoCursoAlquilerProfesor,
   nuevoCursoComision,
+  PaginatedResponse,
   TipoPago,
 } from "@/model/model";
 
 const CURSO = "/curso";
 
+export interface CursoFilters {
+  page?: number;
+  size?: number;
+  search?: string;
+  estadoAlta?: Estado;
+  estadoCurso?: EstadoCurso;
+}
+
 class CursoService {
   getAllCursos = async (): Promise<Curso[]> => {
     const response = await api.get(`${CURSO}/activos`);
     return response.data.data;
+  };
+
+  /**
+   * Versión paginada para la pantalla de administración.
+   * Llama a GET /curso/activos-paginado con page/size/search/estadoAlta/estadoCurso.
+   */
+  getAllCursosPaginado = async (
+    filters: CursoFilters,
+  ): Promise<PaginatedResponse<Curso>> => {
+    const { page = 0, size = 10, search, estadoAlta, estadoCurso } = filters;
+    const response = await api.get(`${CURSO}/activos-paginado`, {
+      params: {
+        page,
+        size,
+        search: search || undefined,
+        estadoAlta: estadoAlta || undefined,
+        estadoCurso: estadoCurso || undefined,
+      },
+    });
+    return response.data;
   };
 
   altaCursoAlquiler = async (
@@ -103,7 +134,6 @@ class CursoService {
     const response = await api.delete(`${CURSO}/baja/${cursoId}`);
     return response.data;
   };
-
 }
 
 export const cursoService = new CursoService();

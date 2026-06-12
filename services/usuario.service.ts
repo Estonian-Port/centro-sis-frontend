@@ -3,9 +3,12 @@ import {
   CompleteProfileData,
   Curso,
   CursoAlumno,
+  Estado,
   NuevoAlumno,
   NuevoUsuario,
+  PaginatedResponse,
   ProfesorLista,
+  Rol,
   UpdatePerfilUsuario,
   Usuario,
   UsuarioDetails,
@@ -14,10 +17,39 @@ import {
 
 const USER = "/usuario";
 
+export interface UsuarioFilters {
+  page?: number;
+  size?: number;
+  search?: string;
+  roles?: Rol[];
+  estados?: Estado[];
+}
+
 class UsuarioService {
   getAllUsuarios = async (id: number): Promise<Usuario[]> => {
     const response = await api.get(`${USER}/all/${id}`);
     return response.data.data;
+  };
+
+  /**
+   * Versión paginada para la pantalla de administración.
+   * Llama a GET /usuario/all-paginado/{userId} con page/size/search/roles/estados.
+   */
+  getAllUsuariosPaginado = async (
+    id: number,
+    filters: UsuarioFilters,
+  ): Promise<PaginatedResponse<Usuario>> => {
+    const { page = 0, size = 10, search, roles, estados } = filters;
+    const response = await api.get(`${USER}/all-paginado/${id}`, {
+      params: {
+        page,
+        size,
+        search: search || undefined,
+        roles: roles && roles.length > 0 ? roles : undefined,
+        estados: estados && estados.length > 0 ? estados : undefined,
+      },
+    });
+    return response.data;
   };
 
   getAllCoursesByAlumno = async (id: number): Promise<CursoAlumno[]> => {

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   View,
   ScrollView,
@@ -36,7 +36,6 @@ import { AvisoInvitacionModal } from "@/components/modals/AvisoInvitacionModal";
 import { Ionicons } from "@expo/vector-icons";
 import { TIPOGRAFIA } from "@/util/tipografia";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 import { getErrorMessage } from "@/helper/auth.interceptor";
 import { EventBus } from "@/util/EventBus";
 import { administracionService } from "@/services/administracion.service";
@@ -75,134 +74,198 @@ const estadoAltaFilterOptions: FilterOption<Estado>[] = [
   { value: Estado.BAJA, label: "Baja", color: "#ef4444" },
 ];
 
+const PAGE_SIZE = 10;
+
 export default function AdminScreen() {
   const [activeTab, setActiveTab] = useState<"users" | "courses">("users");
   const [searchQuery, setSearchQuery] = useState("");
   const [vistaActual, setVistaActual] = useState<ViewMode>("lista");
 
-  // Filtros para USUARIOS
+  // ── Filtros usuarios ──────────────────────────────────────────────────────
   const [filtrosRol, setFiltrosRol] = useState<Rol[]>([]);
-  const [filtrosEstadoUsuario, setFiltrosEstadoUsuario] = useState<Estado[]>(
-    [],
-  );
+  const [filtrosEstadoUsuario, setFiltrosEstadoUsuario] = useState<Estado[]>([]);
 
-  // Filtros para CURSOS
-  const [filtrosEstadoCurso, setFiltrosEstadoCurso] = useState<EstadoCurso[]>(
-    [],
-  );
+  // ── Filtros cursos ────────────────────────────────────────────────────────
+  const [filtrosEstadoCurso, setFiltrosEstadoCurso] = useState<EstadoCurso[]>([]);
   const [filtrosEstadoAlta, setFiltrosEstadoAlta] = useState<Estado[]>([]);
 
+  // ── Estado paginado usuarios ──────────────────────────────────────────────
+  const [users, setUsers] = useState<Usuario[]>([]);
+  const [userPage, setUserPage] = useState(0);
+  const [userTotalPages, setUserTotalPages] = useState(0);
+  const [userTotalElements, setUserTotalElements] = useState(0);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingMoreUsers, setLoadingMoreUsers] = useState(false);
+
+  // ── Estado paginado cursos ────────────────────────────────────────────────
   const [courses, setCourses] = useState<Curso[]>([]);
+  const [coursePage, setCoursePage] = useState(0);
+  const [courseTotalPages, setCourseTotalPages] = useState(0);
+  const [courseTotalElements, setCourseTotalElements] = useState(0);
+  const [loadingCourses, setLoadingCourses] = useState(false);
+  const [loadingMoreCourses, setLoadingMoreCourses] = useState(false);
+
+  // ── Modales ───────────────────────────────────────────────────────────────
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
-  const [users, setUsers] = useState<Usuario[]>([]);
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
   const [showModalDetailsUser, setShowModalDetailsUser] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const { usuario, selectedRole, isLoading } = useAuth();
   const [modalInvitacionVisible, setModalInvitacionVisible] = useState(false);
+  const [selectedPendingCourse, setSelectedPendingCourse] = useState<Curso | null>(null);
   const [showEditCourseModal, setShowEditCourseModal] = useState(false);
-  const [selectedPendingCourse, setSelectedPendingCourse] =
-    useState<Curso | null>(null);
   const [descargandoQr, setDescargandoQr] = useState(false);
 
-  useEffect(() => {
-    if (!usuario) {
-      return;
-    }
-    if (activeTab === "users") {
-      fetchUsers();
-    } else {
-      fetchCourses();
-    }
-  }, [activeTab, usuario]);
+  const { usuario, selectedRole, isLoading } = useAuth();
+
+  // Debounce search para no disparar una request por cada tecla
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
-    setSearchQuery("");
-
-    // Limpiar filtros de usuarios
-    setFiltrosRol([]);
-    setFiltrosEstadoUsuario([]);
-
-    // Limpiar filtros de cursos
-    setFiltrosEstadoCurso([]);
-    setFiltrosEstadoAlta([]);
-  }, [activeTab]);
-
-  useEffect(() => {
-    const handler = () => {
-      if (activeTab === "courses") fetchCourses();
-    };
-    EventBus.on("cursoUpdated", handler);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 350);
     return () => {
-      EventBus.off("cursoUpdated", handler);
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
     };
-  }, [activeTab]);
+  }, [searchQuery]);
 
-  useEffect(() => {
-    const handler = async ({ cursoId }: { cursoId: number }) => {
-      // Busca el curso actualizado
-      const updatedCurso = await cursoService.getById(cursoId);
-      // Actualiza solo ese curso en el array de courses
-      setCourses((prevCourses) =>
-        prevCourses.map((c) => (c.id === updatedCurso.id ? updatedCurso : c)),
-      );
-    };
-    EventBus.on("alumnoBaja", handler);
-    return () => EventBus.off("alumnoBaja", handler);
-  }, []);
-
+  // ── Redirect si no tiene rol ──────────────────────────────────────────────
   useEffect(() => {
     if (
       !isLoading &&
       selectedRole !== Rol.ADMINISTRADOR &&
       selectedRole !== Rol.OFICINA
     ) {
-      router.replace("/(tabs)"); // ← REDIRECT
+      router.replace("/(tabs)");
     }
   }, [selectedRole, isLoading]);
 
-  const fetchUsers = async () => {
-    if (!usuario) {
-      return;
-    }
+  // ── Fetch usuarios paginado ───────────────────────────────────────────────
+  const fetchUsers = useCallback(
+    async (pageNum: number = 0) => {
+      if (!usuario) return;
 
-    setLoading(true);
-    try {
-      const data = await usuarioService.getAllUsuarios(usuario.id);
-      setUsers(data);
-    } catch (error) {
-      console.error("[fetchUsers] Error:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: getErrorMessage(error) || "No se pudieron cargar los usuarios",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (pageNum === 0) setLoadingUsers(true);
+      else setLoadingMoreUsers(true);
 
-  const fetchCourses = async () => {
-    if (!usuario) {
-      return;
-    }
+      try {
+        const response = await usuarioService.getAllUsuariosPaginado(
+          usuario.id,
+          {
+            page: pageNum,
+            size: PAGE_SIZE,
+            search: debouncedSearch || undefined,
+            roles: filtrosRol.length > 0 ? filtrosRol : undefined,
+            estados: filtrosEstadoUsuario.length > 0 ? filtrosEstadoUsuario : undefined,
+          },
+        );
 
-    setLoading(true);
-    try {
-      const data = await cursoService.getAllCursos();
-      setCourses(data);
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: getErrorMessage(error) || "No se pudieron cargar los cursos",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (pageNum === 0) {
+          setUsers(response.content);
+        } else {
+          setUsers((prev) => [...prev, ...response.content]);
+        }
+        setUserPage(response.page);
+        setUserTotalPages(response.totalPages);
+        setUserTotalElements(response.totalElements);
+      } catch (error) {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: getErrorMessage(error) || "No se pudieron cargar los usuarios",
+        });
+      } finally {
+        setLoadingUsers(false);
+        setLoadingMoreUsers(false);
+      }
+    },
+    [usuario, debouncedSearch, filtrosRol, filtrosEstadoUsuario],
+  );
 
+  // ── Fetch cursos paginado ─────────────────────────────────────────────────
+  const fetchCourses = useCallback(
+    async (pageNum: number = 0) => {
+      if (!usuario) return;
+
+      if (pageNum === 0) setLoadingCourses(true);
+      else setLoadingMoreCourses(true);
+
+      try {
+        const response = await cursoService.getAllCursosPaginado({
+          page: pageNum,
+          size: PAGE_SIZE,
+          search: debouncedSearch || undefined,
+          estadoAlta: filtrosEstadoAlta.length === 1 ? filtrosEstadoAlta[0] : undefined,
+          estadoCurso:
+            filtrosEstadoCurso.length === 1 ? filtrosEstadoCurso[0] : undefined,
+        });
+
+        if (pageNum === 0) {
+          setCourses(response.content);
+        } else {
+          setCourses((prev) => [...prev, ...response.content]);
+        }
+        setCoursePage(response.page);
+        setCourseTotalPages(response.totalPages);
+        setCourseTotalElements(response.totalElements);
+      } catch (error) {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: getErrorMessage(error) || "No se pudieron cargar los cursos",
+        });
+      } finally {
+        setLoadingCourses(false);
+        setLoadingMoreCourses(false);
+      }
+    },
+    [usuario, debouncedSearch, filtrosEstadoAlta, filtrosEstadoCurso],
+  );
+
+  // ── Disparar fetch al cambiar filtros / búsqueda / tab ───────────────────
+  useEffect(() => {
+    if (!usuario) return;
+    if (activeTab === "users") fetchUsers(0);
+  }, [activeTab, usuario, debouncedSearch, filtrosRol, filtrosEstadoUsuario]);
+
+  useEffect(() => {
+    if (!usuario) return;
+    if (activeTab === "courses") fetchCourses(0);
+  }, [activeTab, usuario, debouncedSearch, filtrosEstadoAlta, filtrosEstadoCurso]);
+
+  // ── Limpiar filtros al cambiar de tab ────────────────────────────────────
+  useEffect(() => {
+    setSearchQuery("");
+    setDebouncedSearch("");
+    setFiltrosRol([]);
+    setFiltrosEstadoUsuario([]);
+    setFiltrosEstadoCurso([]);
+    setFiltrosEstadoAlta([]);
+  }, [activeTab]);
+
+  // ── EventBus ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = () => {
+      if (activeTab === "courses") fetchCourses(0);
+    };
+    EventBus.on("cursoUpdated", handler);
+    return () => EventBus.off("cursoUpdated", handler);
+  }, [activeTab, fetchCourses]);
+
+  useEffect(() => {
+    const handler = async ({ cursoId }: { cursoId: number }) => {
+      const updatedCurso = await cursoService.getById(cursoId);
+      setCourses((prev) =>
+        prev.map((c) => (c.id === updatedCurso.id ? updatedCurso : c)),
+      );
+    };
+    EventBus.on("alumnoBaja", handler);
+    return () => EventBus.off("alumnoBaja", handler);
+  }, []);
+
+  // ── Acciones ──────────────────────────────────────────────────────────────
   const handleViewUserDetails = (user: Usuario) => {
     if (user.estado !== "PENDIENTE") {
       setSelectedUser(user);
@@ -225,11 +288,11 @@ export default function AdminScreen() {
   const bajaCurso = async (cursoId: number) => {
     try {
       await cursoService.bajaCurso(cursoId);
-      fetchCourses();
+      fetchCourses(0);
       Toast.show({
         type: "success",
         text1: "Curso dado de baja",
-        text2: `El curso ha sido dado de baja del sistema.`,
+        text2: "El curso ha sido dado de baja del sistema.",
         position: "bottom",
       });
     } catch (error) {
@@ -244,14 +307,14 @@ export default function AdminScreen() {
 
   const altaUsuario = async (nuevoUsuario: NuevoUsuario) => {
     try {
-      const response = await usuarioService.altaUsuario(nuevoUsuario);
+      await usuarioService.altaUsuario(nuevoUsuario);
       Toast.show({
         type: "success",
         text1: "Invitación enviada",
         text2: `La invitación ha sido enviada a ${nuevoUsuario.email}.`,
         position: "bottom",
       });
-      fetchUsers();
+      fetchUsers(0);
     } catch (error) {
       Toast.show({
         type: "error",
@@ -266,7 +329,6 @@ export default function AdminScreen() {
     setDescargandoQr(true);
     try {
       await administracionService.descargarTodosQr();
-
       Toast.show({
         type: "success",
         text1: "✅ QR Descargados",
@@ -274,7 +336,6 @@ export default function AdminScreen() {
         position: "bottom",
       });
     } catch (error) {
-      console.error("Error descargando QR:", error);
       Toast.show({
         type: "error",
         text1: "Error",
@@ -286,41 +347,27 @@ export default function AdminScreen() {
     }
   };
 
-  // ============================================
-  // TOGGLES DE FILTROS
-  // ============================================
-
-  const toggleFiltroRol = (rol: Rol) => {
+  // ── Toggles de filtros ────────────────────────────────────────────────────
+  const toggleFiltroRol = (rol: Rol) =>
     setFiltrosRol((prev) =>
       prev.includes(rol) ? prev.filter((r) => r !== rol) : [...prev, rol],
     );
-  };
 
-  const toggleFiltroEstadoUsuario = (estado: Estado) => {
+  const toggleFiltroEstadoUsuario = (estado: Estado) =>
     setFiltrosEstadoUsuario((prev) =>
-      prev.includes(estado)
-        ? prev.filter((e) => e !== estado)
-        : [...prev, estado],
+      prev.includes(estado) ? prev.filter((e) => e !== estado) : [...prev, estado],
     );
-  };
 
-  const toggleFiltroEstadoCurso = (estado: EstadoCurso) => {
+  const toggleFiltroEstadoCurso = (estado: EstadoCurso) =>
     setFiltrosEstadoCurso((prev) =>
-      prev.includes(estado)
-        ? prev.filter((e) => e !== estado)
-        : [...prev, estado],
+      prev.includes(estado) ? prev.filter((e) => e !== estado) : [...prev, estado],
     );
-  };
 
-  const toggleFiltroEstadoAlta = (estado: Estado) => {
+  const toggleFiltroEstadoAlta = (estado: Estado) =>
     setFiltrosEstadoAlta((prev) =>
-      prev.includes(estado)
-        ? prev.filter((e) => e !== estado)
-        : [...prev, estado],
+      prev.includes(estado) ? prev.filter((e) => e !== estado) : [...prev, estado],
     );
-  };
 
-  // Limpiar filtros
   const limpiarFiltrosUsuarios = () => {
     setFiltrosRol([]);
     setFiltrosEstadoUsuario([]);
@@ -331,97 +378,17 @@ export default function AdminScreen() {
     setFiltrosEstadoAlta([]);
   };
 
-  // ============================================
-  // FILTRADO DE USUARIOS
-  // ============================================
+  // ── Contadores de filtros activos ─────────────────────────────────────────
+  const contadorFiltrosUsuarios = filtrosRol.length + filtrosEstadoUsuario.length;
+  const contadorFiltrosCursos = filtrosEstadoCurso.length + filtrosEstadoAlta.length;
 
-  const filteredUsers = useMemo(() => {
-    let filtered = users;
+  if (!usuario) return null;
 
-    // Filtrar por búsqueda
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (user) =>
-          user.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.apellido.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.dni.includes(searchQuery),
-      );
-    }
-
-    // Filtrar por rol
-    if (filtrosRol.length > 0) {
-      filtered = filtered.filter((user) =>
-        filtrosRol.some((rol) => user.listaRol.includes(rol)),
-      );
-    }
-
-    // Filtrar por estado de usuario
-    if (filtrosEstadoUsuario.length > 0) {
-      filtered = filtered.filter((user) =>
-        filtrosEstadoUsuario.includes(user.estado),
-      );
-    }
-
-    return filtered;
-  }, [users, searchQuery, filtrosRol, filtrosEstadoUsuario]);
-
-  // ============================================
-  // FILTRADO DE CURSOS
-  // ============================================
-
-  const filteredCourses = useMemo(() => {
-    let filtered = courses;
-
-    // Filtrar por búsqueda
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (course) =>
-          course.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          course.profesores.some((p) =>
-            p.nombre.toLowerCase().includes(searchQuery.toLowerCase()),
-          ),
-      );
-    }
-
-    // Filtrar por estado de curso
-    if (filtrosEstadoCurso.length > 0) {
-      filtered = filtered.filter((course) =>
-        filtrosEstadoCurso.includes(course.estado),
-      );
-    }
-
-    // Filtrar por estado de alta
-    if (filtrosEstadoAlta.length > 0) {
-      filtered = filtered.filter((course) =>
-        filtrosEstadoAlta.includes(course.estadoAlta),
-      );
-    }
-
-    return filtered;
-  }, [courses, searchQuery, filtrosEstadoCurso, filtrosEstadoAlta]);
-
-  // Contador de filtros activos
-  const contadorFiltrosUsuarios =
-    filtrosRol.length + filtrosEstadoUsuario.length;
-  const contadorFiltrosCursos =
-    filtrosEstadoCurso.length + filtrosEstadoAlta.length;
-
-  if (!usuario) {
-    return null;
-  }
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.loadingText}>Cargando...</Text>
-      </View>
-    );
-  }
+  const isLoading_ = activeTab === "users" ? loadingUsers : loadingCourses;
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
       <View style={styles.header}>
         <Text style={styles.title}>Administración</Text>
         <View style={styles.tabContainer}>
@@ -430,18 +397,13 @@ export default function AdminScreen() {
             onPress={() => setActiveTab("users")}
           >
             <Text
-              style={[
-                styles.tabText,
-                activeTab === "users" && styles.activeTabText,
-              ]}
+              style={[styles.tabText, activeTab === "users" && styles.activeTabText]}
             >
               Usuarios
             </Text>
             {activeTab === "users" && contadorFiltrosUsuarios > 0 && (
               <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>
-                  {contadorFiltrosUsuarios}
-                </Text>
+                <Text style={styles.filterBadgeText}>{contadorFiltrosUsuarios}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -451,35 +413,27 @@ export default function AdminScreen() {
             onPress={() => setActiveTab("courses")}
           >
             <Text
-              style={[
-                styles.tabText,
-                activeTab === "courses" && styles.activeTabText,
-              ]}
+              style={[styles.tabText, activeTab === "courses" && styles.activeTabText]}
             >
               Cursos
             </Text>
             {activeTab === "courses" && contadorFiltrosCursos > 0 && (
               <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>
-                  {contadorFiltrosCursos}
-                </Text>
+                <Text style={styles.filterBadgeText}>{contadorFiltrosCursos}</Text>
               </View>
             )}
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Controls: Búsqueda + Toggle vista + Botón crear */}
+      {/* ── Controls ───────────────────────────────────────────────────────── */}
       <View style={styles.controls}>
         <SearchBar
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder={`Buscar ${
-            activeTab === "users" ? "usuarios" : "cursos"
-          }...`}
+          placeholder={`Buscar ${activeTab === "users" ? "usuarios" : "cursos"}...`}
         />
 
-        {/* Toggle vista solo en cursos */}
         {activeTab === "courses" && (
           <ViewToggle
             currentView={vistaActual}
@@ -514,7 +468,7 @@ export default function AdminScreen() {
         />
       </View>
 
-      {/* Filtros para USUARIOS - Una línea horizontal */}
+      {/* ── Filtros usuarios ────────────────────────────────────────────────── */}
       {activeTab === "users" && (
         <View style={styles.filtersSection}>
           <ScrollView
@@ -522,7 +476,6 @@ export default function AdminScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.filtersScrollContent}
           >
-            {/* Filtros de Rol */}
             <View style={styles.filterGroup}>
               <FilterChips
                 options={rolFilterOptions}
@@ -530,11 +483,7 @@ export default function AdminScreen() {
                 onToggle={toggleFiltroRol}
               />
             </View>
-
-            {/* Separador */}
             <View style={styles.filterSeparator} />
-
-            {/* Filtros de Estado */}
             <View style={styles.filterGroup}>
               <FilterChips
                 options={estadoUsuarioFilterOptions}
@@ -542,8 +491,6 @@ export default function AdminScreen() {
                 onToggle={toggleFiltroEstadoUsuario}
               />
             </View>
-
-            {/* Botón limpiar filtros */}
             {contadorFiltrosUsuarios > 0 && (
               <>
                 <View style={styles.filterSeparator} />
@@ -559,7 +506,7 @@ export default function AdminScreen() {
         </View>
       )}
 
-      {/* Filtros para CURSOS - Una línea horizontal */}
+      {/* ── Filtros cursos ──────────────────────────────────────────────────── */}
       {activeTab === "courses" && (
         <View style={styles.filtersSection}>
           <ScrollView
@@ -567,7 +514,6 @@ export default function AdminScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.filtersScrollContent}
           >
-            {/* Filtros de Estado del Curso */}
             <View style={styles.filterGroup}>
               <FilterChips
                 options={estadoCursoFilterOptions}
@@ -575,11 +521,7 @@ export default function AdminScreen() {
                 onToggle={toggleFiltroEstadoCurso}
               />
             </View>
-
-            {/* Separador */}
             <View style={styles.filterSeparator} />
-
-            {/* Filtros de Estado de Alta */}
             <View style={styles.filterGroup}>
               <FilterChips
                 options={estadoAltaFilterOptions}
@@ -587,8 +529,6 @@ export default function AdminScreen() {
                 onToggle={toggleFiltroEstadoAlta}
               />
             </View>
-
-            {/* Botón limpiar filtros */}
             {contadorFiltrosCursos > 0 && (
               <>
                 <View style={styles.filterSeparator} />
@@ -604,75 +544,148 @@ export default function AdminScreen() {
         </View>
       )}
 
-      {/* Content */}
+      {/* ── Contenido ──────────────────────────────────────────────────────── */}
       <ScrollView style={styles.content}>
+        {/* USUARIOS */}
         {activeTab === "users" && (
           <View style={styles.tableContainer}>
-            {/* Contador de resultados */}
-            <Text style={styles.resultCount}>
-              {filteredUsers.length}{" "}
-              {filteredUsers.length === 1 ? "usuario" : "usuarios"}
-            </Text>
-
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => (
-                <UserItem
-                  key={user.id}
-                  user={user}
-                  handleUserDetails={(u: Usuario) => handleViewUserDetails(u)}
-                  onRefresh={fetchUsers}
-                />
-              ))
-            ) : (
-              <View style={styles.emptyState}>
-                <Ionicons name="people-outline" size={48} color="#9ca3af" />
-                <Text style={styles.emptyText}>
-                  No hay usuarios que coincidan con los filtros
-                </Text>
+            {loadingUsers ? (
+              <View style={styles.loadingInline}>
+                <ActivityIndicator size="large" color="#3b82f6" />
+                <Text style={styles.loadingText}>Cargando usuarios...</Text>
               </View>
-            )}
-          </View>
-        )}
-
-        {activeTab === "courses" && (
-          <>
-            {vistaActual === "lista" ? (
-              <View style={styles.tableContainer}>
-                {/* Contador de resultados */}
+            ) : (
+              <>
                 <Text style={styles.resultCount}>
-                  {filteredCourses.length}{" "}
-                  {filteredCourses.length === 1 ? "curso" : "cursos"}
+                  {userTotalElements}{" "}
+                  {userTotalElements === 1 ? "usuario" : "usuarios"}
                 </Text>
 
-                {filteredCourses.length > 0 ? (
-                  filteredCourses.map((curso) => (
-                    <CourseItem
-                      key={curso.id}
-                      course={curso}
-                      handleCourseDetails={handleViewCourseDetails}
-                      onEditPendingCourse={handleEditPendingCourse}
-                      onDarDeBaja={(cursoId: number) => bajaCurso(cursoId)}
+                {users.length > 0 ? (
+                  users.map((user) => (
+                    <UserItem
+                      key={user.id}
+                      user={user}
+                      handleUserDetails={(u: Usuario) => handleViewUserDetails(u)}
+                      onRefresh={() => fetchUsers(0)}
                     />
                   ))
                 ) : (
                   <View style={styles.emptyState}>
-                    <Ionicons name="book-outline" size={48} color="#9ca3af" />
+                    <Ionicons name="people-outline" size={48} color="#9ca3af" />
                     <Text style={styles.emptyText}>
-                      No hay cursos que coincidan con los filtros
+                      No hay usuarios que coincidan con los filtros
                     </Text>
                   </View>
                 )}
+
+                {/* Cargar más usuarios */}
+                {userPage < userTotalPages - 1 && (
+                  <TouchableOpacity
+                    style={styles.loadMoreButton}
+                    onPress={() => fetchUsers(userPage + 1)}
+                    disabled={loadingMoreUsers}
+                  >
+                    {loadingMoreUsers ? (
+                      <ActivityIndicator size="small" color="#3b82f6" />
+                    ) : (
+                      <>
+                        <Text style={styles.loadMoreText}>Cargar más</Text>
+                        <Ionicons name="chevron-down" size={20} color="#3b82f6" />
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
+
+                {users.length > 0 && (
+                  <Text style={styles.pageInfo}>
+                    Página {userPage + 1} de {userTotalPages} •{" "}
+                    {userTotalElements} usuarios
+                  </Text>
+                )}
+              </>
+            )}
+          </View>
+        )}
+
+        {/* CURSOS */}
+        {activeTab === "courses" && (
+          <>
+            {vistaActual === "lista" ? (
+              <View style={styles.tableContainer}>
+                {loadingCourses ? (
+                  <View style={styles.loadingInline}>
+                    <ActivityIndicator size="large" color="#3b82f6" />
+                    <Text style={styles.loadingText}>Cargando cursos...</Text>
+                  </View>
+                ) : (
+                  <>
+                    <Text style={styles.resultCount}>
+                      {courseTotalElements}{" "}
+                      {courseTotalElements === 1 ? "curso" : "cursos"}
+                    </Text>
+
+                    {courses.length > 0 ? (
+                      courses.map((curso) => (
+                        <CourseItem
+                          key={curso.id}
+                          course={curso}
+                          handleCourseDetails={handleViewCourseDetails}
+                          onEditPendingCourse={handleEditPendingCourse}
+                          onDarDeBaja={(cursoId: number) => bajaCurso(cursoId)}
+                        />
+                      ))
+                    ) : (
+                      <View style={styles.emptyState}>
+                        <Ionicons name="book-outline" size={48} color="#9ca3af" />
+                        <Text style={styles.emptyText}>
+                          No hay cursos que coincidan con los filtros
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* Cargar más cursos */}
+                    {coursePage < courseTotalPages - 1 && (
+                      <TouchableOpacity
+                        style={styles.loadMoreButton}
+                        onPress={() => fetchCourses(coursePage + 1)}
+                        disabled={loadingMoreCourses}
+                      >
+                        {loadingMoreCourses ? (
+                          <ActivityIndicator size="small" color="#3b82f6" />
+                        ) : (
+                          <>
+                            <Text style={styles.loadMoreText}>Cargar más</Text>
+                            <Ionicons
+                              name="chevron-down"
+                              size={20}
+                              color="#3b82f6"
+                            />
+                          </>
+                        )}
+                      </TouchableOpacity>
+                    )}
+
+                    {courses.length > 0 && (
+                      <Text style={styles.pageInfo}>
+                        Página {coursePage + 1} de {courseTotalPages} •{" "}
+                        {courseTotalElements} cursos
+                      </Text>
+                    )}
+                  </>
+                )}
               </View>
             ) : (
+              // Vista calendario: necesita todos los cursos; usa el endpoint no paginado
               <CalendarioSemanal
-                cursos={filteredCourses as any}
+                cursos={courses as any}
                 onCursoPress={handleViewCourseDetails}
               />
             )}
           </>
         )}
 
-        {/* Modals */}
+        {/* ── Modales ──────────────────────────────────────────────────────── */}
         <CreateUserModal
           visible={showCreateUserModal}
           onClose={() => setShowCreateUserModal(false)}
@@ -683,7 +696,7 @@ export default function AdminScreen() {
           visible={showCreateCourseModal}
           onClose={() => {
             setShowCreateCourseModal(false);
-            fetchCourses();
+            fetchCourses(0);
           }}
         />
 
@@ -695,7 +708,7 @@ export default function AdminScreen() {
               setSelectedUser(null);
             }}
             idUsuario={selectedUser.id}
-            fetchUsers={fetchUsers}
+            fetchUsers={() => fetchUsers(0)}
           />
         )}
 
@@ -725,16 +738,6 @@ export default function AdminScreen() {
 }
 
 const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: "#6b7280",
-  },
   container: {
     flex: 1,
     backgroundColor: "#f9fafb",
@@ -790,6 +793,15 @@ const styles = StyleSheet.create({
   tableContainer: {
     padding: 20,
     gap: 8,
+  },
+  loadingInline: {
+    alignItems: "center",
+    paddingVertical: 40,
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#6b7280",
   },
   resultCount: {
     fontSize: 14,
@@ -866,5 +878,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#ffffff",
+  },
+  loadMoreButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    padding: 16,
+    marginTop: 16,
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  loadMoreText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#3b82f6",
+  },
+  pageInfo: {
+    fontSize: 13,
+    color: "#9ca3af",
+    textAlign: "center",
+    marginTop: 16,
+    marginBottom: 8,
   },
 });
