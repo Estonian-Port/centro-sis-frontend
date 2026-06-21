@@ -29,7 +29,6 @@ import * as Sharing from "expo-sharing"; // Para compartir en móvil
 import { captureRef } from "react-native-view-shot"; // Para capturar la vista como imagen
 import { AdultoResponsableModal } from "./AdultoResponsableModal";
 import { getErrorMessage } from "@/helper/auth.interceptor";
-import { MatriculaCard } from "@/components/pagos/MatriculaCard";
 
 interface UserDetailModalProps {
   visible: boolean;
@@ -624,12 +623,12 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   )}
                 </Card>
 
-                {/* Matrícula anual */}
+                {/* Matrícula anual 
                 <MatriculaCard
                   alumnoId={user.id}
                   usuarioId={usuario!.id}
                   canRegister={(esAdmin || esOficina) && user.estado !== Estado.BAJA}
-                />
+                />*/}
               </View>
             )}
 
