@@ -208,6 +208,7 @@ export function formatConcepto(concepto: TipoPagoConcepto): string {
     [TipoPagoConcepto.CURSO]: "Cursada",
     [TipoPagoConcepto.ALQUILER]: "Alquiler",
     [TipoPagoConcepto.COMISION]: "Comisión",
+    [TipoPagoConcepto.MATRICULA]: "Matrícula",
   };
   return map[concepto];
 }

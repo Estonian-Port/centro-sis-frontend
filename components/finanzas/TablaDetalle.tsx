@@ -44,6 +44,7 @@ export const TablaDetalleIngresos: React.FC<TablaDetalleIngresosProps> = ({ deta
         {/* Rows */}
         <FilaConcepto concepto={detalle.pagosAlumnos} />
         <FilaConcepto concepto={detalle.alquileresProfesores} />
+        <FilaConcepto concepto={detalle.matriculasAlumnos} />
 
         {/* Total */}
         <View style={[styles.tableRow, styles.totalRow]}>

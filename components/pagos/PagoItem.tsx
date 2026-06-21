@@ -26,6 +26,8 @@ export const PagoItem: React.FC<PagoItemProps> = ({ pago }) => {
         return "#f59e0b"; // Naranja
       case "COMISION":
         return "#10b981"; // Verde
+      case "MATRICULA":
+        return "#8b5cf6"; // Violeta
       default:
         return "#6b7280";
     }
@@ -39,6 +41,8 @@ export const PagoItem: React.FC<PagoItemProps> = ({ pago }) => {
         return "home-outline";
       case "COMISION":
         return "cash-outline";
+      case "MATRICULA":
+        return "ribbon-outline";
       default:
         return "card-outline";
     }
