@@ -750,9 +750,9 @@ export default function AdminScreen() {
                       courses.map((curso) => (
                         <CourseItem
                           key={curso.id}
-                          course={curso}
-                          handleCourseDetails={handleViewCourseDetails}
-                          onEditPendingCourse={handleEditPendingCourse}
+                          course={curso as any}
+                          handleCourseDetails={() => handleViewCourseDetails(curso)}
+                          onEditPendingCourse={() => handleEditPendingCourse(curso)}
                           onDarDeBaja={(cursoId: number) => bajaCurso(cursoId)}
                         />
                       ))
