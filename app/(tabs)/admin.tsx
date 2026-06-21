@@ -123,9 +123,7 @@ function usePaginatedResource<T, F>({
 
       try {
         const response = await fetchPageRef.current(pageNum, filters);
-
-        // Si mientras esperábamos esta respuesta se disparó otra request
-        // más nueva (cambio de filtro, etc.), descartamos esta por obsoleta.
+        
         if (requestId !== requestIdRef.current) return;
 
         setItems((prev) =>
@@ -787,6 +785,7 @@ export default function AdminScreen() {
         )}
 
         {/* Modals 
+        MATRICULA
         <ConfigurarMatriculaModal
           visible={showConfigMatricula}
           onClose={() => setShowConfigMatricula(false)}

@@ -112,8 +112,8 @@ const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
           <View style={styles.cursoFooter}>
             <Ionicons name="people-outline" size={12} color="#6b7280" />
             <Text style={styles.alumnosText}>
-              {curso.alumnosInscriptos.length}{" "}
-              {curso.alumnosInscriptos.length === 1 ? "alumno" : "alumnos"}
+              {curso.totalAlumnosInscriptos}{" "}
+              {curso.totalAlumnosInscriptos === 1 ? "alumno" : "alumnos"}
             </Text>
           </View>
         )}

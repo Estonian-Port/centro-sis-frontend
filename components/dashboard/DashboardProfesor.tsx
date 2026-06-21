@@ -57,7 +57,7 @@ export const DashboardProfesor = ({
         (course) =>
           course.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
           course.profesores.some((p) =>
-            p.nombre.toLowerCase().includes(searchQuery.toLowerCase())
+            p.nombreCompleto.toLowerCase().includes(searchQuery.toLowerCase())
           )
       );
     }
@@ -172,7 +172,7 @@ export const DashboardProfesor = ({
             <View style={styles.statsRow}>
               <StatRow
                 number={cursos.reduce(
-                  (sum, curso) => sum + curso.alumnosInscriptos.length,
+                  (sum, curso) => sum + curso.totalAlumnosInscriptos,
                   0
                 )}
                 label="Alumnos"
