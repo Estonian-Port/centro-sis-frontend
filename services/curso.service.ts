@@ -170,7 +170,7 @@ class CursoService {
 
   obtenerPartesAsistencias = async (cursoId: number): Promise<any> => {
     const response = await api.get(`${CURSO}/${cursoId}/partes-asistencia`);
-    return response.data;
+    return response.data.data;
   };
 
   // ─── Baja ─────────────────────────────────────────────────────────────────
