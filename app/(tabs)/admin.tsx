@@ -9,7 +9,6 @@ import {
   Platform,
 } from "react-native";
 import {
-  Curso,
   EstadoCurso,
   NuevoUsuario,
   Rol,
@@ -37,7 +36,6 @@ import { AvisoInvitacionModal } from "@/components/modals/AvisoInvitacionModal";
 import { Ionicons } from "@expo/vector-icons";
 import { TIPOGRAFIA } from "@/util/tipografia";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 import { getErrorMessage } from "@/helper/auth.interceptor";
 import { EventBus } from "@/util/EventBus";
 import { administracionService } from "@/services/administracion.service";
@@ -78,6 +76,91 @@ const estadoAltaFilterOptions: FilterOption<Estado>[] = [
 
 const PAGE_SIZE = 10;
 
+type PaginatedResponse<T> = {
+  content: T[];
+  page: number;
+  totalPages: number;
+  totalElements: number;
+};
+
+interface UsePaginatedResourceParams<T, F> {
+  enabled: boolean;
+  filters: F;
+  fetchPage: (pageNum: number, filters: F) => Promise<PaginatedResponse<T>>;
+  onError: (error: unknown) => void;
+}
+
+function usePaginatedResource<T, F>({
+  enabled,
+  filters,
+  fetchPage,
+  onError,
+}: UsePaginatedResourceParams<T, F>) {
+  const [items, setItems] = useState<T[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const requestIdRef = useRef(0);
+  const fetchPageRef = useRef(fetchPage);
+  const onErrorRef = useRef(onError);
+  useEffect(() => {
+    fetchPageRef.current = fetchPage;
+    onErrorRef.current = onError;
+  });
+
+  const filtersKey = JSON.stringify(filters);
+
+  const load = useCallback(
+    async (pageNum: number = 0) => {
+      if (!enabled) return;
+
+      const requestId = ++requestIdRef.current;
+      if (pageNum === 0) setLoading(true);
+      else setLoadingMore(true);
+
+      try {
+        const response = await fetchPageRef.current(pageNum, filters);
+
+        // Si mientras esperábamos esta respuesta se disparó otra request
+        // más nueva (cambio de filtro, etc.), descartamos esta por obsoleta.
+        if (requestId !== requestIdRef.current) return;
+
+        setItems((prev) =>
+          pageNum === 0 ? response.content : [...prev, ...response.content],
+        );
+        setPage(response.page);
+        setTotalPages(response.totalPages);
+        setTotalElements(response.totalElements);
+      } catch (error) {
+        if (requestId === requestIdRef.current) onErrorRef.current(error);
+      } finally {
+        if (requestId === requestIdRef.current) {
+          setLoading(false);
+          setLoadingMore(false);
+        }
+      }
+    },
+    [enabled, filtersKey],
+  );
+
+  useEffect(() => {
+    if (enabled) load(0);
+  }, [enabled, filtersKey]);
+
+  return {
+    items,
+    page,
+    totalPages,
+    totalElements,
+    loading,
+    loadingMore,
+    load,
+  };
+}
+
 export default function AdminScreen() {
   const [activeTab, setActiveTab] = useState<"users" | "courses">("users");
   const [searchQuery, setSearchQuery] = useState("");
@@ -91,23 +174,7 @@ export default function AdminScreen() {
   // ── Filtros cursos ────────────────────────────────────────────────────────
   const [filtrosEstadoCurso, setFiltrosEstadoCurso] = useState<EstadoCurso[]>([]);
   const [filtrosEstadoAlta, setFiltrosEstadoAlta] = useState<Estado[]>([]);
-
-  // ── Estado paginado usuarios ──────────────────────────────────────────────
-  const [users, setUsers] = useState<Usuario[]>([]);
-  const [userPage, setUserPage] = useState(0);
-  const [userTotalPages, setUserTotalPages] = useState(0);
-  const [userTotalElements, setUserTotalElements] = useState(0);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [loadingMoreUsers, setLoadingMoreUsers] = useState(false);
-
-  // ── Estado paginado cursos ────────────────────────────────────────────────
-  const [courses, setCourses] = useState<CursoResumen[]>([]);
-  const [coursePage, setCoursePage] = useState(0);
-  const [courseTotalPages, setCourseTotalPages] = useState(0);
-  const [courseTotalElements, setCourseTotalElements] = useState(0);
-  const [loadingCourses, setLoadingCourses] = useState(false);
-  const [loadingMoreCourses, setLoadingMoreCourses] = useState(false);
-
+  
   // ── Modales ───────────────────────────────────────────────────────────────
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
@@ -134,7 +201,6 @@ export default function AdminScreen() {
     };
   }, [searchQuery]);
 
-  // ── Redirect si no tiene rol ──────────────────────────────────────────────
   useEffect(() => {
     if (
       !isLoading &&
@@ -143,105 +209,95 @@ export default function AdminScreen() {
     ) {
       router.replace("/(tabs)");
     }
-    if (activeTab === "users") {
-      fetchUsers();
-    } else {
-      fetchCourses();
-    }
-  }, [activeTab, usuario]);
+  }, [isLoading, selectedRole]);
 
   // ── Fetch usuarios paginado ───────────────────────────────────────────────
-  const fetchUsers = useCallback(
-    async (pageNum: number = 0) => {
-      if (!usuario) return;
-
-      if (pageNum === 0) setLoadingUsers(true);
-      else setLoadingMoreUsers(true);
-
-      try {
-        const response = await usuarioService.getAllUsuariosPaginado(
-          usuario.id,
-          {
-            page: pageNum,
-            size: PAGE_SIZE,
-            search: debouncedSearch || undefined,
-            roles: filtrosRol.length > 0 ? filtrosRol : undefined,
-            estados: filtrosEstadoUsuario.length > 0 ? filtrosEstadoUsuario : undefined,
-          },
-        );
-
-        if (pageNum === 0) {
-          setUsers(response.content);
-        } else {
-          setUsers((prev) => [...prev, ...response.content]);
-        }
-        setUserPage(response.page);
-        setUserTotalPages(response.totalPages);
-        setUserTotalElements(response.totalElements);
-      } catch (error) {
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: getErrorMessage(error) || "No se pudieron cargar los usuarios",
-        });
-      } finally {
-        setLoadingUsers(false);
-        setLoadingMoreUsers(false);
-      }
-    },
-    [usuario, debouncedSearch, filtrosRol, filtrosEstadoUsuario],
+  const usersFilters = useMemo(
+    () => ({
+      search: debouncedSearch || undefined,
+      roles: filtrosRol.length > 0 ? filtrosRol : undefined,
+      estados: filtrosEstadoUsuario.length > 0 ? filtrosEstadoUsuario : undefined,
+    }),
+    [debouncedSearch, filtrosRol, filtrosEstadoUsuario],
   );
+
+  const fetchUsersPage = useCallback(
+    (pageNum: number, filters: typeof usersFilters) => {
+      if (!usuario) {
+        return Promise.resolve({ content: [], page: 0, totalPages: 0, totalElements: 0 });
+      }
+      return usuarioService.getAllUsuariosPaginado(usuario.id, {
+        page: pageNum,
+        size: PAGE_SIZE,
+        ...filters,
+      });
+    },
+    [usuario],
+  );
+
+  const {
+    items: users,
+    page: userPage,
+    totalPages: userTotalPages,
+    totalElements: userTotalElements,
+    loading: loadingUsers,
+    loadingMore: loadingMoreUsers,
+    load: fetchUsers,
+  } = usePaginatedResource<Usuario, typeof usersFilters>({
+    enabled: !!usuario && activeTab === "users",
+    filters: usersFilters,
+    fetchPage: fetchUsersPage,
+    onError: (error) =>
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: getErrorMessage(error) || "No se pudieron cargar los usuarios",
+      }),
+  });
 
   // ── Fetch cursos paginado ────────────────────────────────────────────────
-  const fetchCourses = useCallback(
-    async (pageNum: number = 0) => {
-      if (!usuario) return;
-
-      if (pageNum === 0) setLoadingCourses(true);
-      else setLoadingMoreCourses(true);
-
-      try {
-        const response = await cursoService.getResumenPaginado({
-          page: pageNum,
-          size: PAGE_SIZE,
-          search: debouncedSearch || undefined,
-          estadoAlta: filtrosEstadoAlta.length === 1 ? filtrosEstadoAlta[0] : undefined,
-          estadoCurso:
-            filtrosEstadoCurso.length === 1 ? filtrosEstadoCurso[0] : undefined,
-        });
-
-        if (pageNum === 0) {
-          setCourses(response.content);
-        } else {
-          setCourses((prev) => [...prev, ...response.content]);
-        }
-        setCoursePage(response.page);
-        setCourseTotalPages(response.totalPages);
-        setCourseTotalElements(response.totalElements);
-      } catch (error) {
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: getErrorMessage(error) || "No se pudieron cargar los cursos",
-        });
-      } finally {
-        setLoadingCourses(false);
-        setLoadingMoreCourses(false);
-      }
-    },
-    [usuario, debouncedSearch, filtrosEstadoAlta, filtrosEstadoCurso],
+  const coursesFilters = useMemo(
+    () => ({
+      search: debouncedSearch || undefined,
+      estadoAlta: filtrosEstadoAlta.length === 1 ? filtrosEstadoAlta[0] : undefined,
+      estadoCurso: filtrosEstadoCurso.length === 1 ? filtrosEstadoCurso[0] : undefined,
+    }),
+    [debouncedSearch, filtrosEstadoAlta, filtrosEstadoCurso],
   );
 
-  // ── Disparar fetch al cambiar filtros / búsqueda / tab ───────────────────
-  useEffect(() => {
-    if (!usuario) return;
-    if (activeTab === "users") fetchUsers(0);
-  }, [activeTab, usuario, debouncedSearch, filtrosRol, filtrosEstadoUsuario]);
+  const fetchCoursesPage = useCallback(
+    (pageNum: number, filters: typeof coursesFilters) => {
+      if (!usuario) {
+        return Promise.resolve({ content: [], page: 0, totalPages: 0, totalElements: 0 });
+      }
+      return cursoService.getResumenPaginado({
+        page: pageNum,
+        size: PAGE_SIZE,
+        ...filters,
+      });
+    },
+    [usuario],
+  );
 
-  useEffect(() => {
-    if (!usuario) return;
-    if (activeTab === "courses") fetchCourses(0);
-  }, [activeTab, usuario, debouncedSearch, filtrosEstadoAlta, filtrosEstadoCurso]);
+  const {
+    items: courses,
+    page: coursePage,
+    totalPages: courseTotalPages,
+    totalElements: courseTotalElements,
+    loading: loadingCourses,
+    loadingMore: loadingMoreCourses,
+    load: fetchCourses,
+  } = usePaginatedResource<CursoResumen, typeof coursesFilters>({
+    enabled: !!usuario && activeTab === "courses",
+    filters: coursesFilters,
+    fetchPage: fetchCoursesPage,
+    onError: (error) =>
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: getErrorMessage(error) || "No se pudieron cargar los cursos",
+      }),
+  });
 
   // ── Limpiar filtros al cambiar de tab ────────────────────────────────────
   useEffect(() => {
@@ -264,7 +320,7 @@ export default function AdminScreen() {
     return () => {
       EventBus.off("cursoUpdated", handler);
     };
-  }, [activeTab]);
+  }, [activeTab, fetchCourses]);
 
   useEffect(() => {
     const handler = async ({ cursoId }: { cursoId: number }) => {
@@ -280,7 +336,7 @@ export default function AdminScreen() {
 
   // ── Acciones ──────────────────────────────────────────────────────────────
   const handleViewUserDetails = (user: Usuario) => {
-    if (user.estado !== "PENDIENTE") {
+    if (user.estado !== Estado.PENDIENTE) {
       setSelectedUser(user);
       setShowModalDetailsUser(true);
     } else {
@@ -399,8 +455,6 @@ export default function AdminScreen() {
   const contadorFiltrosCursos = filtrosEstadoCurso.length + filtrosEstadoAlta.length;
 
   if (!usuario) return null;
-
-  const isLoading_ = activeTab === "users" ? loadingUsers : loadingCourses;
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -753,7 +807,7 @@ export default function AdminScreen() {
           }}
         />
 
-        {selectedUser && selectedUser.estado !== "PENDIENTE" && (
+        {selectedUser && selectedUser.estado !== Estado.PENDIENTE && (
           <UserDetailModal
             visible={showModalDetailsUser}
             onClose={() => {
@@ -765,7 +819,7 @@ export default function AdminScreen() {
           />
         )}
 
-        {selectedUser && selectedUser.estado === "PENDIENTE" && (
+        {selectedUser && selectedUser.estado === Estado.PENDIENTE && (
           <AvisoInvitacionModal
             visible={modalInvitacionVisible}
             onClose={() => {
