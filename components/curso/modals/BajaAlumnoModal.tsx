@@ -10,14 +10,14 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { Alumno, Usuario } from "@/model/model";
+import { CursoAlumnoInscripto, CursoDetalle, MiInscripcionCurso } from "@/model/model";
 import { getErrorMessage } from "@/helper/auth.interceptor";
 
 interface ConfirmarBajaModalProps {
   visible: boolean;
   onClose: () => void;
-  alumno: Alumno;
-  curso: string;
+  alumno: CursoAlumnoInscripto;
+  curso: CursoDetalle;
   onConfirmar: () => Promise<void>;
 }
 
@@ -37,7 +37,7 @@ export const ConfirmarBajaModal: React.FC<ConfirmarBajaModalProps> = ({
       Toast.show({
         type: "success",
         text1: "Alumno dado de baja",
-        text2: `${alumno.nombre} ${alumno.apellido} fue dado de baja del curso`,
+        text2: `${alumno.nombreCompleto} fue dado de baja del curso`,
         position: "bottom",
       });
       onClose();
@@ -75,10 +75,10 @@ export const ConfirmarBajaModal: React.FC<ConfirmarBajaModalProps> = ({
           <Text style={styles.message}>
             Estás a punto de dar de baja a{" "}
             <Text style={styles.boldText}>
-              {alumno.nombre} {alumno.apellido}
+              {alumno.nombreCompleto}
             </Text>{" "}
             del curso{" "}
-            <Text style={styles.boldText}>{curso}</Text>.
+            <Text style={styles.boldText}>{curso.nombre}</Text>.
           </Text>
 
           {/* Advertencia */}

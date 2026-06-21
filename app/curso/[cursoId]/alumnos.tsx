@@ -2,8 +2,8 @@ import { AddAlumnoModal } from "@/components/modals/AddAlumnoModal";
 import { AlumnoItem } from "@/components/curso/AlumnoItem";
 import { SearchBar } from "@/components/ui/SearchBar";
 import { Button } from "@/components/ui/Button";
-import { Curso, EstadoPago } from "@/model/model";
-import { cursoService } from "@/services/curso.service";
+import { CursoAlumnoInscripto, CursoDetalle, EstadoPago } from "@/model/model";
+import {cursoService} from "@/services/curso.service";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -22,7 +22,8 @@ import { getErrorMessage } from "@/helper/auth.interceptor";
 
 export default function AlumnosTab() {
   const { cursoId } = useLocalSearchParams();
-  const [curso, setCurso] = useState<Curso | null>(null);
+  const [curso, setCurso] = useState<CursoDetalle | null>(null);
+  const [alumnos, setAlumnos] = useState<CursoAlumnoInscripto[]>([]);
   const [loading, setLoading] = useState(true);
   const { selectedRole } = useAuth();
 
@@ -42,8 +43,13 @@ export default function AlumnosTab() {
 
     setLoading(true);
     try {
-      const response = await cursoService.getById(Number(cursoId));
-      setCurso(response);
+        const [detalleResp, alumnosResp] = await Promise.all([
+        cursoService.getDetalle(Number(cursoId)),
+        cursoService.getAlumnosInscriptos(Number(cursoId), 0, 100) 
+      ]);
+      
+      setCurso(detalleResp);
+      setAlumnos(alumnosResp.content);
     } catch (error) {
       console.error("Error fetching curso:", error);
       Toast.show({
@@ -78,24 +84,18 @@ export default function AlumnosTab() {
     );
   };
 
-  // Filtrado de inscripciones
-  const getFilteredInscripciones = () => {
-    if (!curso) return [];
-
-    let filtered = curso.inscripciones || [];
+  const getFilteredAlumnos = () => {
+    let filtered = alumnos || [];
 
     // Filtrar por búsqueda
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((inscripcion) => {
-        const alumno = inscripcion.alumno;
-        const nombreCompleto =
-          `${alumno.nombre} ${alumno.apellido}`.toLowerCase();
-        const dni = alumno.dni?.toLowerCase() || "";
-        const email = alumno.email?.toLowerCase() || "";
-
+        const nombreCompleto = inscripcion.nombreCompleto.toLowerCase();
+        const dni = inscripcion.dni?.toLowerCase() || "";
+        const email = inscripcion.email?.toLowerCase() || "";
         return (
-          nombreCompleto.includes(query) ||
+		  nombreCompleto.includes(query) ||
           dni.includes(query) ||
           email.includes(query)
         );
@@ -105,7 +105,7 @@ export default function AlumnosTab() {
     // Filtrar por estado de pago
     if (selectedEstados.length > 0) {
       filtered = filtered.filter((inscripcion) =>
-        selectedEstados.includes(inscripcion.estadoPago),
+        selectedEstados.includes(inscripcion.estadoPago as EstadoPago),
       );
     }
 
@@ -141,7 +141,7 @@ export default function AlumnosTab() {
     );
   }
 
-  const filteredInscripciones = getFilteredInscripciones();
+  const filteredInscripciones = getFilteredAlumnos();
 
   return (
     <View style={styles.container}>
@@ -177,7 +177,7 @@ export default function AlumnosTab() {
         {/* Header con título y botón */}
         <View style={styles.headerSection}>
           <Text style={styles.headerTitle}>
-            Alumnos ({curso.inscripciones?.length || 0})
+            Alumnos ({curso.totalAlumnosInscriptos || 0})
           </Text>
           <Button
             title="Agregar Alumno"
@@ -215,8 +215,8 @@ export default function AlumnosTab() {
           <View style={styles.alumnosList}>
             {filteredInscripciones.map((inscripcion) => (
               <AlumnoItem
-                key={inscripcion.id}
-                inscripcion={inscripcion}
+                key={inscripcion.inscripcionId}
+                alumno={inscripcion}
                 curso={curso}
                 onRefresh={fetchCurso}
               />
@@ -229,7 +229,7 @@ export default function AlumnosTab() {
       <AddAlumnoModal
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
-        curso={curso}
+        curso={curso as any}
         onSuccess={() => {
           fetchCurso();
           setShowAddModal(false);

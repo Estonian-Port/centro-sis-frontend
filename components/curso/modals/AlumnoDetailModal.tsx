@@ -1,4 +1,3 @@
-// components/curso/AlumnoDetailModal.tsx
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -11,11 +10,13 @@ import {
   ScrollView,
 } from "react-native";
 import {
-  Curso,
+  CursoAlumnoInscripto,
+  CursoDetalle,
   Estado,
   EstadoCurso,
   EstadoPago,
-  Inscripcion,
+  MiInscripcionCurso,
+  PagoRealizado,
   Rol,
   TipoCurso,
 } from "@/model/model";
@@ -23,7 +24,8 @@ import { COLORES } from "@/util/colores";
 import { Tag } from "@/components/ui/Tag";
 import { Button } from "@/components/ui/Button";
 import {
-  estadoPagoToTagVariant, formatDateToDDMMYYYY, formatEstadoPago
+  estadoPagoToTagVariant, formatDateToDDMMYYYY, formatEstadoPago,
+  getIniciales
 } from "@/helper/funciones";
 import { useAuth } from "@/context/authContext";
 import { AdultoResponsableModal } from "@/components/modals/AdultoResponsableModal";
@@ -31,8 +33,10 @@ import { AdultoResponsableModal } from "@/components/modals/AdultoResponsableMod
 interface AlumnoDetailModalProps {
   visible: boolean;
   onClose: () => void;
-  inscripcion: Inscripcion;
-  curso: Curso;
+  alumno: CursoAlumnoInscripto;
+  inscripcion: MiInscripcionCurso;
+  curso: CursoDetalle;
+  pagos: PagoRealizado[]
   onOpenRegistrarPago: () => void;
   onOpenAsignarPuntos: () => void;
   onOpenEditarBeneficio: () => void;
@@ -42,8 +46,10 @@ interface AlumnoDetailModalProps {
 export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
   visible,
   onClose,
+  alumno,
   inscripcion,
   curso,
+  pagos,
   onOpenRegistrarPago,
   onOpenAsignarPuntos,
   onOpenEditarBeneficio,
@@ -52,7 +58,6 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
   const { selectedRole } = useAuth();
   const [showAdultoResponsableModal, setShowAdultoResponsableModal] =
     useState(false);
-  const alumno = inscripcion.alumno;
 
   const esMenorDeEdad = (fechaNacimiento: string | undefined) => {
     if (!fechaNacimiento) return false;
@@ -112,13 +117,12 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
             <View style={styles.modalHeaderInfo}>
               <View style={styles.modalAvatar}>
                 <Text style={styles.modalAvatarText}>
-                  {alumno.nombre[0]}
-                  {alumno.apellido[0]}
+                  {getIniciales(alumno.nombreCompleto)}
                 </Text>
               </View>
               <View>
                 <Text style={styles.modalTitle}>
-                  {alumno.nombre} {alumno.apellido}
+                  {alumno.nombreCompleto}
                 </Text>
                 <Tag
                   label={formatEstadoPago(inscripcion.estadoPago)}
@@ -221,7 +225,7 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                 />
                 <InfoRow
                   label="Monto"
-                  value={`$${inscripcion.tipoPagoElegido.monto.toLocaleString()}`}
+                  value={`${inscripcion.tipoPagoElegido.monto}`}
                   valueStyle={styles.greenValue}
                 />
                 <View style={styles.infoRow}>
@@ -254,7 +258,7 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
             <View style={styles.section}>
               <View style={styles.sectionHeaderWithAction}>
                 <Text style={styles.sectionTitle}>
-                  Pagos Realizados ({inscripcion.pagosRealizados?.length || 0})
+                  Pagos Realizados ({pagos?.length || 0})
                 </Text>
                 {puedeEditarPagos && (
                   <TouchableOpacity
@@ -270,16 +274,16 @@ export const AlumnoDetailModal: React.FC<AlumnoDetailModalProps> = ({
                   </TouchableOpacity>
                 )}
               </View>
-              {inscripcion.pagosRealizados &&
-              inscripcion.pagosRealizados.length > 0 ? (
+              {pagos &&
+              pagos.length > 0 ? (
                 <View style={styles.pagosContainer}>
-                  {inscripcion.pagosRealizados.map((pago) => (
+                  {pagos.map((pago) => (
                     <View key={pago.id} style={styles.pagoItem}>
                       <View style={styles.pagoInfo}>
                         <Ionicons name="cash" size={18} color="#10b981" />
                         <View style={styles.pagoDetails}>
                           <Text style={styles.pagoMonto}>
-                            ${pago.monto.toLocaleString()}
+                            ${pago.tipoPago.monto}
                           </Text>
                           <Text style={styles.pagoFecha}>
                             {formatDateToDDMMYYYY(pago.fecha)}

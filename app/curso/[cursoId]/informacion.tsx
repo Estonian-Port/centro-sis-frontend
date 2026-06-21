@@ -33,11 +33,9 @@ export default function InformacionTab() {
   const { selectedRole } = useAuth();
   const { curso, fetchCurso } = useCurso();
   const [showEditarNombreModal, setShowEditarNombreModal] = useState(false);
-  const [showEditarProfesoresModal, setShowEditarProfesoresModal] =
-    useState(false);
+  const [showEditarProfesoresModal, setShowEditarProfesoresModal] = useState(false);
   const [showEditarHorariosModal, setShowEditarHorariosModal] = useState(false);
-  const [showEditarModalidadesModal, setShowEditarModalidadesModal] =
-    useState(false);
+  const [showEditarModalidadesModal, setShowEditarModalidadesModal] = useState(false);
   const [pagosCurso, setPagosCurso] = useState<Pago[]>([]);
   const [loadingPagos, setLoadingPagos] = useState(false);
   const [mostrarTodos, setMostrarTodos] = useState(false);
@@ -114,7 +112,7 @@ export default function InformacionTab() {
           />
           <InfoRow
             label="Alumnos Inscriptos"
-            value={`${curso.inscripciones?.length || 0}`}
+            value={`${curso.totalAlumnosInscriptos || 0}`}
           />
         </View>
       </View>
@@ -149,7 +147,7 @@ export default function InformacionTab() {
                 color="#3b82f6"
               />
               <Text style={styles.listItemText}>
-                {profesor.nombre} {profesor.apellido}
+                {profesor.nombreCompleto}
               </Text>
             </View>
           ))}
@@ -392,7 +390,14 @@ export default function InformacionTab() {
           EventBus.emit("cursoUpdated");
         }}
         onBuscarProfesores={async (query) => {
-          return await usuarioService.searchByRol(query, "PROFESOR");
+          const usuarios = await usuarioService.searchByRol(query, "PROFESOR");
+          
+          // Transformamos a la interfaz Profesor requerida
+          return usuarios.map((usuario) => ({
+            id: usuario.id,
+            nombreCompleto: `${usuario.nombre} ${usuario.apellido}`,
+            email: usuario.email
+          }));
         }}
       />
 

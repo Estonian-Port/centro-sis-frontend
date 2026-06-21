@@ -1,4 +1,3 @@
-// components/modals/EditarBeneficioModal.tsx
 import React, { useState, useEffect } from "react";
 import {
   Modal,
@@ -11,15 +10,16 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { Alumno, Usuario } from "@/model/model";
 import { getErrorMessage } from "@/helper/auth.interceptor";
+import { CursoAlumnoInscripto, CursoDetalle, MiInscripcionCurso } from "@/model/model";
+import { cursoService } from "@/services/curso.service";
 
 interface EditarBeneficioModalProps {
   visible: boolean;
   onClose: () => void;
-  alumno: Alumno;
-  beneficioActual: number;
-  montoCurso: number;
+  alumno: CursoAlumnoInscripto;
+  curso: CursoDetalle;
+  inscripcion : MiInscripcionCurso
   onGuardar: (beneficio: number) => Promise<void>;
 }
 
@@ -27,18 +27,24 @@ export const EditarBeneficioModal: React.FC<EditarBeneficioModalProps> = ({
   visible,
   onClose,
   alumno,
-  beneficioActual,
-  montoCurso,
+  curso,
+  inscripcion,
   onGuardar,
 }) => {
   const [beneficio, setBeneficio] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      setBeneficio(beneficioActual.toString());
-    }
-  }, [visible, beneficioActual]);
+  if (!inscripcion) {
+    return (
+      <Modal visible={visible} transparent>
+        <View style={styles.overlay}>
+          <View style={styles.modal}>
+            <ActivityIndicator size="large" color="#3b82f6" />
+          </View>
+        </View>
+      </Modal>
+    );
+  }
 
   const handleGuardar = async () => {
     const beneficioNum = parseFloat(beneficio);
@@ -69,7 +75,7 @@ export const EditarBeneficioModal: React.FC<EditarBeneficioModalProps> = ({
       Toast.show({
         type: "success",
         text1: "Beneficio actualizado",
-        text2: `Beneficio del ${beneficioNum}% aplicado a ${alumno.nombre}`,
+        text2: `Beneficio del ${beneficioNum}% aplicado a ${alumno.nombreCompleto}`,
         position: "bottom",
       });
       onClose();
@@ -87,13 +93,13 @@ export const EditarBeneficioModal: React.FC<EditarBeneficioModalProps> = ({
   };
 
   const handleClose = () => {
-    setBeneficio(beneficioActual.toString());
+    setBeneficio(inscripcion.beneficio.toString());
     onClose();
   };
 
   const beneficioNum = parseFloat(beneficio) || 0;
-  const descuento = (montoCurso * beneficioNum) / 100;
-  const montoFinal = montoCurso - descuento;
+  const descuento = (inscripcion.tipoPagoElegido.monto * beneficioNum) / 100;
+  const montoFinal = inscripcion.tipoPagoElegido.monto - descuento;
 
   return (
     <Modal
@@ -118,10 +124,10 @@ export const EditarBeneficioModal: React.FC<EditarBeneficioModalProps> = ({
           {/* Alumno info */}
           <View style={styles.alumnoInfo}>
             <Text style={styles.alumnoNombre}>
-              {alumno.nombre} {alumno.apellido}
+              {alumno.nombreCompleto}
             </Text>
             <Text style={styles.montoOriginal}>
-              Monto del curso: ${montoCurso.toLocaleString("es-AR")}
+              Monto del curso: ${inscripcion.tipoPagoElegido.monto.toLocaleString("es-AR")}
             </Text>
           </View>
 
@@ -148,7 +154,7 @@ export const EditarBeneficioModal: React.FC<EditarBeneficioModalProps> = ({
               <View style={styles.previewRow}>
                 <Text style={styles.previewLabel}>Monto original:</Text>
                 <Text style={styles.previewValue}>
-                  ${montoCurso.toLocaleString("es-AR")}
+                  ${inscripcion.tipoPagoElegido.monto.toLocaleString("es-AR")}
                 </Text>
               </View>
               <View style={styles.previewRow}>

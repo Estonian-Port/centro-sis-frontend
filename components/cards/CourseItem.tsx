@@ -216,7 +216,7 @@ const CourseItem = ({
                   ellipsizeMode="tail"
                 >
                   {course.profesores
-                    .map((p) => `${p.nombre} ${p.apellido}`)
+                    .map((p) => `${p.nombreCompleto}`)
                     .join(", ")}
                 </Text>
               ) : (
@@ -285,8 +285,8 @@ const CourseItem = ({
               <View style={styles.alumnosRow}>
                 <Ionicons name="people" size={16} color="#6b7280" />
                 <Text style={styles.alumnosCount}>
-                  {course.alumnosInscriptos.length}{" "}
-                  {course.alumnosInscriptos.length === 1 ? "alumno" : "alumnos"}
+                  {course.cantidadAlumnosInscriptos}{" "}
+                  {course.cantidadAlumnosInscriptos === 1 ? "alumno" : "alumnos"}
                 </Text>
               </View>
             )}
@@ -370,9 +370,7 @@ const CourseItem = ({
               El profesor{" "}
               <Text style={styles.modalProfesorName}>
                 {course.profesores.length > 0
-                  ? course.profesores[0].nombre +
-                    " " +
-                    course.profesores[0].apellido
+                  ? course.profesores[0].nombreCompleto
                   : "asignado"}
               </Text>{" "}
               debe completar la información del curso para activarlo.

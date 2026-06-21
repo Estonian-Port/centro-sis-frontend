@@ -11,13 +11,13 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { Alumno, Usuario } from "@/model/model";
 import { getErrorMessage } from "@/helper/auth.interceptor";
+import { CursoAlumnoInscripto, MiInscripcionCurso } from "@/model/model";
 
 interface AsignarPuntosModalProps {
   visible: boolean;
   onClose: () => void;
-  alumno: Alumno;
+  alumno: CursoAlumnoInscripto;
   puntosActuales: number;
   onAsignar: (puntos: number) => Promise<void>;
 }
@@ -51,7 +51,7 @@ export const AsignarPuntosModal: React.FC<AsignarPuntosModalProps> = ({
       Toast.show({
         type: "success",
         text1: "Puntos asignados",
-        text2: `Se asignaron ${puntosNum} puntos a ${alumno.nombre}`,
+        text2: `Se asignaron ${puntosNum} puntos a ${alumno.nombreCompleto}`,
         position: "bottom",
       });
       setPuntos("");
@@ -100,7 +100,7 @@ export const AsignarPuntosModal: React.FC<AsignarPuntosModalProps> = ({
           {/* Alumno info */}
           <View style={styles.alumnoInfo}>
             <Text style={styles.alumnoNombre}>
-              {alumno.nombre} {alumno.apellido}
+              {alumno.nombreCompleto}
             </Text>
             <Text style={styles.puntosActuales}>
               Puntos actuales: {puntosActuales}

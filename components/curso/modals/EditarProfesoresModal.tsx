@@ -11,16 +11,17 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { Usuario } from "@/model/model";
+import { Profesor, Usuario } from "@/model/model";
 import { cursoService } from "@/services/curso.service";
 import { getErrorMessage } from "@/helper/auth.interceptor";
+import { getIniciales } from "@/helper/funciones";
 
 interface EditarProfesoresModalProps {
   visible: boolean;
   onClose: () => void;
-  profesoresActuales: Usuario[];
+  profesoresActuales: Profesor[];
   onGuardar: (profesorIds: number[]) => Promise<void>;
-  onBuscarProfesores: (query: string) => Promise<Usuario[]>;
+  onBuscarProfesores: (query: string) => Promise<Profesor[]>;
 }
 
 export const EditarProfesoresModal: React.FC<EditarProfesoresModalProps> = ({
@@ -30,9 +31,9 @@ export const EditarProfesoresModal: React.FC<EditarProfesoresModalProps> = ({
   onGuardar,
   onBuscarProfesores,
 }) => {
-  const [profesores, setProfesores] = useState<Usuario[]>([]);
+  const [profesores, setProfesores] = useState<Profesor[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Usuario[]>([]);
+  const [searchResults, setSearchResults] = useState<Profesor[]>([]);
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -70,7 +71,7 @@ export const EditarProfesoresModal: React.FC<EditarProfesoresModalProps> = ({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const handleAgregarProfesor = (profesor: Usuario) => {
+  const handleAgregarProfesor = (profesor: Profesor) => {
     setProfesores([...profesores, profesor]);
     setSearchQuery("");
     setSearchResults([]);
@@ -168,13 +169,12 @@ export const EditarProfesoresModal: React.FC<EditarProfesoresModalProps> = ({
                   <View key={profesor.id} style={styles.profesorItem}>
                     <View style={styles.profesorAvatar}>
                       <Text style={styles.avatarText}>
-                        {profesor.nombre[0]}
-                        {profesor.apellido[0]}
+                        {getIniciales(profesor.nombreCompleto)}
                       </Text>
                     </View>
                     <View style={styles.profesorInfo}>
                       <Text style={styles.profesorName}>
-                        {profesor.nombre} {profesor.apellido}
+                        {profesor.nombreCompleto}
                       </Text>
                       <Text style={styles.profesorEmail}>{profesor.email}</Text>
                     </View>
@@ -227,13 +227,12 @@ export const EditarProfesoresModal: React.FC<EditarProfesoresModalProps> = ({
                     >
                       <View style={styles.resultAvatar}>
                         <Text style={styles.resultAvatarText}>
-                          {profesor.nombre[0]}
-                          {profesor.apellido[0]}
+                        {getIniciales(profesor.nombreCompleto)}
                         </Text>
                       </View>
                       <View style={styles.resultInfo}>
                         <Text style={styles.resultName}>
-                          {profesor.nombre} {profesor.apellido}
+                          {profesor.nombreCompleto}
                         </Text>
                         <Text style={styles.resultEmail}>{profesor.email}</Text>
                       </View>
