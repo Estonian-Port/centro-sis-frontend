@@ -26,10 +26,6 @@ export interface UsuarioFilters {
 }
 
 class UsuarioService {
-  getAllUsuarios = async (id: number): Promise<Usuario[]> => {
-    const response = await api.get(`${USER}/all/${id}`);
-    return response.data.data;
-  };
 
   /**
    * Versión paginada para la pantalla de administración.

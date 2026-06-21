@@ -173,16 +173,6 @@ class CursoService {
     return response.data;
   };
 
-  completarCursoAlquiler = async (
-    curso: nuevoCursoAlquilerProfesor,
-  ): Promise<Curso> => {
-    const response = await api.post(
-      `${CURSO}/${curso.id}/finalizar-alta-alquiler`,
-      curso,
-    );
-    return response.data;
-  };
-
   // ─── Baja ─────────────────────────────────────────────────────────────────
 
   bajaCurso = async (cursoId: number): Promise<CustomResponse<null>> => {

@@ -29,7 +29,6 @@ import { useAuth } from "@/context/authContext";
 import { cursoService } from "@/services/curso.service";
 import UserItem from "@/components/cards/UserItem";
 import { UserDetailModal } from "@/components/modals/UserDetailsModal";
-import { ConfigurarMatriculaModal } from "@/components/modals/ConfigurarMatriculaModal";
 import { CreateUserModal } from "@/components/modals/CreateUserModal";
 import { CreateCourseModal } from "@/components/modals/CreateCourseModal";
 import { COLORES } from "@/util/colores";
@@ -83,6 +82,7 @@ export default function AdminScreen() {
   const [activeTab, setActiveTab] = useState<"users" | "courses">("users");
   const [searchQuery, setSearchQuery] = useState("");
   const [vistaActual, setVistaActual] = useState<ViewMode>("lista");
+  const [showConfigMatricula, setShowConfigMatricula] = useState(false);
 
   // ── Filtros usuarios ──────────────────────────────────────────────────────
   const [filtrosRol, setFiltrosRol] = useState<Rol[]>([]);
@@ -149,8 +149,6 @@ export default function AdminScreen() {
       fetchCourses();
     }
   }, [activeTab, usuario]);
-
-  }, [selectedRole, isLoading]);
 
   // ── Fetch usuarios paginado ───────────────────────────────────────────────
   const fetchUsers = useCallback(
@@ -303,11 +301,11 @@ export default function AdminScreen() {
   const bajaCurso = async (cursoId: number) => {
     try {
       await cursoService.bajaCurso(cursoId);
-      fetchCourses(0);
+      fetchCourses();
       Toast.show({
         type: "success",
         text1: "Curso dado de baja",
-        text2: "El curso ha sido dado de baja del sistema.",
+        text2: `El curso ha sido dado de baja del sistema.`,
         position: "bottom",
       });
     } catch (error) {
@@ -322,14 +320,14 @@ export default function AdminScreen() {
 
   const altaUsuario = async (nuevoUsuario: NuevoUsuario) => {
     try {
-      await usuarioService.altaUsuario(nuevoUsuario);
+      const response = await usuarioService.altaUsuario(nuevoUsuario);
       Toast.show({
         type: "success",
         text1: "Invitación enviada",
         text2: `La invitación ha sido enviada a ${nuevoUsuario.email}.`,
         position: "bottom",
       });
-      fetchUsers(0);
+      fetchUsers();
     } catch (error) {
       Toast.show({
         type: "error",
@@ -385,6 +383,7 @@ export default function AdminScreen() {
       prev.includes(estado) ? prev.filter((e) => e !== estado) : [...prev, estado],
     );
 
+  // Limpiar filtros
   const limpiarFiltrosUsuarios = () => {
     setFiltrosRol([]);
     setFiltrosEstadoUsuario([]);
@@ -414,13 +413,18 @@ export default function AdminScreen() {
             onPress={() => setActiveTab("users")}
           >
             <Text
-              style={[styles.tabText, activeTab === "users" && styles.activeTabText]}
+              style={[
+                styles.tabText,
+                activeTab === "users" && styles.activeTabText,
+              ]}
             >
               Usuarios
             </Text>
             {activeTab === "users" && contadorFiltrosUsuarios > 0 && (
               <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>{contadorFiltrosUsuarios}</Text>
+                <Text style={styles.filterBadgeText}>
+                  {contadorFiltrosUsuarios}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
@@ -430,13 +434,18 @@ export default function AdminScreen() {
             onPress={() => setActiveTab("courses")}
           >
             <Text
-              style={[styles.tabText, activeTab === "courses" && styles.activeTabText]}
+              style={[
+                styles.tabText,
+                activeTab === "courses" && styles.activeTabText,
+              ]}
             >
               Cursos
             </Text>
             {activeTab === "courses" && contadorFiltrosCursos > 0 && (
               <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>{contadorFiltrosCursos}</Text>
+                <Text style={styles.filterBadgeText}>
+                  {contadorFiltrosCursos}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
@@ -451,6 +460,7 @@ export default function AdminScreen() {
           placeholder={`Buscar ${activeTab === "users" ? "usuarios" : "cursos"}...`}
         />
 
+        {/* Toggle vista solo en cursos */}
         {activeTab === "courses" && (
           <ViewToggle
             currentView={vistaActual}
@@ -502,6 +512,7 @@ export default function AdminScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.filtersScrollContent}
           >
+            {/* Filtros de Rol */}
             <View style={styles.filterGroup}>
               <FilterChips
                 options={rolFilterOptions}
@@ -509,7 +520,11 @@ export default function AdminScreen() {
                 onToggle={toggleFiltroRol}
               />
             </View>
+
+            {/* Separador */}
             <View style={styles.filterSeparator} />
+
+            {/* Filtros de Estado */}
             <View style={styles.filterGroup}>
               <FilterChips
                 options={estadoUsuarioFilterOptions}
@@ -517,6 +532,8 @@ export default function AdminScreen() {
                 onToggle={toggleFiltroEstadoUsuario}
               />
             </View>
+
+            {/* Botón limpiar filtros */}
             {contadorFiltrosUsuarios > 0 && (
               <>
                 <View style={styles.filterSeparator} />
@@ -540,6 +557,7 @@ export default function AdminScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.filtersScrollContent}
           >
+            {/* Filtros de Estado del Curso */}
             <View style={styles.filterGroup}>
               <FilterChips
                 options={estadoCursoFilterOptions}
@@ -547,7 +565,11 @@ export default function AdminScreen() {
                 onToggle={toggleFiltroEstadoCurso}
               />
             </View>
+
+            {/* Separador */}
             <View style={styles.filterSeparator} />
+
+            {/* Filtros de Estado de Alta */}
             <View style={styles.filterGroup}>
               <FilterChips
                 options={estadoAltaFilterOptions}
@@ -555,6 +577,8 @@ export default function AdminScreen() {
                 onToggle={toggleFiltroEstadoAlta}
               />
             </View>
+
+            {/* Botón limpiar filtros */}
             {contadorFiltrosCursos > 0 && (
               <>
                 <View style={styles.filterSeparator} />
@@ -572,7 +596,6 @@ export default function AdminScreen() {
 
       {/* ── Contenido ──────────────────────────────────────────────────────── */}
       <ScrollView style={styles.content}>
-        {/* USUARIOS */}
         {activeTab === "users" && (
           <View style={styles.tableContainer}>
             {loadingUsers ? (
@@ -699,105 +722,8 @@ export default function AdminScreen() {
                     )}
                   </>
                 )}
-
-                {/* Cargar más usuarios */}
-                {userPage < userTotalPages - 1 && (
-                  <TouchableOpacity
-                    style={styles.loadMoreButton}
-                    onPress={() => fetchUsers(userPage + 1)}
-                    disabled={loadingMoreUsers}
-                  >
-                    {loadingMoreUsers ? (
-                      <ActivityIndicator size="small" color="#3b82f6" />
-                    ) : (
-                      <>
-                        <Text style={styles.loadMoreText}>Cargar más</Text>
-                        <Ionicons name="chevron-down" size={20} color="#3b82f6" />
-                      </>
-                    )}
-                  </TouchableOpacity>
-                )}
-
-                {users.length > 0 && (
-                  <Text style={styles.pageInfo}>
-                    Página {userPage + 1} de {userTotalPages} •{" "}
-                    {userTotalElements} usuarios
-                  </Text>
-                )}
-              </>
-            )}
-          </View>
-        )}
-
-        {/* CURSOS */}
-        {activeTab === "courses" && (
-          <>
-            {vistaActual === "lista" ? (
-              <View style={styles.tableContainer}>
-                {loadingCourses ? (
-                  <View style={styles.loadingInline}>
-                    <ActivityIndicator size="large" color="#3b82f6" />
-                    <Text style={styles.loadingText}>Cargando cursos...</Text>
-                  </View>
-                ) : (
-                  <>
-                    <Text style={styles.resultCount}>
-                      {courseTotalElements}{" "}
-                      {courseTotalElements === 1 ? "curso" : "cursos"}
-                    </Text>
-
-                    {courses.length > 0 ? (
-                      courses.map((curso) => (
-                        <CourseItem
-                          key={curso.id}
-                          course={curso as any}
-                          handleCourseDetails={() => handleViewCourseDetails(curso)}
-                          onEditPendingCourse={() => handleEditPendingCourse(curso)}
-                          onDarDeBaja={(cursoId: number) => bajaCurso(cursoId)}
-                        />
-                      ))
-                    ) : (
-                      <View style={styles.emptyState}>
-                        <Ionicons name="book-outline" size={48} color="#9ca3af" />
-                        <Text style={styles.emptyText}>
-                          No hay cursos que coincidan con los filtros
-                        </Text>
-                      </View>
-                    )}
-
-                    {/* Cargar más cursos */}
-                    {coursePage < courseTotalPages - 1 && (
-                      <TouchableOpacity
-                        style={styles.loadMoreButton}
-                        onPress={() => fetchCourses(coursePage + 1)}
-                        disabled={loadingMoreCourses}
-                      >
-                        {loadingMoreCourses ? (
-                          <ActivityIndicator size="small" color="#3b82f6" />
-                        ) : (
-                          <>
-                            <Text style={styles.loadMoreText}>Cargar más</Text>
-                            <Ionicons
-                              name="chevron-down"
-                              size={20}
-                              color="#3b82f6"
-                            />
-                          </>
-                        )}
-                      </TouchableOpacity>
-                    )}
-
-                    {courses.length > 0 && (
-                      <Text style={styles.pageInfo}>
-                        Página {coursePage + 1} de {courseTotalPages} •{" "}
-                        {courseTotalElements} cursos
-                      </Text>
-                    )}
-                  </>
-                )}
               </View>
             ) : (
-              // Vista calendario: necesita todos los cursos; usa el endpoint no paginado
               <CalendarioSemanal
                 cursos={courses as any}
                 onCursoPress={handleViewCourseDetails as any}
@@ -806,12 +732,12 @@ export default function AdminScreen() {
           </>
         )}
 
-        {/* ── Modales ──────────────────────────────────────────────────────── */}
+        {/* Modals 
         <ConfigurarMatriculaModal
           visible={showConfigMatricula}
           onClose={() => setShowConfigMatricula(false)}
           usuarioId={usuario.id}
-        />
+        />*/}
 
         <CreateUserModal
           visible={showCreateUserModal}
@@ -823,7 +749,7 @@ export default function AdminScreen() {
           visible={showCreateCourseModal}
           onClose={() => {
             setShowCreateCourseModal(false);
-            fetchCourses(0);
+            fetchCourses();
           }}
         />
 
@@ -835,7 +761,7 @@ export default function AdminScreen() {
               setSelectedUser(null);
             }}
             idUsuario={selectedUser.id}
-            fetchUsers={() => fetchUsers(0)}
+            fetchUsers={fetchUsers}
           />
         )}
 
@@ -865,6 +791,16 @@ export default function AdminScreen() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#6b7280",
+  },
   container: {
     flex: 1,
     backgroundColor: "#f9fafb",
@@ -925,10 +861,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 40,
     gap: 12,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: "#6b7280",
   },
   resultCount: {
     fontSize: 14,
