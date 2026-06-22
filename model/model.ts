@@ -71,6 +71,12 @@ export interface NuevoAlumno {
   dni: string;
 }
 
+export interface Profesor {
+  id: number;
+  nombreCompleto: string;
+  email: string
+}
+
 export interface Usuario {
   id: number;
   nombre: string;
@@ -166,14 +172,14 @@ export interface Curso {
   id: number;
   nombre: string;
   horarios: Horario[];
-  alumnosInscriptos: Alumno[];
+  cantidadAlumnosInscriptos: number;
   fechaInicio: string;
   fechaFin: string;
   estado: EstadoCurso;
   estadoAlta: Estado;
-  profesores: Usuario[];
+  profesores: Profesor[];
   tiposPago: TipoPago[];
-  inscripciones: Inscripcion[];
+  totalAlumnosInscriptos: number;
   recargoPorAtraso: number;
   tipoCurso: TipoCurso;
   montoAlquiler?: number;
@@ -217,6 +223,85 @@ export interface nuevoCursoComision {
   profesoresId: number[];
   fechaInicio: string; // formato "YYYY-MM-DD"
   fechaFin: string; // formato "YYYY-MM-DD"
+}
+
+export interface ProfesorResumen {
+  id: number;
+  nombreCompleto: string;
+}
+
+/** Para listados (grilla de administración, calendario). Sin alumnos/inscripciones. */
+export interface CursoResumen {
+  id: number;
+  nombre: string;
+  tipoCurso: string;
+  estado: string;
+  estadoAlta: string;
+  fechaInicio: string;
+  fechaFin: string;
+  horarios: Horario[];
+  profesores: ProfesorResumen[];
+  cantidadAlumnosInscriptos: number;
+}
+
+/** Para la vista de detalle de un curso. Los alumnos se piden aparte, paginados. */
+export interface CursoDetalle {
+  id: number;
+  nombre: string;
+  tipoCurso: string;
+  estado: EstadoCurso;
+  estadoAlta: string;
+  fechaInicio: string;
+  fechaFin: string;
+  recargoPorAtrasoPorcentaje?: number;
+  horarios: Horario[]; 
+  tiposPago: TipoPago[]; 
+  profesores: ProfesorResumen[]; 
+  montoAlquiler?: number | null; 
+  cuotasAlquiler?: number | null;
+  totalAlumnosInscriptos: number;
+}
+
+/** Fila del sub-recurso paginado /curso/{id}/alumnos. */
+export interface CursoAlumnoInscripto {
+  id: number;
+  inscripcionId: number;
+  nombreCompleto: string;
+  email: string;
+  dni: string;
+  celular : string
+  estadoPago: EstadoPago;
+  fechaNacimiento: string;
+  fechaInscripcion: string;
+  porcentajeAsistencia: number;
+  puntos: number;
+  adultoResponsable : AdultoResponsable
+}
+
+/** Vista "mi curso" de un alumno puntual. */
+export interface MiInscripcionCurso {
+  id: number;
+  nombreCurso: string;
+  estado: string;
+  estadoPago: EstadoPago;
+  tipoPagoElegido: TipoPago;
+  fechaInscripcion: string;
+  porcentajeAsistencia: number;
+  puntos: number;
+  beneficio: number;  
+}
+
+export interface CustomResponse<T> {
+  message: string;
+  data: T;
+}
+
+export interface CursoFilters {
+  page?: number;
+  size?: number;
+  search?: string;
+  estadoAlta?: Estado;
+  estadoCurso?: EstadoCurso;
 }
 
 /*=======================
@@ -492,4 +577,11 @@ export interface PagoDisplay {
   retraso?: boolean;
   beneficio?: number;
   estaActivo: boolean;
+}
+
+export interface PagoRealizado {
+  id: number;
+  tipoPago: TipoPago;
+  fecha: string;
+  retraso?: boolean;
 }

@@ -212,3 +212,20 @@ export function formatConcepto(concepto: TipoPagoConcepto): string {
   };
   return map[concepto];
 }
+
+export const getIniciales = (nombreCompleto: string): string => {
+  if (!nombreCompleto) return "";
+
+  const partes = nombreCompleto.trim().split(" ");
+  
+  // Si solo tiene una palabra
+  if (partes.length === 1) {
+    return partes[0].substring(0, 1).toUpperCase();
+  }
+
+  // Tomamos la primera letra del primer nombre y la primera del último apellido
+  const primera = partes[0].charAt(0).toUpperCase();
+  const ultima = partes[partes.length - 1].charAt(0).toUpperCase();
+
+  return `${primera}${ultima}`;
+};

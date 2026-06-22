@@ -9,12 +9,12 @@ import {
   Platform,
 } from "react-native";
 import {
-  Curso,
   EstadoCurso,
   NuevoUsuario,
   Rol,
   Usuario,
   Estado,
+  CursoResumen,
 } from "@/model/model";
 import { ViewToggle, ViewMode } from "@/components/ui/ViewToggle";
 import CourseItem from "@/components/cards/CourseItem";
@@ -28,7 +28,6 @@ import { useAuth } from "@/context/authContext";
 import { cursoService } from "@/services/curso.service";
 import UserItem from "@/components/cards/UserItem";
 import { UserDetailModal } from "@/components/modals/UserDetailsModal";
-import { ConfigurarMatriculaModal } from "@/components/modals/ConfigurarMatriculaModal";
 import { CreateUserModal } from "@/components/modals/CreateUserModal";
 import { CreateCourseModal } from "@/components/modals/CreateCourseModal";
 import { COLORES } from "@/util/colores";
@@ -77,10 +76,94 @@ const estadoAltaFilterOptions: FilterOption<Estado>[] = [
 
 const PAGE_SIZE = 10;
 
+type PaginatedResponse<T> = {
+  content: T[];
+  page: number;
+  totalPages: number;
+  totalElements: number;
+};
+
+interface UsePaginatedResourceParams<T, F> {
+  enabled: boolean;
+  filters: F;
+  fetchPage: (pageNum: number, filters: F) => Promise<PaginatedResponse<T>>;
+  onError: (error: unknown) => void;
+}
+
+function usePaginatedResource<T, F>({
+  enabled,
+  filters,
+  fetchPage,
+  onError,
+}: UsePaginatedResourceParams<T, F>) {
+  const [items, setItems] = useState<T[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const requestIdRef = useRef(0);
+  const fetchPageRef = useRef(fetchPage);
+  const onErrorRef = useRef(onError);
+  useEffect(() => {
+    fetchPageRef.current = fetchPage;
+    onErrorRef.current = onError;
+  });
+
+  const filtersKey = JSON.stringify(filters);
+
+  const load = useCallback(
+    async (pageNum: number = 0) => {
+      if (!enabled) return;
+
+      const requestId = ++requestIdRef.current;
+      if (pageNum === 0) setLoading(true);
+      else setLoadingMore(true);
+
+      try {
+        const response = await fetchPageRef.current(pageNum, filters);
+        
+        if (requestId !== requestIdRef.current) return;
+
+        setItems((prev) =>
+          pageNum === 0 ? response.content : [...prev, ...response.content],
+        );
+        setPage(response.page);
+        setTotalPages(response.totalPages);
+        setTotalElements(response.totalElements);
+      } catch (error) {
+        if (requestId === requestIdRef.current) onErrorRef.current(error);
+      } finally {
+        if (requestId === requestIdRef.current) {
+          setLoading(false);
+          setLoadingMore(false);
+        }
+      }
+    },
+    [enabled, filtersKey],
+  );
+
+  useEffect(() => {
+    if (enabled) load(0);
+  }, [enabled, filtersKey]);
+
+  return {
+    items,
+    page,
+    totalPages,
+    totalElements,
+    loading,
+    loadingMore,
+    load,
+  };
+}
+
 export default function AdminScreen() {
   const [activeTab, setActiveTab] = useState<"users" | "courses">("users");
   const [searchQuery, setSearchQuery] = useState("");
   const [vistaActual, setVistaActual] = useState<ViewMode>("lista");
+  const [showConfigMatricula, setShowConfigMatricula] = useState(false);
 
   // ── Filtros usuarios ──────────────────────────────────────────────────────
   const [filtrosRol, setFiltrosRol] = useState<Rol[]>([]);
@@ -89,30 +172,14 @@ export default function AdminScreen() {
   // ── Filtros cursos ────────────────────────────────────────────────────────
   const [filtrosEstadoCurso, setFiltrosEstadoCurso] = useState<EstadoCurso[]>([]);
   const [filtrosEstadoAlta, setFiltrosEstadoAlta] = useState<Estado[]>([]);
-
-  // ── Estado paginado usuarios ──────────────────────────────────────────────
-  const [users, setUsers] = useState<Usuario[]>([]);
-  const [userPage, setUserPage] = useState(0);
-  const [userTotalPages, setUserTotalPages] = useState(0);
-  const [userTotalElements, setUserTotalElements] = useState(0);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [loadingMoreUsers, setLoadingMoreUsers] = useState(false);
-
-  // ── Estado paginado cursos ────────────────────────────────────────────────
-  const [courses, setCourses] = useState<CursoResumen[]>([]);
-  const [coursePage, setCoursePage] = useState(0);
-  const [courseTotalPages, setCourseTotalPages] = useState(0);
-  const [courseTotalElements, setCourseTotalElements] = useState(0);
-  const [loadingCourses, setLoadingCourses] = useState(false);
-  const [loadingMoreCourses, setLoadingMoreCourses] = useState(false);
-
+  
   // ── Modales ───────────────────────────────────────────────────────────────
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
   const [showModalDetailsUser, setShowModalDetailsUser] = useState(false);
   const [modalInvitacionVisible, setModalInvitacionVisible] = useState(false);
-  const [selectedPendingCourse, setSelectedPendingCourse] = useState<Curso | null>(null);
+  const [selectedPendingCourse, setSelectedPendingCourse] = useState<CursoResumen | null>(null);
   const [showEditCourseModal, setShowEditCourseModal] = useState(false);
   const [descargandoQr, setDescargandoQr] = useState(false);
 
@@ -132,7 +199,6 @@ export default function AdminScreen() {
     };
   }, [searchQuery]);
 
-  // ── Redirect si no tiene rol ──────────────────────────────────────────────
   useEffect(() => {
     if (
       !isLoading &&
@@ -141,134 +207,134 @@ export default function AdminScreen() {
     ) {
       router.replace("/(tabs)");
     }
-  }, [selectedRole, isLoading]);
+  }, [isLoading, selectedRole]);
 
   // ── Fetch usuarios paginado ───────────────────────────────────────────────
-  const fetchUsers = useCallback(
-    async (pageNum: number = 0) => {
-      if (!usuario) return;
-
-      if (pageNum === 0) setLoadingUsers(true);
-      else setLoadingMoreUsers(true);
-
-      try {
-        const response = await usuarioService.getAllUsuariosPaginado(
-          usuario.id,
-          {
-            page: pageNum,
-            size: PAGE_SIZE,
-            search: debouncedSearch || undefined,
-            roles: filtrosRol.length > 0 ? filtrosRol : undefined,
-            estados: filtrosEstadoUsuario.length > 0 ? filtrosEstadoUsuario : undefined,
-          },
-        );
-
-        if (pageNum === 0) {
-          setUsers(response.content);
-        } else {
-          setUsers((prev) => [...prev, ...response.content]);
-        }
-        setUserPage(response.page);
-        setUserTotalPages(response.totalPages);
-        setUserTotalElements(response.totalElements);
-      } catch (error) {
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: getErrorMessage(error) || "No se pudieron cargar los usuarios",
-        });
-      } finally {
-        setLoadingUsers(false);
-        setLoadingMoreUsers(false);
-      }
-    },
-    [usuario, debouncedSearch, filtrosRol, filtrosEstadoUsuario],
+  const usersFilters = useMemo(
+    () => ({
+      search: debouncedSearch || undefined,
+      roles: filtrosRol.length > 0 ? filtrosRol : undefined,
+      estados: filtrosEstadoUsuario.length > 0 ? filtrosEstadoUsuario : undefined,
+    }),
+    [debouncedSearch, filtrosRol, filtrosEstadoUsuario],
   );
 
-  // ── Fetch cursos paginado ─────────────────────────────────────────────────
-  const fetchCourses = useCallback(
-    async (pageNum: number = 0) => {
-      if (!usuario) return;
-
-      if (pageNum === 0) setLoadingCourses(true);
-      else setLoadingMoreCourses(true);
-
-      try {
-        const response = await cursoService.getAllCursosPaginado({
-          page: pageNum,
-          size: PAGE_SIZE,
-          search: debouncedSearch || undefined,
-          estadoAlta: filtrosEstadoAlta.length === 1 ? filtrosEstadoAlta[0] : undefined,
-          estadoCurso:
-            filtrosEstadoCurso.length === 1 ? filtrosEstadoCurso[0] : undefined,
-        });
-
-        if (pageNum === 0) {
-          setCourses(response.content);
-        } else {
-          setCourses((prev) => [...prev, ...response.content]);
-        }
-        setCoursePage(response.page);
-        setCourseTotalPages(response.totalPages);
-        setCourseTotalElements(response.totalElements);
-      } catch (error) {
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: getErrorMessage(error) || "No se pudieron cargar los cursos",
-        });
-      } finally {
-        setLoadingCourses(false);
-        setLoadingMoreCourses(false);
+  const fetchUsersPage = useCallback(
+    (pageNum: number, filters: typeof usersFilters) => {
+      if (!usuario) {
+        return Promise.resolve({ content: [], page: 0, totalPages: 0, totalElements: 0 });
       }
+      return usuarioService.getAllUsuariosPaginado(usuario.id, {
+        page: pageNum,
+        size: PAGE_SIZE,
+        ...filters,
+      });
     },
-    [usuario, debouncedSearch, filtrosEstadoAlta, filtrosEstadoCurso],
+    [usuario],
   );
 
-  // ── Disparar fetch al cambiar filtros / búsqueda / tab ───────────────────
-  useEffect(() => {
-    if (!usuario) return;
-    if (activeTab === "users") fetchUsers(0);
-  }, [activeTab, usuario, debouncedSearch, filtrosRol, filtrosEstadoUsuario]);
+  const {
+    items: users,
+    page: userPage,
+    totalPages: userTotalPages,
+    totalElements: userTotalElements,
+    loading: loadingUsers,
+    loadingMore: loadingMoreUsers,
+    load: fetchUsers,
+  } = usePaginatedResource<Usuario, typeof usersFilters>({
+    enabled: !!usuario && activeTab === "users",
+    filters: usersFilters,
+    fetchPage: fetchUsersPage,
+    onError: (error) =>
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: getErrorMessage(error) || "No se pudieron cargar los usuarios",
+      }),
+  });
 
-  useEffect(() => {
-    if (!usuario) return;
-    if (activeTab === "courses") fetchCourses(0);
-  }, [activeTab, usuario, debouncedSearch, filtrosEstadoAlta, filtrosEstadoCurso]);
+  // ── Fetch cursos paginado ────────────────────────────────────────────────
+  const coursesFilters = useMemo(
+    () => ({
+      search: debouncedSearch || undefined,
+      estadoAlta: filtrosEstadoAlta.length === 1 ? filtrosEstadoAlta[0] : undefined,
+      estadoCurso: filtrosEstadoCurso.length === 1 ? filtrosEstadoCurso[0] : undefined,
+    }),
+    [debouncedSearch, filtrosEstadoAlta, filtrosEstadoCurso],
+  );
+
+  const fetchCoursesPage = useCallback(
+    (pageNum: number, filters: typeof coursesFilters) => {
+      if (!usuario) {
+        return Promise.resolve({ content: [], page: 0, totalPages: 0, totalElements: 0 });
+      }
+      return cursoService.getResumenPaginado({
+        page: pageNum,
+        size: PAGE_SIZE,
+        ...filters,
+      });
+    },
+    [usuario],
+  );
+
+  const {
+    items: courses,
+    page: coursePage,
+    totalPages: courseTotalPages,
+    totalElements: courseTotalElements,
+    loading: loadingCourses,
+    loadingMore: loadingMoreCourses,
+    load: fetchCourses,
+  } = usePaginatedResource<CursoResumen, typeof coursesFilters>({
+    enabled: !!usuario && activeTab === "courses",
+    filters: coursesFilters,
+    fetchPage: fetchCoursesPage,
+    onError: (error) =>
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: getErrorMessage(error) || "No se pudieron cargar los cursos",
+      }),
+  });
 
   // ── Limpiar filtros al cambiar de tab ────────────────────────────────────
   useEffect(() => {
     setSearchQuery("");
-    setDebouncedSearch("");
+
+    // Limpiar filtros de usuarios
     setFiltrosRol([]);
     setFiltrosEstadoUsuario([]);
+
+    // Limpiar filtros de cursos
     setFiltrosEstadoCurso([]);
     setFiltrosEstadoAlta([]);
   }, [activeTab]);
 
-  // ── EventBus ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const handler = () => {
-      if (activeTab === "courses") fetchCourses(0);
+      if (activeTab === "courses") fetchCourses();
     };
     EventBus.on("cursoUpdated", handler);
-    return () => EventBus.off("cursoUpdated", handler);
+    return () => {
+      EventBus.off("cursoUpdated", handler);
+    };
   }, [activeTab, fetchCourses]);
 
   useEffect(() => {
     const handler = async ({ cursoId }: { cursoId: number }) => {
-      const updatedCurso = await cursoService.getById(cursoId);
-      setCourses((prev) =>
-        prev.map((c) => (c.id === updatedCurso.id ? updatedCurso : c)),
-      );
+      try {
+        fetchCourses(0);
+      } catch (error) {
+        console.error(error);
+      }
     };
     EventBus.on("alumnoBaja", handler);
     return () => EventBus.off("alumnoBaja", handler);
-  }, []);
+  }, [fetchCourses]);
 
   // ── Acciones ──────────────────────────────────────────────────────────────
   const handleViewUserDetails = (user: Usuario) => {
-    if (user.estado !== "PENDIENTE") {
+    if (user.estado !== Estado.PENDIENTE) {
       setSelectedUser(user);
       setShowModalDetailsUser(true);
     } else {
@@ -277,11 +343,11 @@ export default function AdminScreen() {
     }
   };
 
-  const handleViewCourseDetails = (course: Curso) => {
+  const handleViewCourseDetails = (course: CursoResumen) => {
     router.push(`/curso/${course.id}/alumnos`);
   };
 
-  const handleEditPendingCourse = (course: Curso) => {
+  const handleEditPendingCourse = (course: CursoResumen) => {
     setSelectedPendingCourse(course);
     setShowEditCourseModal(true);
   };
@@ -289,11 +355,11 @@ export default function AdminScreen() {
   const bajaCurso = async (cursoId: number) => {
     try {
       await cursoService.bajaCurso(cursoId);
-      fetchCourses(0);
+      fetchCourses();
       Toast.show({
         type: "success",
         text1: "Curso dado de baja",
-        text2: "El curso ha sido dado de baja del sistema.",
+        text2: `El curso ha sido dado de baja del sistema.`,
         position: "bottom",
       });
     } catch (error) {
@@ -308,14 +374,14 @@ export default function AdminScreen() {
 
   const altaUsuario = async (nuevoUsuario: NuevoUsuario) => {
     try {
-      await usuarioService.altaUsuario(nuevoUsuario);
+      const response = await usuarioService.altaUsuario(nuevoUsuario);
       Toast.show({
         type: "success",
         text1: "Invitación enviada",
         text2: `La invitación ha sido enviada a ${nuevoUsuario.email}.`,
         position: "bottom",
       });
-      fetchUsers(0);
+      fetchUsers();
     } catch (error) {
       Toast.show({
         type: "error",
@@ -330,6 +396,7 @@ export default function AdminScreen() {
     setDescargandoQr(true);
     try {
       await administracionService.descargarTodosQr();
+
       Toast.show({
         type: "success",
         text1: "✅ QR Descargados",
@@ -337,6 +404,7 @@ export default function AdminScreen() {
         position: "bottom",
       });
     } catch (error) {
+      console.error("Error descargando QR:", error);
       Toast.show({
         type: "error",
         text1: "Error",
@@ -369,6 +437,7 @@ export default function AdminScreen() {
       prev.includes(estado) ? prev.filter((e) => e !== estado) : [...prev, estado],
     );
 
+  // Limpiar filtros
   const limpiarFiltrosUsuarios = () => {
     setFiltrosRol([]);
     setFiltrosEstadoUsuario([]);
@@ -385,8 +454,6 @@ export default function AdminScreen() {
 
   if (!usuario) return null;
 
-  const isLoading_ = activeTab === "users" ? loadingUsers : loadingCourses;
-
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* ── Header ─────────────────────────────────────────────────────────── */}
@@ -398,13 +465,18 @@ export default function AdminScreen() {
             onPress={() => setActiveTab("users")}
           >
             <Text
-              style={[styles.tabText, activeTab === "users" && styles.activeTabText]}
+              style={[
+                styles.tabText,
+                activeTab === "users" && styles.activeTabText,
+              ]}
             >
               Usuarios
             </Text>
             {activeTab === "users" && contadorFiltrosUsuarios > 0 && (
               <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>{contadorFiltrosUsuarios}</Text>
+                <Text style={styles.filterBadgeText}>
+                  {contadorFiltrosUsuarios}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
@@ -414,13 +486,18 @@ export default function AdminScreen() {
             onPress={() => setActiveTab("courses")}
           >
             <Text
-              style={[styles.tabText, activeTab === "courses" && styles.activeTabText]}
+              style={[
+                styles.tabText,
+                activeTab === "courses" && styles.activeTabText,
+              ]}
             >
               Cursos
             </Text>
             {activeTab === "courses" && contadorFiltrosCursos > 0 && (
               <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>{contadorFiltrosCursos}</Text>
+                <Text style={styles.filterBadgeText}>
+                  {contadorFiltrosCursos}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
@@ -435,6 +512,7 @@ export default function AdminScreen() {
           placeholder={`Buscar ${activeTab === "users" ? "usuarios" : "cursos"}...`}
         />
 
+        {/* Toggle vista solo en cursos */}
         {activeTab === "courses" && (
           <ViewToggle
             currentView={vistaActual}
@@ -486,6 +564,7 @@ export default function AdminScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.filtersScrollContent}
           >
+            {/* Filtros de Rol */}
             <View style={styles.filterGroup}>
               <FilterChips
                 options={rolFilterOptions}
@@ -493,7 +572,11 @@ export default function AdminScreen() {
                 onToggle={toggleFiltroRol}
               />
             </View>
+
+            {/* Separador */}
             <View style={styles.filterSeparator} />
+
+            {/* Filtros de Estado */}
             <View style={styles.filterGroup}>
               <FilterChips
                 options={estadoUsuarioFilterOptions}
@@ -501,6 +584,8 @@ export default function AdminScreen() {
                 onToggle={toggleFiltroEstadoUsuario}
               />
             </View>
+
+            {/* Botón limpiar filtros */}
             {contadorFiltrosUsuarios > 0 && (
               <>
                 <View style={styles.filterSeparator} />
@@ -524,6 +609,7 @@ export default function AdminScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.filtersScrollContent}
           >
+            {/* Filtros de Estado del Curso */}
             <View style={styles.filterGroup}>
               <FilterChips
                 options={estadoCursoFilterOptions}
@@ -531,7 +617,11 @@ export default function AdminScreen() {
                 onToggle={toggleFiltroEstadoCurso}
               />
             </View>
+
+            {/* Separador */}
             <View style={styles.filterSeparator} />
+
+            {/* Filtros de Estado de Alta */}
             <View style={styles.filterGroup}>
               <FilterChips
                 options={estadoAltaFilterOptions}
@@ -539,6 +629,8 @@ export default function AdminScreen() {
                 onToggle={toggleFiltroEstadoAlta}
               />
             </View>
+
+            {/* Botón limpiar filtros */}
             {contadorFiltrosCursos > 0 && (
               <>
                 <View style={styles.filterSeparator} />
@@ -556,7 +648,6 @@ export default function AdminScreen() {
 
       {/* ── Contenido ──────────────────────────────────────────────────────── */}
       <ScrollView style={styles.content}>
-        {/* USUARIOS */}
         {activeTab === "users" && (
           <View style={styles.tableContainer}>
             {loadingUsers ? (
@@ -618,7 +709,6 @@ export default function AdminScreen() {
           </View>
         )}
 
-        {/* CURSOS */}
         {activeTab === "courses" && (
           <>
             {vistaActual === "lista" ? (
@@ -639,9 +729,9 @@ export default function AdminScreen() {
                       courses.map((curso) => (
                         <CourseItem
                           key={curso.id}
-                          course={curso}
-                          handleCourseDetails={handleViewCourseDetails}
-                          onEditPendingCourse={handleEditPendingCourse}
+                          course={curso as any}
+                          handleCourseDetails={() => handleViewCourseDetails(curso)}
+                          onEditPendingCourse={() => handleEditPendingCourse(curso)}
                           onDarDeBaja={(cursoId: number) => bajaCurso(cursoId)}
                         />
                       ))
@@ -686,21 +776,21 @@ export default function AdminScreen() {
                 )}
               </View>
             ) : (
-              // Vista calendario: necesita todos los cursos; usa el endpoint no paginado
               <CalendarioSemanal
                 cursos={courses as any}
-                onCursoPress={handleViewCourseDetails}
+                onCursoPress={handleViewCourseDetails as any}
               />
             )}
           </>
         )}
 
-        {/* ── Modales ──────────────────────────────────────────────────────── */}
+        {/* Modals 
+        MATRICULA
         <ConfigurarMatriculaModal
           visible={showConfigMatricula}
           onClose={() => setShowConfigMatricula(false)}
           usuarioId={usuario.id}
-        />
+        />*/}
 
         <CreateUserModal
           visible={showCreateUserModal}
@@ -712,11 +802,11 @@ export default function AdminScreen() {
           visible={showCreateCourseModal}
           onClose={() => {
             setShowCreateCourseModal(false);
-            fetchCourses(0);
+            fetchCourses();
           }}
         />
 
-        {selectedUser && selectedUser.estado !== "PENDIENTE" && (
+        {selectedUser && selectedUser.estado !== Estado.PENDIENTE && (
           <UserDetailModal
             visible={showModalDetailsUser}
             onClose={() => {
@@ -724,11 +814,11 @@ export default function AdminScreen() {
               setSelectedUser(null);
             }}
             idUsuario={selectedUser.id}
-            fetchUsers={() => fetchUsers(0)}
+            fetchUsers={fetchUsers}
           />
         )}
 
-        {selectedUser && selectedUser.estado === "PENDIENTE" && (
+        {selectedUser && selectedUser.estado === Estado.PENDIENTE && (
           <AvisoInvitacionModal
             visible={modalInvitacionVisible}
             onClose={() => {
@@ -754,6 +844,16 @@ export default function AdminScreen() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#6b7280",
+  },
   container: {
     flex: 1,
     backgroundColor: "#f9fafb",
@@ -814,10 +914,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 40,
     gap: 12,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: "#6b7280",
   },
   resultCount: {
     fontSize: 14,

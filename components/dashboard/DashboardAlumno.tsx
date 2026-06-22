@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { View, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Curso, CursoAlumno, EstadoCurso } from "@/model/model";
+import { Curso, CursoAlumno, CursoDetalle, EstadoCurso } from "@/model/model";
 import CourseItem from "@/components/cards/CourseItem";
 import { FilterChips, FilterOption } from "@/components/ui/FilterChip";
 import { ViewMode, ViewToggle } from "@/components/ui/ViewToggle";
@@ -38,7 +38,7 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
         (course) =>
           course.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
           course.profesores.some((p) =>
-            p.nombre.toLowerCase().includes(searchQuery.toLowerCase())
+            p.nombreCompleto.toLowerCase().includes(searchQuery.toLowerCase())
           )
       );
     }
@@ -52,7 +52,7 @@ export const DashboardAlumno = ({ cursos }: { cursos: CursoAlumno[] }) => {
     return filtered;
   }, [cursos, searchQuery, filtrosEstado]);
 
-  const handleViewCourseDetails = (course: CursoAlumno | Curso) => {
+  const handleViewCourseDetails = (course: CursoAlumno | CursoDetalle) => {
     setSelectedCourse(course as CursoAlumno);
     setShowModalDetailsCourse(true);
   };

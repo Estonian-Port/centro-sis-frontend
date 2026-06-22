@@ -107,7 +107,7 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({
                     />
                     <View style={styles.profesorInfo}>
                       <Text style={styles.profesorName}>
-                        {profesor.nombre} {profesor.apellido}
+                        {profesor.nombreCompleto}
                       </Text>
                       <Text style={styles.profesorContact}>
                         {profesor.email}

@@ -3,6 +3,7 @@ import {
   CompleteProfileData,
   Curso,
   CursoAlumno,
+  CursoDetalle,
   Estado,
   NuevoAlumno,
   NuevoUsuario,
@@ -26,10 +27,6 @@ export interface UsuarioFilters {
 }
 
 class UsuarioService {
-  getAllUsuarios = async (id: number): Promise<Usuario[]> => {
-    const response = await api.get(`${USER}/all/${id}`);
-    return response.data.data;
-  };
 
   /**
    * Versión paginada para la pantalla de administración.
@@ -52,13 +49,13 @@ class UsuarioService {
     return response.data;
   };
 
-  getAllCoursesByAlumno = async (id: number): Promise<CursoAlumno[]> => {
-    const response = await api.get(`${USER}/cursos-alumno/${id}`);
+  getAllCoursesByAlumnoV2 = async (id: number): Promise<CursoAlumno[]> => {
+    const response = await api.get(`${USER}/v2/cursos-alumno/${id}`);
     return response.data.data;
   };
 
-  getAllCoursesByProfesor = async (id: number): Promise<Curso[]> => {
-    const response = await api.get(`${USER}/cursos-profesor/${id}`);
+  getAllCoursesByProfesorV2 = async (id: number): Promise<CursoDetalle[]> => {
+    const response = await api.get(`${USER}/v2/cursos-profesor/${id}`);
     return response.data.data;
   };
 

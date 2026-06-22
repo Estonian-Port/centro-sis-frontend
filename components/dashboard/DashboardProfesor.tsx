@@ -3,6 +3,7 @@ import { View, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Curso,
+  CursoDetalle,
   Estado,
   EstadoCurso,
   nuevoCursoAlquilerProfesor,
@@ -31,7 +32,7 @@ export const DashboardProfesor = ({
   cursos,
   onRefresh,
 }: {
-  cursos: Curso[];
+  cursos: CursoDetalle[];
   onRefresh: () => void;
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -39,7 +40,7 @@ export const DashboardProfesor = ({
   const [filtrosEstado, setFiltrosEstado] = useState<EstadoCurso[]>([]);
   const [cursoFormVisible, setCursoFormVisible] = useState(false);
   const [cursoPendienteSeleccionado, setCursoPendienteSeleccionado] =
-    useState<Curso | null>(null);
+    useState<CursoDetalle | null>(null);
 
   const toggleFiltroEstado = (estado: EstadoCurso) => {
     setFiltrosEstado((prev) =>
@@ -57,7 +58,7 @@ export const DashboardProfesor = ({
         (course) =>
           course.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
           course.profesores.some((p) =>
-            p.nombre.toLowerCase().includes(searchQuery.toLowerCase())
+            p.nombreCompleto.toLowerCase().includes(searchQuery.toLowerCase())
           )
       );
     }
@@ -71,7 +72,7 @@ export const DashboardProfesor = ({
     return filtered;
   }, [cursos, searchQuery, filtrosEstado]);
 
-  const handleViewCourseDetails = (course: Curso) => {
+  const handleViewCourseDetails = (course: CursoDetalle) => {
     if (course.estadoAlta === Estado.PENDIENTE) {
       setCursoPendienteSeleccionado(course);
       setCursoFormVisible(true);
@@ -172,7 +173,7 @@ export const DashboardProfesor = ({
             <View style={styles.statsRow}>
               <StatRow
                 number={cursos.reduce(
-                  (sum, curso) => sum + curso.alumnosInscriptos.length,
+                  (sum, curso) => sum + curso.totalAlumnosInscriptos,
                   0
                 )}
                 label="Alumnos"

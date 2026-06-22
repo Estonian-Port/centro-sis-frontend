@@ -21,6 +21,7 @@ import {
   TipoPago,
   PagoType,
   nuevoCursoAlquilerProfesor,
+  CursoDetalle,
 } from "@/model/model";
 import { TimePickerModal } from "../pickers/TimePicker";
 import { CuotasCalculadas } from "../pagos/CuotasCalculadas";
@@ -36,7 +37,7 @@ interface CursoFormModalProps {
   visible: boolean;
   onClose: () => void;
   onSuccess: (curso: nuevoCursoAlquilerProfesor) => void;
-  curso: Curso;
+  curso: CursoDetalle;
 }
 
 // Validación personalizada para horarios
@@ -351,45 +352,45 @@ export const CursoFormModal: React.FC<CursoFormModalProps> = ({
 
             {/* Horarios */}
             <View style={styles.section}>
-  <Text style={styles.subsectionLabel}>Horarios del Curso</Text>
-  
-  {curso.horarios && curso.horarios.length > 0 ? (
-    <View style={styles.horariosReadonlyContainer}>
-      {curso.horarios.map((horario, index) => (
-        <View key={index} style={styles.horarioReadonlyCard}>
-          <View style={styles.horarioReadonlyHeader}>
-            <Ionicons name="calendar" size={18} color="#3b82f6" />
-            <Text style={styles.horarioReadonlyDia}>
-              {horario.dia}
-            </Text>
-          </View>
-          <View style={styles.horarioReadonlyTime}>
-            <View style={styles.horarioReadonlyTimeItem}>
-              <Ionicons name="time-outline" size={16} color="#6b7280" />
-              <Text style={styles.horarioReadonlyTimeText}>
-                {horario.horaInicio}
-              </Text>
+              <Text style={styles.subsectionLabel}>Horarios del Curso</Text>
+              
+              {curso.horarios && curso.horarios.length > 0 ? (
+                <View style={styles.horariosReadonlyContainer}>
+                  {curso.horarios.map((horario, index) => (
+                    <View key={index} style={styles.horarioReadonlyCard}>
+                      <View style={styles.horarioReadonlyHeader}>
+                        <Ionicons name="calendar" size={18} color="#3b82f6" />
+                        <Text style={styles.horarioReadonlyDia}>
+                          {horario.dia}
+                        </Text>
+                      </View>
+                      <View style={styles.horarioReadonlyTime}>
+                        <View style={styles.horarioReadonlyTimeItem}>
+                          <Ionicons name="time-outline" size={16} color="#6b7280" />
+                          <Text style={styles.horarioReadonlyTimeText}>
+                            {horario.horaInicio}
+                          </Text>
+                        </View>
+                        <Text style={styles.horarioReadonlyTimeSeparator}>-</Text>
+                        <View style={styles.horarioReadonlyTimeItem}>
+                          <Ionicons name="time-outline" size={16} color="#6b7280" />
+                          <Text style={styles.horarioReadonlyTimeText}>
+                            {horario.horaFin}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.noHorariosContainer}>
+                  <Ionicons name="alert-circle" size={24} color="#f59e0b" />
+                  <Text style={styles.noHorariosText}>
+                    No hay horarios configurados para este curso
+                  </Text>
+                </View>
+              )}
             </View>
-            <Text style={styles.horarioReadonlyTimeSeparator}>-</Text>
-            <View style={styles.horarioReadonlyTimeItem}>
-              <Ionicons name="time-outline" size={16} color="#6b7280" />
-              <Text style={styles.horarioReadonlyTimeText}>
-                {horario.horaFin}
-              </Text>
-            </View>
-          </View>
-        </View>
-      ))}
-    </View>
-  ) : (
-    <View style={styles.noHorariosContainer}>
-      <Ionicons name="alert-circle" size={24} color="#f59e0b" />
-      <Text style={styles.noHorariosText}>
-        No hay horarios configurados para este curso
-      </Text>
-    </View>
-  )}
-</View>
 
             {/* Tipos de Pago */}
             <View style={styles.section}>

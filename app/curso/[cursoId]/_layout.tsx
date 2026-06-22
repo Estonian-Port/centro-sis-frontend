@@ -16,7 +16,7 @@ import {
 import { COLORES } from "@/util/colores";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { cursoService } from "@/services/curso.service";
-import { Curso, Rol } from "@/model/model";
+import { CursoDetalle, Rol } from "@/model/model";
 import Toast from "react-native-toast-message";
 import { Tag } from "@/components/ui/Tag";
 import { estadoCursoToTagVariant, formatEstadoCurso } from "@/helper/funciones";
@@ -28,11 +28,11 @@ export default function CursoLayout() {
   const { cursoId } = useLocalSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const [curso, setCurso] = useState<Curso | null>(null);
+
+  const [curso, setCurso] = useState<CursoDetalle | null>(null);
   const [loading, setLoading] = useState(true);
   const { usuario, selectedRole, isLoading } = useAuth();
 
-  // Derivar activeTab del pathname en lugar de estado local
   const getActiveTab = (): "alumnos" | "informacion" | "asistencias" => {
     if (pathname.includes("/informacion")) return "informacion";
     if (pathname.includes("/asistencias")) return "asistencias";
@@ -50,7 +50,7 @@ export default function CursoLayout() {
       (!isLoading && selectedRole === Rol.PORTERIA) ||
       (!isLoading && selectedRole === Rol.ALUMNO)
     ) {
-      router.replace("/(tabs)"); // ← REDIRECT
+      router.replace("/(tabs)");
     }
   }, [selectedRole, isLoading]);
 
@@ -60,7 +60,7 @@ export default function CursoLayout() {
 
       if (showLoading) setLoading(true);
       try {
-        const response = await cursoService.getById(Number(cursoId));
+        const response = await cursoService.getDetalle(Number(cursoId));
         setCurso(response);
       } catch (error) {
         console.error("Error fetching curso:", error);
@@ -78,7 +78,6 @@ export default function CursoLayout() {
   );
 
   const handleTabChange = (tab: "alumnos" | "informacion" | "asistencias") => {
-    // Usar replace en lugar de push para no agregar al historial
     router.replace(`/curso/${cursoId}/${tab}`);
   };
 
@@ -174,7 +173,7 @@ export default function CursoLayout() {
       </View>
 
       {/* Content */}
-      <CursoContext.Provider value={{ curso, fetchCurso }}>
+      <CursoContext.Provider value={{ curso: curso as any, fetchCurso }}>
         <Slot />
       </CursoContext.Provider>
     </SafeAreaView>

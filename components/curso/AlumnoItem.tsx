@@ -7,26 +7,27 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
-import { Curso, Inscripcion } from "@/model/model";
+import { CursoAlumnoInscripto, CursoDetalle, MiInscripcionCurso, PagoRealizado } from "@/model/model";
 import { Tag } from "../ui/Tag";
 import { inscripcionService } from "@/services/inscripcion.service";
-import { AlumnoDetailModal } from "./modals/AlumnoInscripcionModal";
+import { AlumnoDetailModal } from "./modals/AlumnoDetailModal";
 import { AsignarPuntosModal } from "./modals/AsignarPuntosModal";
 import { EditarBeneficioModal } from "./modals/EditarBeneficioModal";
 import { RegistrarPagoModal } from "./modals/RegistrarPagoModal";
 import { ConfirmarBajaModal } from "./modals/BajaAlumnoModal";
-import { estadoPagoToTagVariant, formatEstadoPago } from "@/helper/funciones";
+import { estadoPagoToTagVariant, formatEstadoPago, getIniciales } from "@/helper/funciones";
 import { useAuth } from "@/context/authContext";
 import { EventBus } from "@/util/EventBus";
+import { cursoService } from "@/services/curso.service";
 
 interface AlumnoItemProps {
-  inscripcion: Inscripcion;
-  curso: Curso;
+  alumno: CursoAlumnoInscripto;
+  curso: CursoDetalle;
   onRefresh: () => Promise<void>;
 }
 
 export const AlumnoItem: React.FC<AlumnoItemProps> = ({
-  inscripcion,
+  alumno,
   curso,
   onRefresh,
 }) => {
@@ -36,8 +37,30 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
   const [showPagoModal, setShowPagoModal] = useState(false);
   const [showBajaModal, setShowBajaModal] = useState(false);
   const { usuario } = useAuth();
+  const [inscripcion, setInscripcion] = useState<MiInscripcionCurso | null>(null);
+  const [pagos, setPagos] = useState<PagoRealizado[] | null>(null);
 
-  const alumno = inscripcion.alumno;
+  const [cargandoDetalle, setCargandoDetalle] = useState(false);
+
+  const cargarDetalle = async () => {
+    if (inscripcion) return;
+    setCargandoDetalle(true);
+    try {
+      const inscripcionResp = await cursoService.getMiInscripcion(curso.id, alumno.id);
+      setInscripcion(inscripcionResp);
+
+      const pagosResp = await cursoService.getPagosRealizados(curso.id, alumno.id);
+      setPagos(pagosResp);
+
+    } finally {
+      setCargandoDetalle(false);
+    }
+  };
+
+  const handleOpenBeneficio = () => {
+    cargarDetalle();
+    setShowBeneficioModal(true);
+  };
 
   if (!alumno || !usuario) return null;
 
@@ -45,8 +68,10 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
     <>
       <TouchableOpacity
         style={styles.card}
-        onPress={() => setShowDetailModal(true)}
-        activeOpacity={0.7}
+        onPress={() => {
+            cargarDetalle();
+            setShowDetailModal(true);
+          }}        activeOpacity={0.7}
       >
         {Platform.OS === "web" ? (
           // WEB: Todo en una fila horizontal
@@ -55,8 +80,7 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
             <View style={styles.alumnoInfo}>
               <View style={styles.alumnoAvatar}>
                 <Text style={styles.avatarText}>
-                  {alumno.nombre[0]}
-                  {alumno.apellido[0]}
+                  {getIniciales(alumno.nombreCompleto)}
                 </Text>
               </View>
               <View style={styles.alumnoDetails}>
@@ -65,7 +89,7 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
                   numberOfLines={1}  
                   ellipsizeMode="tail"
                 >
-                  {alumno.nombre} {alumno.apellido}
+                  {alumno.nombreCompleto}
                 </Text>
                 <View style={styles.alumnoMeta}>
                   <Ionicons name="mail-outline" size={14} color="#6b7280" />
@@ -85,13 +109,13 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
               {/* Puntos */}
               <View style={styles.puntosContainer}>
                 <Ionicons name="star" size={18} color="#f59e0b" />
-                <Text style={styles.puntosText}>{inscripcion.puntos}</Text>
+                <Text style={styles.puntosText}>{alumno.puntos}</Text>
               </View>
 
               {/* Tag estado */}
               <Tag
-                label={formatEstadoPago(inscripcion.estadoPago)}
-                variant={estadoPagoToTagVariant(inscripcion.estadoPago)}
+                label={formatEstadoPago(alumno.estadoPago)}
+                variant={estadoPagoToTagVariant(alumno.estadoPago)}
               />
 
               {/* Chevron */}
@@ -106,8 +130,7 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
               <View style={styles.alumnoInfo}>
                 <View style={styles.alumnoAvatar}>
                   <Text style={styles.avatarText}>
-                    {alumno.nombre[0]}
-                    {alumno.apellido[0]}
+                    {alumno.nombreCompleto}
                   </Text>
                 </View>
                 <View style={styles.alumnoDetails}>
@@ -116,7 +139,7 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
                     numberOfLines={1}  
                     ellipsizeMode="tail"
                   >
-                    {alumno.nombre} {alumno.apellido}
+                    {alumno.nombreCompleto}
                   </Text>
                   <View style={styles.alumnoMeta}>
                     <Ionicons name="mail-outline" size={14} color="#6b7280" />
@@ -137,40 +160,45 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
             <View style={styles.bottomRow}>
               <View style={styles.puntosContainer}>
                 <Ionicons name="star" size={16} color="#f59e0b" />
-                <Text style={styles.puntosText}>{inscripcion.puntos} pts</Text>
+                <Text style={styles.puntosText}>{alumno.puntos} pts</Text>
               </View>
 
               <Tag
-                label={formatEstadoPago(inscripcion.estadoPago)}
-                variant={estadoPagoToTagVariant(inscripcion.estadoPago)}
+                label={formatEstadoPago(alumno.estadoPago)}
+                variant={estadoPagoToTagVariant(alumno.estadoPago)}
               />
             </View>
           </>
         )}
       </TouchableOpacity>
 
-      <AlumnoDetailModal
-        visible={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
-        inscripcion={inscripcion}
-        curso={curso}
-        onOpenRegistrarPago={() => {
-          setShowDetailModal(false);
-          setShowPagoModal(true);
-        }}
-        onOpenAsignarPuntos={() => {
-          setShowDetailModal(false);
-          setShowPuntosModal(true);
-        }}
-        onOpenEditarBeneficio={() => {
-          setShowDetailModal(false);
-          setShowBeneficioModal(true);
-        }}
-        onDarDeBaja={() => {
-          setShowDetailModal(false);
-          setShowBajaModal(true);
-        }}
-      />
+      {inscripcion && pagos && (
+
+        <AlumnoDetailModal
+          visible={showDetailModal}
+          onClose={() => setShowDetailModal(false)}
+          alumno={alumno}
+          curso={curso}
+          inscripcion={inscripcion}
+          pagos={pagos}
+          onOpenRegistrarPago={() => {
+            setShowDetailModal(false);
+            setShowPagoModal(true);
+          }}
+          onOpenAsignarPuntos={() => {
+            setShowDetailModal(false);
+            setShowPuntosModal(true);
+          }}
+          onOpenEditarBeneficio={() => {
+            setShowDetailModal(false);
+            setShowBeneficioModal(true);
+          }}
+          onDarDeBaja={() => {
+            setShowDetailModal(false);
+            setShowBajaModal(true);
+          }}
+        />
+      )}
 
       <AsignarPuntosModal
         visible={showPuntosModal}
@@ -178,11 +206,11 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
           setShowPuntosModal(false);
           setShowDetailModal(true);
         }}
-        alumno={inscripcion.alumno}
-        puntosActuales={inscripcion.puntos}
+        alumno={alumno}
+        puntosActuales={alumno.puntos}
         onAsignar={async (puntos) => {
           await inscripcionService.asignarPuntos(
-            inscripcion.id,
+            alumno.inscripcionId,
             puntos,
             usuario.id,
           );
@@ -190,24 +218,26 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
         }}
       />
 
-      <EditarBeneficioModal
-        visible={showBeneficioModal}
-        onClose={() => {
-          setShowBeneficioModal(false);
-          setShowDetailModal(true);
-        }}
-        alumno={inscripcion.alumno}
-        beneficioActual={inscripcion.beneficio}
-        montoCurso={inscripcion.tipoPagoElegido.monto}
-        onGuardar={async (beneficio) => {
-          await inscripcionService.actualizarBeneficio(
-            inscripcion.id,
-            usuario.id,
-            beneficio,
-          );
-          await onRefresh();
-        }}
-      />
+      {inscripcion && (
+        <EditarBeneficioModal
+          visible={showBeneficioModal}
+          onClose={() => {
+            setShowBeneficioModal(false);
+            setShowDetailModal(true);
+          }}
+          alumno={alumno}
+          curso={curso}
+          inscripcion={inscripcion}
+          onGuardar={async (beneficio) => {
+            await inscripcionService.actualizarBeneficio(
+              alumno.inscripcionId,
+              usuario.id,
+              beneficio,
+            );
+            await onRefresh();
+          }}
+        />
+      )}
 
       <RegistrarPagoModal
         visible={showPagoModal}
@@ -216,7 +246,7 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
           setShowDetailModal(true);
         }}
         usuarioId={usuario.id}
-        inscripcionId={inscripcion.id}
+        inscripcionId={alumno.inscripcionId}
         onSuccess={async () => {
           await onRefresh();
         }}
@@ -228,11 +258,11 @@ export const AlumnoItem: React.FC<AlumnoItemProps> = ({
           setShowBajaModal(false);
           setShowDetailModal(true);
         }}
-        alumno={inscripcion.alumno}
-        curso={curso.nombre}
+        alumno={alumno}
+        curso={curso}
         onConfirmar={async () => {
-          await inscripcionService.eliminarInscripcion(inscripcion.id);
-          EventBus.emit("alumnoBaja", { cursoId: curso.id, alumnoId: inscripcion.alumno.id });
+          await inscripcionService.eliminarInscripcion(alumno.inscripcionId);
+          EventBus.emit("alumnoBaja", { cursoId: curso.id, alumnoId: alumno.id });
           await onRefresh();
         }}
       />

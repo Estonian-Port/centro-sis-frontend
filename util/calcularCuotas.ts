@@ -78,13 +78,6 @@ export function obtenerInfoCuotas(
   };
 }
 
-/**
- * ✅ Verifica si se cobra cuota adicional
- * Con la nueva lógica de meses calendario, ya no existe el concepto de "día 15"
- */
-export function tieneCuotaAdicional(): boolean {
-  return false;
-}
 
 /**
  * ✅ Helper para calcular días totales si todavía lo necesitas para alguna UI

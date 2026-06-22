@@ -1,10 +1,9 @@
-// app/curso/[cursoId]/asistencias.tsx
 import { AsistenciaItem } from "@/components/curso/AsistenciaItem";
 import { TomarAsistenciaModal } from "@/components/curso/modals/TomarAsistenciaModal";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/authContext";
 import { getErrorMessage } from "@/helper/auth.interceptor";
-import { Curso, ParteAsistencia, Rol } from "@/model/model";
+import { CursoAlumnoInscripto, CursoDetalle, ParteAsistencia, Rol } from "@/model/model";
 import { cursoService } from "@/services/curso.service";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
@@ -20,10 +19,12 @@ import Toast from "react-native-toast-message";
 
 export default function AsistenciasTab() {
   const { cursoId } = useLocalSearchParams();
-  const [curso, setCurso] = useState<Curso | null>(null);
-  const [partesAsistencia, setPartesAsistencias] = useState<ParteAsistencia[]>(
-    [],
-  );
+
+  const [curso, setCurso] = useState<CursoDetalle | null>(null);
+  const [partesAsistencia, setPartesAsistencias] = useState<ParteAsistencia[]>([]);
+  const [cursoAlumnoInscripto, setCursoAlumnoInscripto] = useState<CursoAlumnoInscripto[]>([]);
+
+  
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const { selectedRole, usuario } = useAuth();
@@ -37,19 +38,21 @@ export default function AsistenciasTab() {
 
     setLoading(true);
     try {
-      const cursoData = await cursoService.getById(Number(cursoId));
-      setCurso(cursoData);
-
-      const partesAsistenciaData = await cursoService.obtenerPartesAsistencias(
-        Number(cursoId),
-      );
-      setPartesAsistencias(partesAsistenciaData.data);
+      const [detalle, asistencias, inscripciones] = await Promise.all([
+        cursoService.getDetalle(Number(cursoId)),
+        cursoService.obtenerPartesAsistencias(Number(cursoId)),
+        cursoService.getAlumnosInscriptos(Number(cursoId))
+      ]);
+      
+      setCurso(detalle);
+      setPartesAsistencias(asistencias);
+      setCursoAlumnoInscripto(inscripciones.content)
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching asistencias:", error);
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: getErrorMessage(error) || "No se pudieron cargar los partes de asistencia",
+        text2: getErrorMessage(error) || "No se pudieron cargar las asistencias",
         position: "bottom",
       });
     } finally {
@@ -94,7 +97,7 @@ export default function AsistenciasTab() {
         <View style={styles.statItem}>
           <Ionicons name="people-outline" size={24} color="#10b981" />
           <Text style={styles.statValue}>
-            {curso.inscripciones?.length || 0}
+            {cursoAlumnoInscripto?.length || 0}
           </Text>
           <Text style={styles.statLabel}>Alumnos inscriptos</Text>
         </View>
@@ -109,7 +112,7 @@ export default function AsistenciasTab() {
                     0,
                   ) /
                     (partesAsistencia.length *
-                      (curso.inscripciones?.length || 1))) *
+                      (cursoAlumnoInscripto?.length || 1))) *
                     100,
                 )
               : 0}
@@ -146,7 +149,7 @@ export default function AsistenciasTab() {
             </Text>
           </View>
         ) : (
-          partesAsistencia.map((p) => <AsistenciaItem key={p.id} parte={p} />)
+          (partesAsistencia || []).map((p) => <AsistenciaItem key={p.id} parte={p} />)
         )}
       </View>
       <TomarAsistenciaModal

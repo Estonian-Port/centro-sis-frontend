@@ -1,9 +1,7 @@
-// components/pagos/CuotasCalculadas.tsx - NUEVO CÁLCULO CON UMBRAL 15 DÍAS
-
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { calcularCuotas, calcularDuracionEnTexto, tieneCuotaAdicional } from "@/util/calcularCuotas";
+import { calcularCuotas, calcularDuracionEnTexto } from "@/util/calcularCuotas";
 
 interface CuotasCalculadasProps {
   fechaInicio: Date | null;
@@ -19,7 +17,6 @@ export const CuotasCalculadas: React.FC<CuotasCalculadasProps> = ({
   helpText = "Calculadas automáticamente según la duración del curso"
 }) => {
   const cuotas = calcularCuotas(fechaInicio, fechaFin);
-  const hayCuotaAdicional = fechaInicio && fechaFin ? tieneCuotaAdicional(fechaInicio, fechaFin) : false;
 
   return (
     <View style={styles.container}>
@@ -44,16 +41,6 @@ export const CuotasCalculadas: React.FC<CuotasCalculadasProps> = ({
           )}
         </View>
       </View>
-
-      {/* ✅ Aclaración de cuota adicional */}
-      {hayCuotaAdicional && (
-        <View style={styles.additionalInfoContainer}>
-          <Ionicons name="add-circle" size={16} color="#8b5cf6" />
-          <Text style={styles.additionalInfoText}>
-            Se cobra una cuota adicional porque el curso supera los 15 días adicionales
-          </Text>
-        </View>
-      )}
 
       {/* Info adicional */}
       {!fechaInicio || !fechaFin ? (
