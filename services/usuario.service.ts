@@ -48,13 +48,13 @@ class UsuarioService {
     return response.data;
   };
 
-  getAllCoursesByAlumno = async (id: number): Promise<CursoAlumno[]> => {
-    const response = await api.get(`${USER}/cursos-alumno/${id}`);
+  getAllCoursesByAlumnoV2 = async (id: number): Promise<CursoAlumno[]> => {
+    const response = await api.get(`${USER}/v2/cursos-alumno/${id}`);
     return response.data.data;
   };
 
-  getAllCoursesByProfesor = async (id: number): Promise<Curso[]> => {
-    const response = await api.get(`${USER}/cursos-profesor/${id}`);
+  getAllCoursesByProfesorV2 = async (id: number): Promise<Curso[]> => {
+    const response = await api.get(`${USER}/v2/cursos-profesor/${id}`);
     return response.data.data;
   };
 

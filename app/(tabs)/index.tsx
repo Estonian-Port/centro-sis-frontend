@@ -21,15 +21,13 @@ export default function HomeScreen() {
     accesosMensuales: 0,
   });
 
-    const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     if (usuario != null && selectedRole === Rol.ALUMNO) {
-      let listaCursos = await usuarioService.getAllCoursesByAlumno(usuario.id);
+      const listaCursos = await usuarioService.getAllCoursesByAlumnoV2(usuario.id);
       setCursosAlumno(listaCursos);
     }
     if (usuario != null && selectedRole === Rol.PROFESOR) {
-      let listaCursos = await usuarioService.getAllCoursesByProfesor(
-        usuario.id,
-      );
+      const listaCursos = await usuarioService.getAllCoursesByProfesorV2(usuario.id);
       setCursosProfesor(listaCursos);
     }
     if (selectedRole === Rol.ADMINISTRADOR || selectedRole === Rol.OFICINA) {
@@ -37,12 +35,6 @@ export default function HomeScreen() {
       setStats(stats);
     }
   }, [usuario, selectedRole]);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchData();
-    }, [fetchData])
-  );
 
   const renderContent = () => {
     switch (selectedRole) {
