@@ -253,7 +253,7 @@ export interface CursoDetalle {
   estadoAlta: string;
   fechaInicio: string;
   fechaFin: string;
-  recargoPorAtrasoPorcentaje: number;
+  recargoPorAtrasoPorcentaje?: number;
   horarios: Horario[]; 
   tiposPago: TipoPago[]; 
   profesores: ProfesorResumen[]; 

@@ -13,6 +13,7 @@ import {
   Estado,
   CursoAlumno,
   EstadoPago,
+  CursoDetalle,
 } from "@/model/model";
 import { useAuth } from "@/context/authContext";
 import { Tag } from "@/components/ui/Tag";
@@ -27,9 +28,9 @@ import { BajaTotalCurso } from "../modals/BajaTotalCursoModal";
 import { RegistrarPagoCursoModal } from "../modals/RegistrarPagoCursoModal";
 
 interface CourseItemProps {
-  course: Curso | CursoAlumno;
-  handleCourseDetails: (course: Curso | CursoAlumno) => void;
-  onEditPendingCourse?: (course: Curso) => void;
+  course: CursoDetalle | CursoAlumno;
+  handleCourseDetails: (course: CursoDetalle | CursoAlumno) => void;
+  onEditPendingCourse?: (course: CursoDetalle) => void;
   onDarDeBaja?: (courseId: number) => void;
 }
 
@@ -44,7 +45,7 @@ const CourseItem = ({
   const [showBajaModal, setShowBajaModal] = useState(false);
   const [showRegistrarPagoModal, setShowRegistrarPagoModal] = useState(false);
 
-  const esCursoAlumno = (curso: Curso | CursoAlumno): curso is CursoAlumno => {
+  const esCursoAlumno = (curso: CursoDetalle | CursoAlumno): curso is CursoAlumno => {
     return "estadoPago" in curso;
   };
 
@@ -86,7 +87,7 @@ const CourseItem = ({
       },
     };
 
-    return coloresTipo[course.tipoCurso];
+    return coloresTipo[course.tipoCurso as TipoCurso];
   };
 
   const estilos = getEstilosCurso();
@@ -285,8 +286,8 @@ const CourseItem = ({
               <View style={styles.alumnosRow}>
                 <Ionicons name="people" size={16} color="#6b7280" />
                 <Text style={styles.alumnosCount}>
-                  {course.cantidadAlumnosInscriptos}{" "}
-                  {course.cantidadAlumnosInscriptos === 1 ? "alumno" : "alumnos"}
+                  {course.totalAlumnosInscriptos}{" "}
+                  {course.totalAlumnosInscriptos === 1 ? "alumno" : "alumnos"}
                 </Text>
               </View>
             )}

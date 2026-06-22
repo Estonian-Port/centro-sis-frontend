@@ -1,5 +1,5 @@
 import { useAuth } from "@/context/authContext";
-import { CursoAlumno, Curso, Rol, Estadistica } from "@/model/model";
+import { CursoAlumno, Curso, Rol, Estadistica, CursoDetalle } from "@/model/model";
 import { useCallback, useState } from "react";
 import { Platform, StatusBar, StyleSheet, Text, View } from "react-native";
 import { administracionService } from "@/services/administracion.service";
@@ -13,7 +13,7 @@ import { useFocusEffect } from "expo-router";
 export default function HomeScreen() {
   const { selectedRole, usuario } = useAuth();
   const [cursosAlumno, setCursosAlumno] = useState<CursoAlumno[]>([]);
-  const [cursosProfesor, setCursosProfesor] = useState<Curso[]>([]);
+  const [cursosProfesor, setCursosProfesor] = useState<CursoDetalle[]>([]);
   const [stats, setStats] = useState<Estadistica>({
     alumnosActivos: 0,
     cursos: 0,
@@ -35,6 +35,12 @@ export default function HomeScreen() {
       setStats(stats);
     }
   }, [usuario, selectedRole]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
 
   const renderContent = () => {
     switch (selectedRole) {

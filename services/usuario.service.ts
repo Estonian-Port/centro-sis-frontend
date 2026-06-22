@@ -3,6 +3,7 @@ import {
   CompleteProfileData,
   Curso,
   CursoAlumno,
+  CursoDetalle,
   Estado,
   NuevoAlumno,
   NuevoUsuario,
@@ -53,7 +54,7 @@ class UsuarioService {
     return response.data.data;
   };
 
-  getAllCoursesByProfesorV2 = async (id: number): Promise<Curso[]> => {
+  getAllCoursesByProfesorV2 = async (id: number): Promise<CursoDetalle[]> => {
     const response = await api.get(`${USER}/v2/cursos-profesor/${id}`);
     return response.data.data;
   };

@@ -9,13 +9,13 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Curso, CursoAlumno } from "@/model/model";
+import { Curso, CursoAlumno, CursoDetalle } from "@/model/model";
 import { COLORES } from "@/util/colores";
 import { useAuth } from "@/context/authContext";
 
 interface CalendarioSemanalProps {
   cursos: CursoAlumno[];
-  onCursoPress?: (curso: Curso | CursoAlumno) => void;
+  onCursoPress?: (curso: CursoDetalle | CursoAlumno) => void;
 }
 
 const CalendarioSemanal: React.FC<CalendarioSemanalProps> = ({
