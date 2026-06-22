@@ -2,31 +2,29 @@
   "expo": {
     "name": "Centro SIS",
     "slug": "centro-sis",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo-centro.png",
     "scheme": "centrosis",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-
     "android": {
       "package": "com.estonianport.centrosis",
-      "versionCode": 4,
-        "adaptiveIcon": {
-          "backgroundColor": "#2D3C59",
-          "foregroundImage": "./assets/images/logo.png"
-        },
-        "navigationBar": {
+      "versionCode": 5,
+      "adaptiveIcon": {
+        "backgroundColor": "#2D3C59",
+        "foregroundImage": "./assets/images/logo.png"
+      },
+      "navigationBar": {
         "backgroundColor": "#ffffff",
         "barStyle": "dark-content"
-        },
-        "edgeToEdgeEnabled": true,
-        "predictiveBackGestureEnabled": false
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
     },
-
     "ios": {
       "bundleIdentifier": "com.estonianport.centrosis",
-      "buildNumber": "4",
+      "buildNumber": "5",
       "supportsTablet": true
     },
     "web": {
@@ -34,7 +32,6 @@
       "output": "static",
       "favicon": "./assets/images/logo-centro.png"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -45,13 +42,13 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "@react-native-community/datetimepicker",
+      "expo-asset"
     ],
-
     "assetBundlePatterns": [
       "**/*"
     ],
-
     "experiments": {
       "typedRoutes": true
     }
