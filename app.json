@@ -38,7 +38,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/logo-centro.png",
-          "resizeMode": "contain",
+          "resizeMode": "cover",
           "backgroundColor": "#ffffff"
         }
       ],
