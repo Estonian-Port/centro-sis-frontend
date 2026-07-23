@@ -201,7 +201,7 @@ export default function TabLayout() {
           name="pagos"
           options={{
             title: "Pagos",
-            href: !isPorteria ? "/(tabs)/admin" : null,
+            href: !isPorteria ? "/(tabs)/pagos" : null,
             tabBarIcon: ({ size, color }) => (
               <Ionicons name="card-outline" size={size} color={color} />
             ),
