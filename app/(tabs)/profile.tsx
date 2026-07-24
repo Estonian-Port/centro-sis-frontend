@@ -155,6 +155,8 @@ export default function ProfileScreen() {
     setShowLogoutModal(false);
   };
 
+  if (!usuario) return null;
+
   const actionItems = [
     {
       icon: "person-outline",

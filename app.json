@@ -2,7 +2,7 @@
   "expo": {
     "name": "Centro SIS",
     "slug": "centro-sis",
-    "version": "1.5.0",
+    "version": "1.6.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo-centro.png",
     "scheme": "centrosis",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "android": {
       "package": "com.estonianport.centrosis",
-      "versionCode": 5,
+      "versionCode": 6,
       "adaptiveIcon": {
         "backgroundColor": "#2D3C59",
         "foregroundImage": "./assets/images/logo.png"
@@ -24,7 +24,8 @@
     },
     "ios": {
       "bundleIdentifier": "com.estonianport.centrosis",
-      "buildNumber": "5",
+      "version": "1.6.0",
+      "buildNumber": "6",
       "supportsTablet": true
     },
     "web": {

@@ -202,8 +202,8 @@ export default function AdminScreen() {
   useEffect(() => {
     if (
       !isLoading &&
-      selectedRole !== Rol.ADMINISTRADOR &&
-      selectedRole !== Rol.OFICINA
+      (!selectedRole ||
+        (selectedRole !== Rol.ADMINISTRADOR && selectedRole !== Rol.OFICINA))
     ) {
       router.replace("/(tabs)");
     }
@@ -453,6 +453,13 @@ export default function AdminScreen() {
   const contadorFiltrosCursos = filtrosEstadoCurso.length + filtrosEstadoAlta.length;
 
   if (!usuario) return null;
+  if (
+    isLoading ||
+    !selectedRole ||
+    (selectedRole !== Rol.ADMINISTRADOR && selectedRole !== Rol.OFICINA)
+  ) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>

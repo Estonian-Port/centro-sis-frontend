@@ -2,7 +2,7 @@ import { useAuth } from "@/context/authContext";
 import { Rol } from "@/model/model";
 import { Ionicons } from "@expo/vector-icons";
 import { Drawer } from "expo-router/drawer";
-import { Tabs } from "expo-router";
+import { Tabs, router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Platform, View } from "react-native";
 import { RoleSelectionModal } from "../../components/modals/RoleSelectionModal";
@@ -10,10 +10,22 @@ import { DrawerContent } from "../../components/navigation/DrawerContent";
 import { CustomDrawerHeader } from "../../components/navigation/CustomDrawerHeader";
 
 function DrawerWithModal({ children }: { children: React.ReactNode }) {
-  const { usuario, selectedRole, setSelectedRole, hasMultipleRoles } =
-    useAuth();
+  const {
+    usuario,
+    selectedRole,
+    setSelectedRole,
+    hasMultipleRoles,
+    isAuthenticated,
+    isLoading,
+  } = useAuth();
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace("/login");
+    }
+  }, [isAuthenticated, isLoading]);
 
   useEffect(() => {
     if (!usuario || hasInitialized) return;
@@ -31,6 +43,8 @@ function DrawerWithModal({ children }: { children: React.ReactNode }) {
     setSelectedRole(role);
     setShowRoleModal(false);
   };
+
+  if (isLoading || !isAuthenticated || !usuario) return null;
 
   return (
     <View style={{ flex: 1 }}>
@@ -201,7 +215,7 @@ export default function TabLayout() {
           name="pagos"
           options={{
             title: "Pagos",
-            href: !isPorteria ? "/(tabs)/admin" : null,
+            href: isPorteria ? null : "/(tabs)/pagos",
             tabBarIcon: ({ size, color }) => (
               <Ionicons name="card-outline" size={size} color={color} />
             ),
