@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -20,6 +20,8 @@ import { getErrorMessage } from "@/helper/auth.interceptor";
 import { EventBus } from "@/util/EventBus";
 import { router } from "expo-router";
 
+const COOLDOWN_MS = 5000;
+
 export default function EscanearQRScreen() {
   const { usuario, selectedRole, isLoading } = useAuth();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -30,6 +32,9 @@ export default function EscanearQRScreen() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastAcceso, setLastAcceso] = useState<Acceso | null>(null);
   const [showWebModal, setShowWebModal] = useState(false);
+
+  const lockRef = useRef(false);
+  const lastScanRef = useRef<{ data: string; at: number } | null>(null);
 
   useEffect(() => {
     // Solo pedir permisos si NO es web
@@ -46,7 +51,18 @@ export default function EscanearQRScreen() {
   }, [selectedRole, isLoading]);
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
-    if (processing) return;
+    const now = Date.now();
+
+    if (lockRef.current) return;
+    if (
+      lastScanRef.current?.data === data &&
+      now - lastScanRef.current.at < COOLDOWN_MS
+    ) {
+      return;
+    }
+
+    lockRef.current = true;
+    lastScanRef.current = { data, at: now };
 
     setProcessing(true);
     setScanning(false);
@@ -57,7 +73,7 @@ export default function EscanearQRScreen() {
       setLastAcceso(acceso);
       EventBus.emit("accesoRegistrado", acceso);
       setShowSuccess(true);
-      setAccesosRecientes([acceso, ...accesosRecientes.slice(0, 49)]);
+      setAccesosRecientes((prev) => [acceso, ...prev.slice(0, 49)]);
 
       setTimeout(
         () => {
@@ -68,14 +84,25 @@ export default function EscanearQRScreen() {
       );
     } catch (error: any) {
       console.error("Error al registrar acceso:", error);
-      Toast.show({
-        type: "error",
-        text1: "❌ Error",
-        text2: getErrorMessage(error) || "QR inválido",
-        position: "bottom",
-        visibilityTime: 4000,
-      });
+      if (error?.response?.status === 409) {
+        Toast.show({
+          type: "info",
+          text1: "Ya registrado",
+          text2: getErrorMessage(error),
+          position: "bottom",
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "❌ Error",
+          text2: getErrorMessage(error) || "QR inválido",
+          position: "bottom",
+          visibilityTime: 4000,
+        });
+      }
     } finally {
+      lastScanRef.current = { data, at: Date.now() };
+      lockRef.current = false;
       setProcessing(false);
     }
   };
@@ -143,7 +170,7 @@ export default function EscanearQRScreen() {
       {/* Botón Escanear */}
       <TouchableOpacity
         style={styles.scanButton}
-        onPress={handleScanPress} // ✅ Cambiado
+        onPress={handleScanPress}
         disabled={processing}
       >
         <Ionicons name="qr-code-outline" size={48} color="#ffffff" />
